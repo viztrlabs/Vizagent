@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface SessionCardProps {
-  session: { id: string; service?: string; project_id: string; start_at?: string | Date; [key: string]: unknown };
+  session: { id: string; service?: string; project_id: string; start_at?: string | Date | null; startAt?: string | Date | null; [key: string]: unknown };
   isPast?: boolean;
   isCancelled?: boolean;
 }
