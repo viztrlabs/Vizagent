@@ -1,0 +1,61 @@
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { redirect } from 'next/navigation';
+import { prisma } from '@/lib/supabase/server';
+import SessionCard from '@/components/portal/SessionCard';
+
+export default async function PortalPage() {
+  const session = await getServerSession(authOptions);
+  if (!session) redirect('/auth/signin?callbackUrl=/portal');
+
+  const sessions = await prisma.configuratorSession.findMany({
+    where: { host_id: session.user!.email! },
+    orderBy: { start_at: 'desc' },
+  });
+
+  const upcoming = sessions.filter(s => s.is_active && s.start_at && s.start_at > new Date());
+  const past = sessions.filter(s => s.is_active && s.start_at && s.start_at <= new Date());
+  const cancelled = sessions.filter(s => !s.is_active);
+
+  return (
+    <main className="max-w-2xl mx-auto px-4 py-12">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-2xl font-medium text-white">Your sessions</h1>
+          <p className="text-sm text-gray-400 mt-1">{session.user?.email}</p>
+        </div>
+        <a href="/book"
+           className="text-sm border border-gray-700 rounded-lg px-4 py-2 hover:bg-surface transition text-white">
+          + Book session
+        </a>
+      </div>
+
+      {upcoming.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
+            Upcoming
+          </h2>
+          {upcoming.map(s => <SessionCard key={s.id} session={s} />)}
+        </section>
+      )}
+
+      {past.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
+            Past
+          </h2>
+          {past.map(s => <SessionCard key={s.id} session={s} isPast />)}
+        </section>
+      )}
+
+      {cancelled.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
+            Cancelled
+          </h2>
+          {cancelled.map(s => <SessionCard key={s.id} session={s} isCancelled />)}
+        </section>
+      )}
+    </main>
+  );
+}
