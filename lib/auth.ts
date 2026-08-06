@@ -1,6 +1,21 @@
 import NextAuth from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import CredentialsProvider from 'next-auth/providers/credentials';
+import { JWT } from 'next-auth/jwt';
+import { DefaultSession } from 'next-auth';
+
+interface ExtendedToken extends JWT {
+  role?: string;
+}
+
+declare module 'next-auth' {
+  interface Session {
+    user: DefaultSession['user'] & { role?: string };
+  }
+  interface User {
+    role?: string;
+  }
+}
 
 const {
   handlers: { GET, POST },
@@ -43,14 +58,15 @@ const {
   ],
   callbacks: {
     async jwt({ token, user }) {
-      if (user) {
-        token.role = (user as any).role;
+      if (user && 'role' in user) {
+        token.role = (user as { role?: string }).role;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).role = token.role;
+        const extendedToken = token as ExtendedToken;
+        session.user.role = extendedToken.role || 'user';
       }
       return session;
     },

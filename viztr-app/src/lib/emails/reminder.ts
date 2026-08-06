@@ -1,4 +1,13 @@
-export function reminderEmailHTML(session: any) {
+interface Session {
+  id: string;
+  service?: string;
+  clientName?: string;
+  hostId: string;
+  startAt: string | Date | null;
+}
+
+export function reminderEmailHTML(session: Session) {
+  const startAt = session.startAt ? new Date(session.startAt) : new Date();
   return `
     <!DOCTYPE html><html><body style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
       <div style="margin-bottom:24px">
@@ -10,9 +19,9 @@ export function reminderEmailHTML(session: any) {
       </p>
       <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
         <tr><td style="padding:8px 0;color:#999;font-size:13px;border-bottom:1px solid #eee">Date</td>
-            <td style="padding:8px 0;font-size:13px;font-weight:500;text-align:right;border-bottom:1px solid #eee">${new Date(session.startAt).toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})}</td></tr>
+            <td style="padding:8px 0;font-size:13px;font-weight:500;text-align:right;border-bottom:1px solid #eee">${startAt.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})}</td></tr>
         <tr><td style="padding:8px 0;color:#999;font-size:13px;border-bottom:1px solid #eee">Time</td>
-            <td style="padding:8px 0;font-size:13px;font-weight:500;text-align:right;border-bottom:1px solid #eee">${new Date(session.startAt).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Kolkata'})} IST</td></tr>
+            <td style="padding:8px 0;font-size:13px;font-weight:500;text-align:right;border-bottom:1px solid #eee">${startAt.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Kolkata'})} IST</td></tr>
         <tr><td style="padding:8px 0;color:#999;font-size:13px">Session ID</td>
             <td style="padding:8px 0;font-size:12px;font-family:monospace;text-align:right">${session.id}</td></tr>
       </table>

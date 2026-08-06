@@ -2,8 +2,18 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+interface Session {
+  id: string;
+  service?: string;
+  project_id?: string;
+  projectId?: string;
+  start_at?: string | Date | null;
+  startAt?: string | Date | null;
+  [key: string]: unknown;
+}
+
 interface SessionCardProps {
-  session: any;
+  session: Session;
   isPast?: boolean;
   isCancelled?: boolean;
 }
@@ -25,7 +35,7 @@ export default function SessionCard({ session, isPast = false, isCancelled = fal
       <div className="flex items-start justify-between mb-3">
         <div className="flex-1 min-w-0">
           <p className="font-medium text-sm text-white truncate">{session.service || 'XR Session'}</p>
-          <p className="text-xs text-gray-400 mt-0.5 truncate">{session.project_id}</p>
+          <p className="text-xs text-gray-400 mt-0.5 truncate">{session.project_id || session.projectId}</p>
         </div>
         <span className={`text-xs px-2 py-1 rounded-full ml-2 flex-shrink-0 ${
           isCancelled ? 'bg-red-900/30 text-red-400' :
@@ -40,13 +50,13 @@ export default function SessionCard({ session, isPast = false, isCancelled = fal
         <div>
           <div className="text-gray-500">Date</div>
           <div className="font-medium text-white">
-            {session.start_at ? new Date(session.start_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'TBD'}
+            {session.start_at || session.startAt ? new Date(session.start_at || session.startAt!).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'TBD'}
           </div>
         </div>
         <div>
           <div className="text-gray-500">Time</div>
           <div className="font-medium text-white">
-            {session.start_at ? new Date(session.start_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' }) : 'TBD'} IST
+            {session.start_at || session.startAt ? new Date(session.start_at || session.startAt!).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' }) : 'TBD'} IST
           </div>
         </div>
         <div className="hidden sm:block">
