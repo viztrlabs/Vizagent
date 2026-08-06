@@ -31,7 +31,7 @@ export default function SignIn() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg px-4 py-8">
+    <div className="min-h-screen flex items-center justify-center bg-bg px-4 sm:px-6 md:px-8 py-8">
       <div className="w-full max-w-md p-6 sm:p-8 bg-surface rounded-xl border border-gray-800">
         <div className="text-center mb-6 sm:mb-8">
           <h1 className="font-display text-3xl text-cyan mb-2">VizTR</h1>
