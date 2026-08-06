@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+## Setup Instructions for VizTR
 
-## Getting Started
+### Current Status
+✅ **All code built:** 18 tasks completed
+✅ **Dependencies installed:** Next.js 16, Babylon.js, Supabase, etc.
+✅ **Authentication:** NextAuth with Google OAuth
+✅ ✅ **Database:** Not yet connected
 
-First, run the development server:
+### What needs to be done:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+**1. Get Supabase Database URL**
+- Go to https://supabase.com/dashboard
+- Create a Supabase project
+- Go to **Settings → Database**
+- Click "View connection string"
+- Copy the **"For application developers"** connection string
+
+**Example format:**
+```
+postgresql://postgres.[PROJECT-REF]:[YOUR-PASSWORD]@[REGION].pooler.supabase.com:6543/postgres
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+**2. Update .env.local**
+Replace the current DATABASE_URL with your actual Supabase connection string.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+**3. Run migrations**
+```bash
+cd C:\Users\Arch_Viz\Desktop\VizAgent
+pnpm prisma migrate dev --name init
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**4. Configure Google OAuth**
 
-## Learn More
+**For Google Client ID and Secret:**
+1. Go to https://console.cloud.google.com/
+2. Create a new Project or select existing
+3. Go to **APIs & Services → Credentials**
+4. Click **Create Credentials** → **OAuth 2.0 Client ID**
+5. **Application type:** Web application
+6. **Redirect URIs:** `http://localhost:3000/api/auth/callback/google`
+7. Copy the **Web Client ID** and **Client secret**
 
-To learn more about Next.js, take a look at the following resources:
+**5. Update .env.local** with your Google credentials:
+```env
+GOOGLE_CLIENT_ID="your-web-client-id"
+GOOGLE_CLIENT_SECRET="your-client-secret"
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+**6. Generate CRON_SECRET** (optional, for Vercel cron):
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**7. Update .env.local** with your Resend key:
+```env
+RESEND_API_KEY="re_your_resend_api_key"
+CRON_SECRET="your-cron-secret"
+```
 
-## Deploy on Vercel
+**8. Test the application:**
+```bash
+cd C:\Users\Arch_Viz\Desktop\VizAgent
+pnpm dev
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**Expected behavior:**
+- Landing page at http://localhost:3000
+- Sign-in page at `/auth/signin`
+- Can sign in with Google or credentials
+- Access dashboard at `/dashboard`
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Need help with any step?
+Just let me know which step you're stuck on, and I'll guide you through it!
