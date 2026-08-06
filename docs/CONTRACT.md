@@ -154,11 +154,15 @@ CREATE TABLE configurator_sessions (
   share_token TEXT UNIQUE NOT NULL,
   is_active BOOLEAN DEFAULT true,
   permissions JSONB DEFAULT '{"canEdit": [], "canView": [], "isPublic": false}',
+  start_at TIMESTAMPTZ,
+  reminder_sent_at TIMESTAMPTZ,
+  gcal_event_id TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 CREATE INDEX idx_configurator_sessions_share_token ON configurator_sessions(share_token);
 CREATE INDEX idx_configurator_sessions_host ON configurator_sessions(host_id);
+CREATE INDEX idx_configurator_sessions_start_at ON configurator_sessions(start_at);
 
 CREATE TABLE viewers (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -318,6 +322,9 @@ export interface ConfiguratorSession {
   share_token: string;
   is_active: boolean;
   permissions: { canEdit: string[]; canView: string[]; isPublic: boolean };
+  start_at?: Date;
+  reminder_sent_at?: Date;
+  gcal_event_id?: string;
   created_at: Date;
   updated_at: Date;
 }
@@ -371,15 +378,22 @@ GET    /api/xr/assets/:id/config → { config: Configuration }
 POST   /api/xr/assets/:id/config → { config: Configuration }
 PUT    /api/xr/assets/:id/config/:configId → { config: Configuration }
 
-POST   /api/configurator/sessions { project_id, host_id, config } → { session: ConfiguratorSession, share_token: string }
+POST   /api/configurator/sessions { project_id, host_id, config, start_at? } → { session: ConfiguratorSession, share_token: string }
 GET    /api/configurator/sessions/:token → { session: ConfiguratorSession }
-PATCH  /api/configurator/sessions/:id { config? } → { session: ConfiguratorSession }
+PATCH  /api/configurator/sessions/:id { config?, status? } → { session: ConfiguratorSession }
 DELETE /api/configurator/sessions/:id → { success: true }
 
 POST   /api/streams/create      { room_id, user_id } → { room_id, ice_servers: IceServer[] }
 POST   /api/streams/join        { room_id, user_id } → { room_id, ice_servers: IceServer[] }
 POST   /api/streams/leave       { room_id, user_id } → { success: true }
 GET    /api/streams/stats       ?room_id → { stats: { peerCount, streamCount } }
+
+-- Booking & Calendar routes (added per pixel streaming discussions)
+POST   /api/bookings            { project_id, service, date, time, duration, client_name, email, project_type } → { session: ConfiguratorSession, gcal_event_id?: string }
+GET    /api/bookings            ?email=string → { sessions: ConfiguratorSession[] }
+DELETE /api/bookings/:id        → { success: true }
+
+GET    /api/cron/session-reminders → { sent: number, total: number }  (Vercel cron, every 15 min)
 ```
 
 ---

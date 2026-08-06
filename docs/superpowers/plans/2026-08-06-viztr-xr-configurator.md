@@ -44,6 +44,8 @@ VizAgent/
 │   │   └── loading.tsx
 │   ├── view/[configId]/
 │   │   └── page.tsx                    # Read-only viewer page
+│   ├── portal/
+│   │   └── page.tsx                    # Client portal page
 │   ├── api/
 │   │   ├── auth/
 │   │   │   ├── signup/route.ts
@@ -73,11 +75,16 @@ VizAgent/
 │   │   │       └── sessions/
 │   │   │           ├── route.ts        # POST
 │   │   │           └── [token]/route.ts # GET
-│   │   └── streams/
-│   │       ├── create/route.ts
-│   │       ├── join/route.ts
-│   │       ├── leave/route.ts
-│   │       └── stats/route.ts
+│   │   ├── bookings/
+│   │   │   ├── route.ts                # GET, POST
+│   │   │   └── [id]/route.ts           # DELETE
+│   │   ├── streams/
+│   │   │   ├── create/route.ts
+│   │   │   ├── join/route.ts
+│   │   │   ├── leave/route.ts
+│   │   │   └── stats/route.ts
+│   │   └── cron/
+│   │       └── session-reminders/route.ts
 │   └── layout.tsx                      # Root layout with fonts
 ├── components/
 │   ├── ui/                             # shadcn/ui components
@@ -104,16 +111,22 @@ VizAgent/
 │   │   ├── Sidebar.tsx                 # Collapsible side panel
 │   │   ├── Toolbar.tsx                 # Action buttons
 │   │   └── ViewControls.tsx
-│   └── stream/
-│       ├── StreamViewer.tsx            # WebRTC viewer component
-│       ├── ControlBar.tsx              # Mute, Fullscreen, etc.
-│       └── ConnectionStatus.tsx
+│   ├── stream/
+│   │   ├── StreamViewer.tsx            # WebRTC viewer component
+│   │   ├── ControlBar.tsx              # Mute, Fullscreen, etc.
+│   │   └── ConnectionStatus.tsx
+│   └── portal/
+│       └── SessionCard.tsx             # Session card for portal
 ├── lib/
 │   ├── supabase/
 │   │   ├── client.ts                   # Browser client
 │   │   └── server.ts                   # Server client
 │   ├── types.ts                        # All TypeScript types (from CONTRACT.md)
 │   ├── validations.ts                  # Zod schemas
+│   ├── auth.ts                         # NextAuth config with Google Calendar scope
+│   ├── google-calendar.ts              # Google Calendar integration
+│   ├── emails/
+│   │   └── reminder.ts                 # Reminder email template
 │   ├── qa/
 │   │   ├── run.ts                      # QA execution logic
 │   │   └── checks.ts                   # 5 QA checks
@@ -130,6 +143,7 @@ VizAgent/
 ├── package.json
 ├── tailwind.config.ts
 ├── tsconfig.json
+├── vercel.json                         # Vercel cron config
 └── pnpm-lock.yaml
 ```
 
@@ -2575,12 +2589,625 @@ git commit -m "feat: add basic marketing pages"
 
 ---
 
+### Task 15: Create Basic Marketing Pages
+
+**Files:**
+- Create: `app/(marketing)/page.tsx`
+- Create: `app/(marketing)/layout.tsx`
+
+**Interfaces:**
+- Consumes: Task 2 (design tokens)
+- Produces: Basic landing page
+
+- [ ] **Step 1: Create app/(marketing)/layout.tsx**
+
+```typescript
+export default function MarketingLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="min-h-screen bg-bg">
+      <header className="border-b border-gray-800">
+        <nav className="container mx-auto px-4 py-4 flex items-center justify-between">
+          <span className="font-display text-2xl text-cyan">VizTR</span>
+          <div className="flex items-center gap-6">
+            <a href="/pricing" className="text-gray-400 hover:text-white transition-colors">Pricing</a>
+            <a href="/login" className="text-gray-400 hover:text-white transition-colors">Login</a>
+            <a href="/signup" className="px-4 py-2 bg-cyan text-bg rounded-md font-medium hover:bg-cyan/90 transition-colors">Sign Up</a>
+          </div>
+        </nav>
+      </header>
+      <main>{children}</main>
+    </div>
+  );
+}
+```
+
+- [ ] **Step 2: Create app/(marketing)/page.tsx**
+
+```typescript
+export default function HomePage() {
+  return (
+    <div className="container mx-auto px-4 py-20">
+      <h1 className="font-display text-6xl text-center mb-6">
+        Architectural Visualization <span className="text-cyan">Reimagined</span>
+      </h1>
+      <p className="text-xl text-gray-400 text-center max-w-2xl mx-auto mb-10">
+        Create immersive 3D experiences for your architectural projects with real-time collaboration and AI-powered rendering.
+      </p>
+      <div className="flex justify-center gap-4">
+        <a href="/signup" className="px-8 py-3 bg-cyan text-bg rounded-lg font-medium text-lg hover:bg-cyan/90 transition-colors">
+          Get Started Free
+        </a>
+        <a href="/demo" className="px-8 py-3 bg-surface text-white rounded-lg font-medium text-lg hover:bg-surface/80 transition-colors">
+          View Demo
+        </a>
+      </div>
+    </div>
+  );
+}
+```
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add .
+git commit -m "feat: add basic marketing pages"
+```
+
+---
+
+### Task 16: Add Google Calendar Sync on Booking
+
+**Files:**
+- Create: `lib/google-calendar.ts`
+- Create: `app/api/bookings/route.ts`
+- Create: `app/api/bookings/[id]/route.ts`
+- Modify: `lib/auth.ts` (add calendar scope)
+- Install: `googleapis` package
+
+**Interfaces:**
+- Consumes: Task 3 (Prisma), Task 4 (types), Task 13 (session API)
+- Produces: Google Calendar integration for bookings
+
+- [ ] **Step 1: Install googleapis package**
+
+```bash
+pnpm add googleapis
+```
+
+- [ ] **Step 2: Create lib/google-calendar.ts**
+
+```typescript
+import { google } from 'googleapis';
+
+export async function addSessionToCalendar(
+  accessToken: string,
+  session: {
+    id: string;
+    service: string;
+    date: string;        // ISO string
+    durationMinutes: number;
+    clientName: string;
+    projectType: string;
+  }
+) {
+  const auth = new google.auth.OAuth2();
+  auth.setCredentials({ access_token: accessToken });
+
+  const calendar = google.calendar({ version: 'v3', auth });
+
+  const start = new Date(session.date);
+  const end = new Date(start.getTime() + session.durationMinutes * 60000);
+
+  const event = await calendar.events.insert({
+    calendarId: 'primary',
+    requestBody: {
+      summary: `VizTR — ${session.service}`,
+      description: [
+        `Project: ${session.projectType}`,
+        `Client: ${session.clientName}`,
+        `Session ID: ${session.id}`,
+        ``,
+        `Join your stream: https://viztr.io/xr`,
+      ].join('\n'),
+      start: { dateTime: start.toISOString(), timeZone: 'Asia/Kolkata' },
+      end: { dateTime: end.toISOString(), timeZone: 'Asia/Kolkata' },
+      reminders: {
+        useDefault: false,
+        overrides: [
+          { method: 'popup', minutes: 60 },
+          { method: 'email', minutes: 60 },
+        ],
+      },
+      colorId: '9',  // blueberry — matches VizTR brand
+    },
+  });
+
+  return event.data.id;
+}
+
+export async function deleteSessionFromCalendar(
+  accessToken: string,
+  gcalEventId: string
+) {
+  const auth = new google.auth.OAuth2();
+  auth.setCredentials({ access_token: accessToken });
+
+  const calendar = google.calendar({ version: 'v3', auth });
+  await calendar.events.delete({
+    calendarId: 'primary',
+    eventId: gcalEventId,
+  });
+}
+```
+
+- [ ] **Step 3: Create app/api/bookings/route.ts**
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/supabase/server';
+import { addSessionToCalendar } from '@/lib/google-calendar';
+import { getToken } from 'next-auth/jwt';
+
+const SERVICE_NAMES: Record<string, string> = {
+  'tour': 'Virtual Tour',
+  'xr': 'XR Configurator',
+  'render': '3D Rendering',
+};
+
+const SERVICE_DURATIONS: Record<string, number> = {
+  'tour': 60,
+  'xr': 90,
+  'render': 120,
+};
+
+export async function POST(request: NextRequest) {
+  const body = await request.json();
+  const { project_id, service, date, time, duration, client_name, email, project_type } = body;
+
+  // Create session
+  const session = await prisma.configuratorSession.create({
+    data: {
+      project_id,
+      host_id: 'admin', // Default host
+      config: '{}',
+      share_token: Math.random().toString(36).substring(2, 15),
+      start_at: new Date(`${date}T${time}:00`),
+    },
+  });
+
+  // Try to add to Google Calendar
+  const token = await getToken({ req: request });
+  let gcalEventId = null;
+
+  if (token?.accessToken) {
+    try {
+      gcalEventId = await addSessionToCalendar(token.accessToken as string, {
+        id: session.id,
+        service: SERVICE_NAMES[service] || service,
+        date: `${date}T${time}:00`,
+        durationMinutes: duration || SERVICE_DURATIONS[service] || 60,
+        clientName: client_name,
+        projectType: project_type,
+      });
+
+      // Update session with gcal event ID
+      await prisma.configuratorSession.update({
+        where: { id: session.id },
+        data: { gcal_event_id: gcalEventId },
+      });
+    } catch (error) {
+      console.error('Failed to add to Google Calendar:', error);
+    }
+  }
+
+  return NextResponse.json({ session, gcal_event_id: gcalEventId }, { status: 201 });
+}
+
+export async function GET(request: NextRequest) {
+  const { searchParams } = new URL(request.url);
+  const email = searchParams.get('email');
+
+  if (!email) {
+    return NextResponse.json({ error: 'email required' }, { status: 400 });
+  }
+
+  const sessions = await prisma.configuratorSession.findMany({
+    where: { host_id: email },
+    orderBy: { start_at: 'desc' },
+  });
+
+  return NextResponse.json({ sessions });
+}
+```
+
+- [ ] **Step 4: Create app/api/bookings/[id]/route.ts**
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/supabase/server';
+import { deleteSessionFromCalendar } from '@/lib/google-calendar';
+import { getToken } from 'next-auth/jwt';
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: { id: string } }
+) {
+  const { id } = params;
+
+  const session = await prisma.configuratorSession.findUnique({
+    where: { id },
+  });
+
+  if (!session) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
+  }
+
+  // Delete from Google Calendar if exists
+  const token = await getToken({ req: request });
+  if (token?.accessToken && session.gcal_event_id) {
+    try {
+      await deleteSessionFromCalendar(
+        token.accessToken as string,
+        session.gcal_event_id
+      );
+    } catch (error) {
+      console.error('Failed to delete from Google Calendar:', error);
+    }
+  }
+
+  // Update session status to cancelled
+  await prisma.configuratorSession.update({
+    where: { id },
+    data: { is_active: false },
+  });
+
+  return NextResponse.json({ success: true });
+}
+```
+
+- [ ] **Step 5: Update lib/auth.ts to add calendar scope**
+
+```typescript
+// Add to NextAuth config
+GoogleProvider({
+  clientId: process.env.GOOGLE_CLIENT_ID!,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+  authorization: {
+    params: {
+      scope: 'openid email profile https://www.googleapis.com/auth/calendar.events',
+      access_type: 'offline',
+      prompt: 'consent',
+    },
+  },
+}),
+```
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add .
+git commit -m "feat: add google calendar sync on booking"
+```
+
+---
+
+### Task 17: Add Automated Reminder Emails (Vercel Cron)
+
+**Files:**
+- Create: `app/api/cron/session-reminders/route.ts`
+- Create: `lib/emails/reminder.ts`
+- Create: `vercel.json`
+- Modify: `lib/supabase/server.ts` (add Resend client)
+- Install: `resend` package
+
+**Interfaces:**
+- Consumes: Task 3 (Prisma), Task 16 (bookings API)
+- Produces: Automated reminder email system
+
+- [ ] **Step 1: Install resend package**
+
+```bash
+pnpm add resend
+```
+
+- [ ] **Step 2: Create vercel.json**
+
+```json
+{
+  "crons": [
+    {
+      "path": "/api/cron/session-reminders",
+      "schedule": "*/15 * * * *"
+    }
+  ]
+}
+```
+
+- [ ] **Step 3: Create lib/emails/reminder.ts**
+
+```typescript
+export function reminderEmailHTML(session: any) {
+  return `
+    <!DOCTYPE html><html><body style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
+      <div style="margin-bottom:24px">
+        <img src="https://viztr.io/logo.png" height="28" alt="VizTR">
+      </div>
+      <h2 style="font-size:18px;font-weight:500;margin-bottom:8px">Your session starts in 1 hour</h2>
+      <p style="color:#666;font-size:14px;margin-bottom:24px">
+        ${session.service} · ${session.client_name}
+      </p>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
+        <tr><td style="padding:8px 0;color:#999;font-size:13px;border-bottom:1px solid #eee">Date</td>
+            <td style="padding:8px 0;font-size:13px;font-weight:500;text-align:right;border-bottom:1px solid #eee">${new Date(session.start_at).toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long'})}</td></tr>
+        <tr><td style="padding:8px 0;color:#999;font-size:13px;border-bottom:1px solid #eee">Time</td>
+            <td style="padding:8px 0;font-size:13px;font-weight:500;text-align:right;border-bottom:1px solid #eee">${new Date(session.start_at).toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit',timeZone:'Asia/Kolkata'})} IST</td></tr>
+        <tr><td style="padding:8px 0;color:#999;font-size:13px">Session ID</td>
+            <td style="padding:8px 0;font-size:12px;font-family:monospace;text-align:right">${session.id}</td></tr>
+      </table>
+      <a href="https://viztr.io/portal" 
+         style="display:block;background:#00e5ff;color:#080a0f;text-align:center;padding:12px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:500;margin-bottom:16px">
+        View session details
+      </a>
+      <p style="font-size:12px;color:#aaa;text-align:center">
+        Your architect will start the stream a few minutes before the session time.
+      </p>
+    </body></html>
+  `;
+}
+```
+
+- [ ] **Step 4: Create app/api/cron/session-reminders/route.ts**
+
+```typescript
+import { NextRequest, NextResponse } from 'next/server';
+import { prisma } from '@/lib/supabase/server';
+import { Resend } from 'resend';
+import { reminderEmailHTML } from '@/lib/emails/reminder';
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+export async function GET(req: NextRequest) {
+  // Vercel cron security — reject requests without the secret
+  if (req.headers.get('authorization') !== `Bearer ${process.env.CRON_SECRET}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+
+  const now = new Date();
+  const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
+  const windowEnd = new Date(now.getTime() + 75 * 60 * 1000); // 15-min window
+
+  // Find sessions starting 60–75 min from now that haven't been reminded yet
+  const upcoming = await prisma.configuratorSession.findMany({
+    where: {
+      is_active: true,
+      reminder_sent_at: null,
+      start_at: {
+        gte: oneHourFromNow,
+        lte: windowEnd,
+      },
+    },
+  });
+
+  const results = await Promise.allSettled(
+    upcoming.map(async (session) => {
+      await resend.emails.send({
+        from: 'VizTR <bookings@viztr.io>',
+        to: session.host_id, // Using host_id as email for now
+        subject: `Your session starts in 1 hour — ${session.id}`,
+        html: reminderEmailHTML(session),
+      });
+
+      await prisma.configuratorSession.update({
+        where: { id: session.id },
+        data: { reminder_sent_at: new Date() },
+      });
+    })
+  );
+
+  const sent = results.filter(r => r.status === 'fulfilled').length;
+  return NextResponse.json({ sent, total: upcoming.length });
+}
+```
+
+- [ ] **Step 5: Add CRON_SECRET to .env.local.example**
+
+```env
+# Cron
+CRON_SECRET=your-long-random-cron-secret
+
+# Email
+RESEND_API_KEY=re_your_resend_api_key
+```
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add .
+git commit -m "feat: add automated reminder emails with vercel cron"
+```
+
+---
+
+### Task 18: Create Client Portal Page
+
+**Files:**
+- Create: `app/portal/page.tsx`
+- Create: `components/portal/SessionCard.tsx`
+
+**Interfaces:**
+- Consumes: Task 3 (Prisma), Task 16 (bookings API)
+- Produces: Client portal for viewing/canceling sessions
+
+- [ ] **Step 1: Create app/portal/page.tsx**
+
+```typescript
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import { redirect } from 'next/navigation';
+import { prisma } from '@/lib/supabase/server';
+import SessionCard from '@/components/portal/SessionCard';
+
+export default async function PortalPage() {
+  const session = await getServerSession(authOptions);
+  if (!session) redirect('/auth/signin?callbackUrl=/portal');
+
+  const sessions = await prisma.configuratorSession.findMany({
+    where: { host_id: session.user!.email! },
+    orderBy: { start_at: 'desc' },
+  });
+
+  const upcoming = sessions.filter(s => s.is_active && s.start_at && s.start_at > new Date());
+  const past = sessions.filter(s => s.is_active && s.start_at && s.start_at <= new Date());
+  const cancelled = sessions.filter(s => !s.is_active);
+
+  return (
+    <main className="max-w-2xl mx-auto px-4 py-12">
+      <div className="flex items-center justify-between mb-8">
+        <div>
+          <h1 className="text-2xl font-medium text-white">Your sessions</h1>
+          <p className="text-sm text-gray-400 mt-1">{session.user?.email}</p>
+        </div>
+        <a href="/book"
+           className="text-sm border border-gray-700 rounded-lg px-4 py-2 hover:bg-surface transition text-white">
+          + Book session
+        </a>
+      </div>
+
+      {upcoming.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
+            Upcoming
+          </h2>
+          {upcoming.map(s => <SessionCard key={s.id} session={s} />)}
+        </section>
+      )}
+
+      {past.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
+            Past
+          </h2>
+          {past.map(s => <SessionCard key={s.id} session={s} isPast />)}
+        </section>
+      )}
+
+      {cancelled.length > 0 && (
+        <section className="mb-8">
+          <h2 className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-3">
+            Cancelled
+          </h2>
+          {cancelled.map(s => <SessionCard key={s.id} session={s} isCancelled />)}
+        </section>
+      )}
+    </main>
+  );
+}
+```
+
+- [ ] **Step 2: Create components/portal/SessionCard.tsx**
+
+```typescript
+'use client';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+interface SessionCardProps {
+  session: any;
+  isPast?: boolean;
+  isCancelled?: boolean;
+}
+
+export default function SessionCard({ session, isPast = false, isCancelled = false }: SessionCardProps) {
+  const router = useRouter();
+  const [cancelling, setCancelling] = useState(false);
+  const [showConfirm, setShowConfirm] = useState(false);
+
+  const cancel = async () => {
+    setCancelling(true);
+    await fetch(`/api/bookings/${session.id}`, { method: 'DELETE' });
+    setShowConfirm(false);
+    router.refresh();
+  };
+
+  return (
+    <div className="rounded-xl border border-gray-800 p-4 mb-3 bg-surface">
+      <div className="flex items-start justify-between mb-3">
+        <div>
+          <p className="font-medium text-sm text-white">{session.service || 'XR Session'}</p>
+          <p className="text-xs text-gray-400 mt-0.5">{session.project_id}</p>
+        </div>
+        <span className={`text-xs px-2 py-1 rounded-full ${
+          isCancelled ? 'bg-red-900/30 text-red-400' :
+          isPast ? 'bg-gray-800 text-gray-400' :
+          'bg-cyan-900/30 text-cyan-400'
+        }`}>
+          {isCancelled ? 'Cancelled' : isPast ? 'Completed' : 'Confirmed'}
+        </span>
+      </div>
+
+      <div className="grid grid-cols-3 gap-2 text-xs mb-3">
+        <div>
+          <div className="text-gray-500">Date</div>
+          <div className="font-medium text-white">
+            {session.start_at ? new Date(session.start_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) : 'TBD'}
+          </div>
+        </div>
+        <div>
+          <div className="text-gray-500">Time</div>
+          <div className="font-medium text-white">
+            {session.start_at ? new Date(session.start_at).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', timeZone: 'Asia/Kolkata' }) : 'TBD'} IST
+          </div>
+        </div>
+        <div>
+          <div className="text-gray-500">ID</div>
+          <div className="font-medium font-mono text-[11px] text-white">{session.id.slice(0, 10)}…</div>
+        </div>
+      </div>
+
+      {!isPast && !isCancelled && !showConfirm && (
+        <button
+          onClick={() => setShowConfirm(true)}
+          className="text-xs text-red-400 border border-red-900/50 rounded-lg px-3 py-1.5 hover:bg-red-900/20 transition"
+        >
+          Cancel session
+        </button>
+      )}
+
+      {showConfirm && (
+        <div className="bg-red-900/20 rounded-lg p-3 text-xs">
+          <p className="text-red-400 mb-2 font-medium">Cancel this session?</p>
+          <div className="flex gap-2">
+            <button onClick={() => setShowConfirm(false)} className="flex-1 border border-gray-700 rounded-lg py-1.5 text-white">Keep it</button>
+            <button onClick={cancel} disabled={cancelling} className="flex-1 bg-red-600 text-white rounded-lg py-1.5 disabled:opacity-60">
+              {cancelling ? 'Cancelling…' : 'Yes, cancel'}
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+```
+
+- [ ] **Step 3: Commit**
+
+```bash
+git add .
+git commit -m "feat: add client portal page for session management"
+```
+
+---
+
 ## Plan Complete
 
 **Saved to:** `docs/superpowers/plans/2026-08-06-viztr-xr-configurator.md`
 
-**Total Tasks:** 15
-**Estimated Time:** 8-10 hours
+**Total Tasks:** 18
+**Estimated Time:** 12-14 hours
 
 **Two execution options:**
 
