@@ -62,17 +62,17 @@ export function MaterialsPanel({ selectedMaterialId }: MaterialsPanelProps) {
         <label className="text-sm text-gray-400">Presets</label>
         <div className="grid grid-cols-3 gap-2 mt-2">
           {materialPresets.map((preset) => (
-            <button
-              key={preset.id}
-              onClick={() => addMaterial({ ...preset, id: `mat-${Date.now()}` })}
-              className="p-3 bg-surface rounded-md hover:bg-surface/80 transition-colors min-h-touch"
-            >
-              <div
-                className="w-10 h-10 sm:w-8 sm:h-8 rounded-full mx-auto mb-1"
-                style={{ backgroundColor: preset.albedo }}
-              />
-              <span className="text-xs">{preset.name}</span>
-            </button>
+<button
+            key={preset.id}
+            onClick={() => addMaterial({ ...preset, id: `mat-${Date.now()}` })}
+            className="p-3 bg-surface rounded-md hover:bg-surface/80 transition-colors min-h-touch min-w-touch"
+          >
+            <div
+              className="w-10 h-10 sm:w-8 sm:h-8 rounded-full mx-auto mb-1"
+              style={{ backgroundColor: preset.albedo }}
+            />
+            <span className="text-xs">{preset.name}</span>
+          </button>
           ))}
         </div>
       </div>
@@ -88,7 +88,7 @@ export function MaterialsPanel({ selectedMaterialId }: MaterialsPanelProps) {
               type="color"
               value={selectedMaterial.albedo}
               onChange={(e) => updateMaterial(selectedMaterial.id, { albedo: e.target.value })}
-              className="w-full h-10 sm:h-8 rounded-md cursor-pointer"
+              className="w-full h-10 sm:h-8 rounded-md cursor-pointer min-h-touch"
             />
           </div>
 
@@ -106,7 +106,7 @@ export function MaterialsPanel({ selectedMaterialId }: MaterialsPanelProps) {
               onChange={(e) =>
                 updateMaterial(selectedMaterial.id, { metallic: parseFloat(e.target.value) })
               }
-              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan"
+              className="w-full h-6 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan min-h-touch"
             />
           </div>
 
@@ -124,7 +124,7 @@ export function MaterialsPanel({ selectedMaterialId }: MaterialsPanelProps) {
               onChange={(e) =>
                 updateMaterial(selectedMaterial.id, { roughness: parseFloat(e.target.value) })
               }
-              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan"
+              className="w-full h-6 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan min-h-touch"
             />
           </div>
 
@@ -142,7 +142,7 @@ export function MaterialsPanel({ selectedMaterialId }: MaterialsPanelProps) {
               onChange={(e) =>
                 updateMaterial(selectedMaterial.id, { opacity: parseFloat(e.target.value) })
               }
-              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan"
+              className="w-full h-6 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan min-h-touch"
             />
           </div>
         </div>
