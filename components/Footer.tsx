@@ -2,9 +2,9 @@ export default function Footer() {
   return (
     <footer className="bg-surface border-t border-gray-800">
       <div className="max-w-7xl mx-auto px-4 py-8 sm:py-12">
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-8">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
           {/* Brand */}
-          <div className="col-span-1 sm:col-span-2 md:col-span-2">
+          <div className="col-span-2 md:col-span-2">
             <span className="font-display text-2xl text-cyan">VizTR</span>
             <p className="text-gray-400 mt-4 max-w-md text-sm sm:text-base">
               Architectural visualization platform connecting architects, designers, and clients
