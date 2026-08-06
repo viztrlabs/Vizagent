@@ -25,8 +25,8 @@ export default function AuthError() {
   const errorMessage = errorMessages[error] || errorMessages.default;
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg">
-      <div className="w-full max-w-md p-8 bg-surface rounded-xl border border-gray-800">
+    <div className="min-h-screen flex items-center justify-center bg-bg px-4 py-8">
+      <div className="w-full max-w-md p-6 sm:p-8 bg-surface rounded-xl border border-gray-800">
         <div className="text-center mb-6">
           <h1 className="font-display text-3xl text-red-400 mb-2">Authentication Error</h1>
           <p className="text-gray-400">{errorMessage}</p>
@@ -35,13 +35,13 @@ export default function AuthError() {
         <div className="flex flex-col gap-3">
           <Link
             href="/auth/signin"
-            className="w-full py-3 bg-cyan text-bg rounded-lg font-medium hover:bg-cyan/90 transition-colors text-center"
+            className="w-full py-3 bg-cyan text-bg rounded-lg font-medium hover:bg-cyan/90 transition-colors text-center min-h-touch"
           >
             Try Again
           </Link>
           <Link
             href="/"
-            className="w-full py-3 bg-surface border border-gray-700 text-white rounded-lg font-medium hover:bg-surface/80 transition-colors text-center"
+            className="w-full py-3 bg-surface border border-gray-700 text-white rounded-lg font-medium hover:bg-surface/80 transition-colors text-center min-h-touch"
           >
             Back to Home
           </Link>
