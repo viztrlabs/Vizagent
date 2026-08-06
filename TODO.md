@@ -46,9 +46,9 @@ Do not skip steps. Do not work on a task that isn't `unclaimed`.
 | T-021 | Fix TypeScript errors + React error #299 | OpenCode | / (root) | done | — | 2026-08-06 | Multiple files | Completed |
 | T-022 | Deploy to Vercel | OpenCode | / (root) | done | — | 2026-08-06 | vercel.json | Completed — https://vizagent-liard.vercel.app |
 | T-023 | Responsive design — Marketing pages | Antigravity | app/(marketing)/ | done | 2026-08-07 01:54 | 2026-08-07 01:56 | app/(marketing)/page.tsx, app/(marketing)/layout.tsx, components/Footer.tsx | Landing page, nav, CTA buttons responsive |
-| T-024 | Responsive design — Auth pages | Antigravity | app/(auth)/, app/auth/ | in_progress | 2026-08-07 01:58 | — | app/auth/error/page.tsx | Signin page still needs responsive work |
+| T-024 | Responsive design — Auth pages | Antigravity | app/(auth)/, app/auth/ | done | 2026-08-07 01:58 | 2026-08-07 04:15 | app/auth/signin/page.tsx | Signin page responsive (already had touch targets) |
 | T-025 | Responsive design — Dashboard + Projects | Antigravity | app/(dashboard)/, app/projects/ | done | 2026-08-07 02:02 | 2026-08-07 02:04 | app/dashboard/page.tsx, app/projects/new/page.tsx | Dashboard, project list, create project |
-| T-026 | Responsive design — Configurator | Antigravity | components/configurator/ | in_progress | 2026-08-07 02:06 | — | components/configurator/LightingPanel.tsx, components/configurator/Toolbar.tsx | 5 more panels + Sidebar need responsive work |
+| T-026 | Responsive design — Configurator | Antigravity | components/configurator/ | done | 2026-08-07 02:06 | 2026-08-07 04:20 | components/configurator/MaterialsPanel.tsx, components/configurator/ARPanel.tsx | All panels responsive (Sidebar, Toolbar, Materials, Lighting, Hotspots, Export, AR) |
 | T-027 | Responsive design — Portal + Booking | Antigravity | app/portal/, app/book/, components/portal/ | done | 2026-08-07 02:08 | 2026-08-07 02:10 | app/book/page.tsx, app/portal/page.tsx, components/portal/SessionCard.tsx | Session cards, booking form |
 | T-028 | GitHub Actions CI (lint + build + test) | OpenCode | .github/workflows/ | done | 2026-08-07 03:00 | 2026-08-07 03:15 | .github/workflows/ci.yml, package.json | CI workflow passes |
 | T-029 | Final integration pass + Vercel deploy verification | OpenCode | / (root) | done | 2026-08-07 03:30 | 2026-08-07 03:45 | Multiple fixes | All pages load, build passes |
@@ -59,7 +59,7 @@ Do not skip steps. Do not work on a task that isn't `unclaimed`.
 
 ## Currently in progress (quick glance)
 
-- **Antigravity:** T-024 (Auth signin page), T-026 (Configurator 5 panels + Sidebar)
+- **Antigravity:** None (all 5 responsive tasks complete)
 - **OpenCode:** None
 
 ---
