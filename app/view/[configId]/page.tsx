@@ -3,11 +3,11 @@ import { BabylonCanvas } from '@/components/configurator/BabylonCanvas';
 import { StreamViewer } from '@/components/stream/StreamViewer';
 
 interface ViewPageProps {
-  params: { configId: string };
+  params: Promise<{ configId: string }>;
 }
 
 export default async function ViewPage({ params }: ViewPageProps) {
-  const { configId } = params;
+  const { configId } = await params;
 
   return (
     <div className="h-screen bg-bg">

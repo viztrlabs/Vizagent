@@ -31,9 +31,9 @@ export default function SignIn() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-bg">
-      <div className="w-full max-w-md p-8 bg-surface rounded-xl border border-gray-800">
-        <div className="text-center mb-8">
+    <div className="min-h-screen flex items-center justify-center bg-bg px-4 py-8">
+      <div className="w-full max-w-md p-6 sm:p-8 bg-surface rounded-xl border border-gray-800">
+        <div className="text-center mb-6 sm:mb-8">
           <h1 className="font-display text-3xl text-cyan mb-2">VizTR</h1>
           <p className="text-gray-400">Sign in to your account</p>
         </div>
@@ -51,7 +51,7 @@ export default function SignIn() {
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full px-4 py-2 bg-bg border border-gray-700 rounded-lg text-white focus:outline-none focus:border-cyan"
+              className="w-full px-4 py-2.5 bg-bg border border-gray-700 rounded-lg text-white focus:outline-none focus:border-cyan min-h-touch"
               placeholder="admin@viztr.io"
               required
             />
@@ -63,7 +63,7 @@ export default function SignIn() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full px-4 py-2 bg-bg border border-gray-700 rounded-lg text-white focus:outline-none focus:border-cyan"
+              className="w-full px-4 py-2.5 bg-bg border border-gray-700 rounded-lg text-white focus:outline-none focus:border-cyan min-h-touch"
               placeholder="••••••••"
               required
             />
@@ -72,7 +72,7 @@ export default function SignIn() {
           <button
             type="submit"
             disabled={loading}
-            className="w-full py-3 bg-cyan text-bg rounded-lg font-medium hover:bg-cyan/90 transition-colors disabled:opacity-50"
+            className="w-full py-3 bg-cyan text-bg rounded-lg font-medium hover:bg-cyan/90 transition-colors disabled:opacity-50 min-h-touch"
           >
             {loading ? 'Signing in...' : 'Sign In'}
           </button>
@@ -90,7 +90,7 @@ export default function SignIn() {
 
           <button
             onClick={() => signIn('google', { callbackUrl: '/portal' })}
-            className="mt-4 w-full py-3 bg-surface border border-gray-700 text-white rounded-lg font-medium hover:bg-surface/80 transition-colors flex items-center justify-center gap-2"
+            className="mt-4 w-full py-3 bg-surface border border-gray-700 text-white rounded-lg font-medium hover:bg-surface/80 transition-colors flex items-center justify-center gap-2 min-h-touch"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path

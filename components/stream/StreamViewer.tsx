@@ -53,12 +53,12 @@ export function StreamViewer({ roomId, userId }: StreamViewerProps) {
   }, [roomId, userId]);
 
   return (
-    <div className="relative">
+    <div className="relative w-full aspect-video sm:aspect-auto sm:h-full bg-black rounded-lg overflow-hidden">
       <video
         ref={videoRef}
         autoPlay
         playsInline
-        className="w-full h-full object-cover rounded-lg"
+        className="w-full h-full object-cover"
       />
       <ConnectionStatus isConnected={isConnected} peerCount={peers.length} />
     </div>

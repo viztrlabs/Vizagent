@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect } from 'react';
 import { Engine, Scene, ArcRotateCamera, HemisphericLight, Vector3, Color3, Color4 } from '@babylonjs/core';
 import { useConfiguratorStore } from '@/lib/store/configurator-store';
 
@@ -13,79 +13,95 @@ export function BabylonCanvas({ modelUrl, className }: BabylonCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<Engine | null>(null);
   const sceneRef = useRef<Scene | null>(null);
+  const configRef = useRef(useConfiguratorStore.getState().config);
 
-  const config = useConfiguratorStore((s) => s.config);
   const undo = useConfiguratorStore((s) => s.undo);
   const redo = useConfiguratorStore((s) => s.redo);
   const saveConfig = useConfiguratorStore((s) => s.saveConfig);
 
-  const initScene = useCallback(async () => {
-    if (!canvasRef.current) return;
-
-    const engine = new Engine(canvasRef.current, true, {
-      preserveDrawingBuffer: true,
-      stencil: true,
-      antialias: true,
+  useEffect(() => {
+    return useConfiguratorStore.subscribe((state) => {
+      configRef.current = state.config;
     });
-    engineRef.current = engine;
-
-    const scene = new Scene(engine);
-    sceneRef.current = scene;
-
-    // Scene settings from config
-    if (config) {
-      scene.clearColor = Color4.FromHexString(config.scene.bg + 'ff');
-      scene.imageProcessingConfiguration.exposure = config.scene.exposure;
-    }
-
-    // Camera
-    const camera = new ArcRotateCamera(
-      'camera',
-      -Math.PI / 2,
-      Math.PI / 2,
-      5,
-      new Vector3(0, 1.7, 0),
-      scene
-    );
-    camera.attachControl(canvasRef.current, true);
-    camera.lowerRadiusLimit = 1;
-    camera.upperRadiusLimit = 20;
-    camera.wheelDeltaPercentage = 0.01;
-
-    // Default light
-    const light = new HemisphericLight('light', new Vector3(0, 10, 0), scene);
-    light.intensity = 0.8;
-    light.diffuse = Color3.White();
-
-    // Load model if provided
-    if (modelUrl) {
-      const { SceneLoader } = await import('@babylonjs/core/Loading/sceneLoader');
-      await SceneLoader.AppendAsync('', modelUrl, scene);
-    }
-
-    // Render loop
-    engine.runRenderLoop(() => {
-      scene.render();
-    });
-
-    // Resize handler
-    const handleResize = () => engine.resize();
-    window.addEventListener('resize', handleResize);
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-      engine.stopRenderLoop();
-      scene.dispose();
-      engine.dispose();
-    };
-  }, [config, modelUrl]);
+  }, []);
 
   useEffect(() => {
-    const cleanup = initScene();
-    return () => {
-      cleanup.then((fn) => fn?.());
+    let cancelled = false;
+
+    const setup = async () => {
+      if (!canvasRef.current) return;
+
+      const engine = new Engine(canvasRef.current, true, {
+        preserveDrawingBuffer: true,
+        stencil: true,
+        antialias: true,
+      });
+      engineRef.current = engine;
+
+      const scene = new Scene(engine);
+      sceneRef.current = scene;
+
+      const config = configRef.current;
+      if (config) {
+        scene.clearColor = Color4.FromHexString(config.scene.bg + 'ff');
+        scene.imageProcessingConfiguration.exposure = config.scene.exposure;
+      }
+
+      const camera = new ArcRotateCamera(
+        'camera',
+        -Math.PI / 2,
+        Math.PI / 2,
+        5,
+        new Vector3(0, 1.7, 0),
+        scene
+      );
+      camera.attachControl(canvasRef.current, true);
+      camera.lowerRadiusLimit = 1;
+      camera.upperRadiusLimit = 20;
+      camera.wheelDeltaPercentage = 0.01;
+
+      const light = new HemisphericLight('light', new Vector3(0, 10, 0), scene);
+      light.intensity = 0.8;
+      light.diffuse = Color3.White();
+
+      if (modelUrl) {
+        const { SceneLoader } = await import('@babylonjs/core/Loading/sceneLoader');
+        if (!cancelled) {
+          await SceneLoader.AppendAsync('', modelUrl, scene);
+        }
+      }
+
+      if (cancelled) {
+        scene.dispose();
+        engine.dispose();
+        return;
+      }
+
+      engine.runRenderLoop(() => {
+        scene.render();
+      });
+
+      const handleResize = () => engine.resize();
+      window.addEventListener('resize', handleResize);
+
+      return () => {
+        window.removeEventListener('resize', handleResize);
+        engine.stopRenderLoop();
+        scene.dispose();
+        engine.dispose();
+      };
     };
-  }, [initScene]);
+
+    let cleanupFn: (() => void) | undefined;
+    setup().then((fn) => {
+      if (!cancelled) cleanupFn = fn;
+    });
+
+    return () => {
+      cancelled = true;
+      cleanupFn?.();
+    };
+  }, [modelUrl]);
 
   // Keyboard shortcuts
   useEffect(() => {

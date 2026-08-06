@@ -17,6 +17,13 @@ export function HotspotsPanel() {
           {config?.objects.length || 0} objects in scene
         </p>
       </div>
+
+      {/* Mobile instruction */}
+      <div className="p-3 bg-surface/50 rounded-md border border-gray-800 sm:hidden">
+        <p className="text-xs text-cyan">
+          Tap anywhere on the 3D view to place a hotspot marker
+        </p>
+      </div>
     </div>
   );
 }

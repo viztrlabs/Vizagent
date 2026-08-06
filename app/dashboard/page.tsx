@@ -44,16 +44,16 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-bg">
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="max-w-7xl mx-auto px-4 py-6 sm:py-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="font-display text-4xl text-white">Projects</h1>
-            <p className="text-gray-400 mt-1">Manage your architectural visualizations</p>
+            <h1 className="font-display text-3xl sm:text-4xl text-white">Projects</h1>
+            <p className="text-gray-400 mt-1 text-sm sm:text-base">Manage your architectural visualizations</p>
           </div>
           <Link
             href="/projects/new"
-            className="px-6 py-3 bg-cyan text-bg rounded-lg font-medium hover:bg-cyan/90 transition-colors"
+            className="px-6 py-3 bg-cyan text-bg rounded-lg font-medium hover:bg-cyan/90 transition-colors text-center min-h-touch"
           >
             + New Project
           </Link>
@@ -66,12 +66,12 @@ export default function DashboardPage() {
             placeholder="Search projects..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full max-w-md px-4 py-2 bg-surface border border-gray-800 rounded-lg text-white focus:outline-none focus:border-cyan"
+            className="w-full px-4 py-2.5 bg-surface border border-gray-800 rounded-lg text-white focus:outline-none focus:border-cyan min-h-touch"
           />
         </div>
 
         {/* Projects Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {filteredProjects.map((project) => (
             <Link
               key={project.id}
@@ -105,7 +105,7 @@ export default function DashboardPage() {
           {/* Add New Project Card */}
           <Link
             href="/projects/new"
-            className="bg-surface/50 rounded-xl border-2 border-dashed border-gray-800 overflow-hidden hover:border-gray-700 transition-all flex flex-col items-center justify-center min-h-[280px]"
+            className="bg-surface/50 rounded-xl border-2 border-dashed border-gray-800 overflow-hidden hover:border-gray-700 transition-all flex flex-col items-center justify-center min-h-[200px] sm:min-h-[280px]"
           >
             <span className="text-4xl text-gray-600 mb-2">+</span>
             <span className="text-gray-500">Create New Project</span>

@@ -65,10 +65,10 @@ export function MaterialsPanel({ selectedMaterialId }: MaterialsPanelProps) {
             <button
               key={preset.id}
               onClick={() => addMaterial({ ...preset, id: `mat-${Date.now()}` })}
-              className="p-2 bg-surface rounded-md hover:bg-surface/80 transition-colors"
+              className="p-3 bg-surface rounded-md hover:bg-surface/80 transition-colors min-h-touch"
             >
               <div
-                className="w-8 h-8 rounded-full mx-auto mb-1"
+                className="w-10 h-10 sm:w-8 sm:h-8 rounded-full mx-auto mb-1"
                 style={{ backgroundColor: preset.albedo }}
               />
               <span className="text-xs">{preset.name}</span>
@@ -88,14 +88,15 @@ export function MaterialsPanel({ selectedMaterialId }: MaterialsPanelProps) {
               type="color"
               value={selectedMaterial.albedo}
               onChange={(e) => updateMaterial(selectedMaterial.id, { albedo: e.target.value })}
-              className="w-full h-8 rounded-md cursor-pointer"
+              className="w-full h-10 sm:h-8 rounded-md cursor-pointer"
             />
           </div>
 
           <div>
-            <label className="text-xs text-gray-500">
-              Metallic: {selectedMaterial.metallic.toFixed(2)}
-            </label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="text-xs text-gray-500">Metallic</label>
+              <span className="text-xs text-gray-400">{selectedMaterial.metallic.toFixed(2)}</span>
+            </div>
             <input
               type="range"
               min="0"
@@ -105,14 +106,15 @@ export function MaterialsPanel({ selectedMaterialId }: MaterialsPanelProps) {
               onChange={(e) =>
                 updateMaterial(selectedMaterial.id, { metallic: parseFloat(e.target.value) })
               }
-              className="w-full"
+              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan"
             />
           </div>
 
           <div>
-            <label className="text-xs text-gray-500">
-              Roughness: {selectedMaterial.roughness.toFixed(2)}
-            </label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="text-xs text-gray-500">Roughness</label>
+              <span className="text-xs text-gray-400">{selectedMaterial.roughness.toFixed(2)}</span>
+            </div>
             <input
               type="range"
               min="0"
@@ -122,14 +124,15 @@ export function MaterialsPanel({ selectedMaterialId }: MaterialsPanelProps) {
               onChange={(e) =>
                 updateMaterial(selectedMaterial.id, { roughness: parseFloat(e.target.value) })
               }
-              className="w-full"
+              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan"
             />
           </div>
 
           <div>
-            <label className="text-xs text-gray-500">
-              Opacity: {selectedMaterial.opacity.toFixed(2)}
-            </label>
+            <div className="flex justify-between items-center mb-1">
+              <label className="text-xs text-gray-500">Opacity</label>
+              <span className="text-xs text-gray-400">{selectedMaterial.opacity.toFixed(2)}</span>
+            </div>
             <input
               type="range"
               min="0"
@@ -139,7 +142,7 @@ export function MaterialsPanel({ selectedMaterialId }: MaterialsPanelProps) {
               onChange={(e) =>
                 updateMaterial(selectedMaterial.id, { opacity: parseFloat(e.target.value) })
               }
-              className="w-full"
+              className="w-full h-2 bg-gray-700 rounded-lg appearance-none cursor-pointer accent-cyan"
             />
           </div>
         </div>

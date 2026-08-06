@@ -29,6 +29,15 @@ const config: Config = {
       spacing: {
         base: "4px",
       },
+      screens: {
+        xs: "475px",
+      },
+      minHeight: {
+        touch: "44px",
+      },
+      minWidth: {
+        touch: "44px",
+      },
     },
   },
   plugins: [],

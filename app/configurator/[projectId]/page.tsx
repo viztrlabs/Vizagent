@@ -4,11 +4,11 @@ import { Sidebar } from '@/components/configurator/Sidebar';
 import { Toolbar } from '@/components/configurator/Toolbar';
 
 interface ConfiguratorPageProps {
-  params: { projectId: string };
+  params: Promise<{ projectId: string }>;
 }
 
 export default async function ConfiguratorPage({ params }: ConfiguratorPageProps) {
-  const { projectId } = params;
+  const { projectId } = await params;
 
   return (
     <div className="h-screen flex bg-bg">

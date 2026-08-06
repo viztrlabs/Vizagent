@@ -60,18 +60,18 @@ export default function BookPage() {
 
   if (success) {
     return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
+      <div className="min-h-screen bg-bg flex items-center justify-center px-4">
         <div className="text-center max-w-md">
           <div className="w-16 h-16 bg-cyan/20 rounded-full flex items-center justify-center mx-auto mb-6">
             <span className="text-3xl">✓</span>
           </div>
-          <h1 className="font-display text-4xl text-white mb-4">Booking Confirmed!</h1>
+          <h1 className="font-display text-3xl sm:text-4xl text-white mb-4">Booking Confirmed!</h1>
           <p className="text-gray-400 mb-8">
             You'll receive a confirmation email shortly with session details and a Google Calendar invite.
           </p>
           <button
             onClick={() => router.push('/portal')}
-            className="px-6 py-3 bg-cyan text-bg rounded-lg font-medium hover:bg-cyan/90 transition-colors"
+            className="px-6 py-3 bg-cyan text-bg rounded-lg font-medium hover:bg-cyan/90 transition-colors min-h-touch"
           >
             View in Portal
           </button>
@@ -81,24 +81,24 @@ export default function BookPage() {
   }
 
   return (
-    <div className="min-h-screen bg-bg py-12">
+    <div className="min-h-screen bg-bg py-8 sm:py-12">
       <div className="max-w-2xl mx-auto px-4">
-        <h1 className="font-display text-5xl text-center mb-2">Book a Session</h1>
-        <p className="text-gray-400 text-center mb-12">
+        <h1 className="font-display text-3xl sm:text-5xl text-center mb-2">Book a Session</h1>
+        <p className="text-gray-400 text-center mb-8 sm:mb-12 text-sm sm:text-base">
           Schedule your architectural visualization session
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
           {/* Service Selection */}
           <div>
             <label className="block text-sm font-medium text-gray-400 mb-4">Select Service</label>
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
               {services.map((service) => (
                 <button
                   key={service.id}
                   type="button"
                   onClick={() => setSelectedService(service.id)}
-                  className={`p-4 rounded-xl border text-left transition-all ${
+                  className={`p-4 rounded-xl border text-left transition-all min-h-touch ${
                     selectedService === service.id
                       ? 'border-cyan bg-cyan/10'
                       : 'border-gray-800 bg-surface hover:border-gray-700'
@@ -113,14 +113,14 @@ export default function BookPage() {
           </div>
 
           {/* Personal Info */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm text-gray-400 mb-1">First Name</label>
               <input
                 type="text"
                 value={formData.firstName}
                 onChange={(e) => setFormData({ ...formData, firstName: e.target.value })}
-                className="w-full px-4 py-2 bg-surface border border-gray-800 rounded-lg text-white focus:outline-none focus:border-cyan"
+                className="w-full px-4 py-2.5 bg-surface border border-gray-800 rounded-lg text-white focus:outline-none focus:border-cyan min-h-touch"
                 required
               />
             </div>
@@ -130,7 +130,7 @@ export default function BookPage() {
                 type="text"
                 value={formData.lastName}
                 onChange={(e) => setFormData({ ...formData, lastName: e.target.value })}
-                className="w-full px-4 py-2 bg-surface border border-gray-800 rounded-lg text-white focus:outline-none focus:border-cyan"
+                className="w-full px-4 py-2.5 bg-surface border border-gray-800 rounded-lg text-white focus:outline-none focus:border-cyan min-h-touch"
                 required
               />
             </div>
@@ -142,20 +142,20 @@ export default function BookPage() {
               type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              className="w-full px-4 py-2 bg-surface border border-gray-800 rounded-lg text-white focus:outline-none focus:border-cyan"
+              className="w-full px-4 py-2.5 bg-surface border border-gray-800 rounded-lg text-white focus:outline-none focus:border-cyan min-h-touch"
               required
             />
           </div>
 
           {/* Date & Time */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-sm text-gray-400 mb-1">Date</label>
               <input
                 type="date"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-                className="w-full px-4 py-2 bg-surface border border-gray-800 rounded-lg text-white focus:outline-none focus:border-cyan"
+                className="w-full px-4 py-2.5 bg-surface border border-gray-800 rounded-lg text-white focus:outline-none focus:border-cyan min-h-touch"
                 min={new Date().toISOString().split('T')[0]}
                 required
               />
@@ -166,7 +166,7 @@ export default function BookPage() {
                 type="time"
                 value={formData.time}
                 onChange={(e) => setFormData({ ...formData, time: e.target.value })}
-                className="w-full px-4 py-2 bg-surface border border-gray-800 rounded-lg text-white focus:outline-none focus:border-cyan"
+                className="w-full px-4 py-2.5 bg-surface border border-gray-800 rounded-lg text-white focus:outline-none focus:border-cyan min-h-touch"
                 required
               />
             </div>
@@ -177,7 +177,7 @@ export default function BookPage() {
             <select
               value={formData.projectType}
               onChange={(e) => setFormData({ ...formData, projectType: e.target.value })}
-              className="w-full px-4 py-2 bg-surface border border-gray-800 rounded-lg text-white focus:outline-none focus:border-cyan"
+              className="w-full px-4 py-2.5 bg-surface border border-gray-800 rounded-lg text-white focus:outline-none focus:border-cyan min-h-touch"
               required
             >
               <option value="">Select project type</option>
@@ -194,7 +194,7 @@ export default function BookPage() {
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              className="w-full px-4 py-2 bg-surface border border-gray-800 rounded-lg text-white focus:outline-none focus:border-cyan h-24 resize-none"
+              className="w-full px-4 py-2.5 bg-surface border border-gray-800 rounded-lg text-white focus:outline-none focus:border-cyan h-24 resize-none"
               placeholder="Any specific requirements or questions..."
             />
           </div>
@@ -202,7 +202,7 @@ export default function BookPage() {
           <button
             type="submit"
             disabled={!selectedService || submitting}
-            className="w-full py-4 bg-cyan text-bg rounded-xl font-medium text-lg hover:bg-cyan/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-4 bg-cyan text-bg rounded-xl font-medium text-lg hover:bg-cyan/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed min-h-touch"
           >
             {submitting ? 'Booking...' : 'Book Session'}
           </button>

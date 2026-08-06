@@ -31,3 +31,45 @@ h1, h2, h3, h4, h5, h6 {
 .font-body {
   font-family: var(--font-dm-sans);
 }
+
+/* Responsive utilities */
+@layer utilities {
+  .safe-bottom {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  .safe-top {
+    padding-top: env(safe-area-inset-top);
+  }
+  .safe-left {
+    padding-left: env(safe-area-inset-left);
+  }
+  .safe-right {
+    padding-right: env(safe-area-inset-right);
+  }
+}
+
+/* Bottom sheet styles */
+.bottom-sheet {
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  max-height: 85vh;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Hamburger animation */
+.hamburger-line {
+  transition: all 0.3s ease;
+}
+
+/* Touch-friendly targets */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* Mobile drawer overlay */
+.drawer-overlay {
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(4px);
+}
