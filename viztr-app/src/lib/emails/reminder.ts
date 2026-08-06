@@ -1,4 +1,4 @@
-export function reminderEmailHTML(session: any) {
+export function reminderEmailHTML(session: { id: string; service?: string; clientName?: string; hostId?: string; startAt: string | Date; [key: string]: unknown }) {
   return `
     <!DOCTYPE html><html><body style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:24px">
       <div style="margin-bottom:24px">

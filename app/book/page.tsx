@@ -67,7 +67,7 @@ export default function BookPage() {
           </div>
           <h1 className="font-display text-3xl sm:text-4xl text-white mb-4">Booking Confirmed!</h1>
           <p className="text-gray-400 mb-8">
-            You'll receive a confirmation email shortly with session details and a Google Calendar invite.
+            You&apos;ll receive a confirmation email shortly with session details and a Google Calendar invite.
           </p>
           <button
             onClick={() => router.push('/portal')}

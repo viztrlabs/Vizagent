@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import Footer from '@/components/Footer';
 
 export default function MarketingLayout({
@@ -14,14 +15,14 @@ export default function MarketingLayout({
     <div className="min-h-screen bg-bg flex flex-col">
       <header className="border-b border-gray-800">
         <nav className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <a href="/" className="font-display text-2xl text-cyan">VizTR</a>
+          <Link href="/" className="font-display text-2xl text-cyan">VizTR</Link>
 
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-6">
-            <a href="/pricing" className="text-gray-400 hover:text-white transition-colors">Pricing</a>
-            <a href="/dashboard" className="text-gray-400 hover:text-white transition-colors">Dashboard</a>
-            <a href="/login" className="text-gray-400 hover:text-white transition-colors">Login</a>
-            <a href="/auth/signin" className="px-4 py-2 bg-cyan text-bg rounded-md font-medium hover:bg-cyan/90 transition-colors min-h-touch">Sign Up</a>
+            <Link href="/pricing" className="text-gray-400 hover:text-white transition-colors">Pricing</Link>
+            <Link href="/dashboard" className="text-gray-400 hover:text-white transition-colors">Dashboard</Link>
+            <Link href="/login" className="text-gray-400 hover:text-white transition-colors">Login</Link>
+            <Link href="/auth/signin" className="px-4 py-2 bg-cyan text-bg rounded-md font-medium hover:bg-cyan/90 transition-colors min-h-touch">Sign Up</Link>
           </div>
 
           {/* Mobile hamburger */}
@@ -42,34 +43,34 @@ export default function MarketingLayout({
         {mobileMenuOpen && (
           <div className="md:hidden border-t border-gray-800 bg-surface">
             <div className="container mx-auto px-4 py-4 space-y-3">
-              <a
+              <Link
                 href="/pricing"
                 className="block py-2 text-gray-400 hover:text-white transition-colors min-h-touch flex items-center"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Pricing
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/dashboard"
                 className="block py-2 text-gray-400 hover:text-white transition-colors min-h-touch flex items-center"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Dashboard
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/login"
                 className="block py-2 text-gray-400 hover:text-white transition-colors min-h-touch flex items-center"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Login
-              </a>
-              <a
+              </Link>
+              <Link
                 href="/auth/signin"
                 className="block py-3 bg-cyan text-bg rounded-md font-medium text-center min-h-touch"
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Sign Up
-              </a>
+              </Link>
             </div>
           </div>
         )}

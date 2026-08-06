@@ -50,7 +50,7 @@ Do not skip steps. Do not work on a task that isn't `unclaimed`.
 | T-025 | Responsive design — Dashboard + Projects | Antigravity | app/(dashboard)/, app/projects/ | unclaimed | — | — | — | Dashboard, project list, create project |
 | T-026 | Responsive design — Configurator | Antigravity | components/configurator/ | unclaimed | — | — | — | Mobile bottom sheet, touch controls |
 | T-027 | Responsive design — Portal + Booking | Antigravity | app/portal/, app/book/, components/portal/ | unclaimed | — | — | — | Session cards, booking form |
-| T-028 | GitHub Actions CI (lint + build + test) | OpenCode | .github/workflows/ | unclaimed | — | — | — | Should exist before first merge to main |
+| T-028 | GitHub Actions CI (lint + build + test) | Antigravity | .github/workflows/ | done | 2026-08-07 02:19 | 2026-08-06 20:41 | .github/workflows/ci.yml, app/(marketing)/layout.tsx, app/book/page.tsx, components/portal/SessionCard.tsx, lib/auth.ts, viztr-app/src/lib/emails/reminder.ts | Should exist before first merge to main |
 | T-029 | Final integration pass + Vercel deploy verification | OpenCode | / (root) | unclaimed | — | — | — | Do this last |
 
 *(Add new rows as new tasks come up. Never delete a `done` row — it's your project history. Never renumber existing IDs.)*
