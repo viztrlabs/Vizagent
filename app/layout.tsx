@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DM_Sans, Syne, Bebas_Neue } from "next/font/google";
+import { auth } from "@/lib/auth";
 import Providers from "@/components/providers";
 import "./globals.css";
 
@@ -24,14 +25,15 @@ export const metadata: Metadata = {
   description: "Create immersive 3D experiences for your architectural projects with real-time collaboration and AI-powered rendering.",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const session = await auth();
   return (
     <html
       lang="en"
       className={`${dmSans.variable} ${syne.variable} ${bebasNeue.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col bg-bg text-white font-body">
-        <Providers>{children}</Providers>
+        <Providers session={session}>{children}</Providers>
       </body>
     </html>
   );
