@@ -5,16 +5,20 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = await params;
+  try {
+    const { id } = await params;
 
-  const asset = await prisma.xrAsset.findUnique({
-    where: { id },
-    include: { configurations: true },
-  });
+    const asset = await prisma.xrAsset.findUnique({
+      where: { id },
+      include: { configurations: true },
+    });
 
-  if (!asset) {
-    return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
+    if (!asset) {
+      return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ asset });
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to fetch asset' }, { status: 500 });
   }
-
-  return NextResponse.json({ asset });
 }

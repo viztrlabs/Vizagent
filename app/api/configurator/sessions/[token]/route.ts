@@ -5,16 +5,20 @@ export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ token: string }> }
 ) {
-  const { token } = await params;
+  try {
+    const { token } = await params;
 
-  const session = await prisma.configuratorSession.findUnique({
-    where: { shareToken: token },
-    include: { viewers: true },
-  });
+    const session = await prisma.configuratorSession.findUnique({
+      where: { shareToken: token },
+      include: { viewers: true },
+    });
 
-  if (!session) {
-    return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+    if (!session) {
+      return NextResponse.json({ error: 'Session not found' }, { status: 404 });
+    }
+
+    return NextResponse.json({ session });
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to fetch session' }, { status: 500 });
   }
-
-  return NextResponse.json({ session });
 }
