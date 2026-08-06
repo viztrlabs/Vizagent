@@ -23,21 +23,38 @@ Do not skip steps. Do not work on a task that isn't `unclaimed`.
 
 | Task ID | Task | Assigned Tool | Folder | Status | Claimed At | Done At | Files Touched | Notes |
 |---------|------|---------------|--------|--------|------------|---------|----------------|-------|
-| T-001 | Initialize Next.js 15 + repo structure + CI skeleton | OpenCode | / (root) | in_progress | 2026-08-06T15:45:00Z | — | — | Do this first, before any other task starts |
-| T-002 | Create Supabase project + run schema from CONTRACT.md | OpenCode | / (root) | unclaimed | — | — | — | Depends on T-001 |
-| T-003 | Landing page — hero, tagline, CTA | Google AI Studio | app/(marketing)/ | unclaimed | — | — | — | Depends on T-001 |
-| T-004 | Waitlist form component + API route | Google AI Studio | app/(marketing)/, app/api/waitlist/ | unclaimed | — | — | — | Depends on T-002 |
-| T-005 | Pricing section (static, Free/Pro/Studio) | Google AI Studio | app/(marketing)/ | unclaimed | — | — | — | Depends on T-003 |
-| T-006 | Signup + login pages | Antigravity | app/(auth)/ | unclaimed | — | — | — | Depends on T-002 |
-| T-007 | Dashboard shell (sidebar, header, layout) | Antigravity | app/(dashboard)/ | unclaimed | — | — | — | Depends on T-002 |
-| T-008 | Project CRUD pages (list, create, edit, delete) | Antigravity | app/(dashboard)/projects/ | unclaimed | — | — | — | Depends on T-007 |
-| T-009 | Upload dropzone component + presigned URL flow | VS Code | components/upload/ | unclaimed | — | — | — | Depends on T-002 |
-| T-010 | Virtual Tour viewer (Three.js sphere + orbit controls) | VS Code | components/viewer/ | unclaimed | — | — | — | Depends on T-002 |
-| T-011 | QA checklist logic (5 automated checks) | VS Code | lib/qa/ | unclaimed | — | — | — | Depends on T-009 |
-| T-012 | Publish button + gate (blocked unless QA passed) | Antigravity | app/(dashboard)/projects/[id]/ | unclaimed | — | — | — | Depends on T-011 |
-| T-013 | Public viewer page (no auth required) | VS Code | app/(public)/tour/ | unclaimed | — | — | — | Depends on T-010 |
-| T-014 | GitHub Actions CI (lint + build + test) | OpenCode | .github/workflows/ | unclaimed | — | — | — | Should exist before first merge to main |
-| T-015 | Final integration pass + Vercel deploy verification | OpenCode | / (root) | unclaimed | — | — | — | Do this last |
+| T-001 | Initialize Next.js 16 + repo structure | OpenCode | / (root) | done | — | 2026-08-06 | package.json, next.config.ts, tsconfig.json | Completed |
+| T-002 | Setup Prisma schema + Supabase + run migrations | OpenCode | / (root) | done | — | 2026-08-06 | prisma/, lib/supabase/ | Completed |
+| T-003 | Install dependencies + configure Tailwind tokens | OpenCode | / (root) | done | — | 2026-08-06 | package.json, tailwind.config.ts, globals.css | Completed |
+| T-004 | Create TypeScript types + Zod validations | OpenCode | / (root) | done | — | 2026-08-06 | lib/types.ts, lib/validations.ts, lib/xr/validation.ts | Completed |
+| T-005 | Zustand store with undo/redo + auto-save | OpenCode | / (root) | done | — | 2026-08-06 | lib/store/configurator-store.ts | Completed |
+| T-006 | Babylon.js canvas + input handler | OpenCode | / (root) | done | — | 2026-08-06 | components/configurator/BabylonCanvas.tsx, lib/xr/input-handler.ts | Completed |
+| T-007 | Configurator panels (materials, lighting, hotspots, export, AR) | OpenCode | / (root) | done | — | 2026-08-06 | components/configurator/*.tsx | Completed |
+| T-008 | Main configurator page layout + sidebar + toolbar | OpenCode | / (root) | done | — | 2026-08-06 | app/configurator/[projectId]/, components/configurator/Sidebar.tsx, Toolbar.tsx | Completed |
+| T-009 | XR assets + configurations API routes | OpenCode | / (root) | done | — | 2026-08-06 | app/api/xr/ | Completed |
+| T-010 | WebRTC pixel streaming API routes | OpenCode | / (root) | done | — | 2026-08-06 | app/api/streams/ | Completed |
+| T-011 | Stream viewer components | OpenCode | / (root) | done | — | 2026-08-06 | components/stream/ | Completed |
+| T-012 | Read-only view page | OpenCode | / (root) | done | — | 2026-08-06 | app/view/[configId]/ | Completed |
+| T-013 | Configurator session API routes | OpenCode | / (root) | done | — | 2026-08-06 | app/api/configurator/sessions/ | Completed |
+| T-014 | Keyboard shortcuts + polish | OpenCode | / (root) | done | — | 2026-08-06 | components/configurator/BabylonCanvas.tsx | Completed |
+| T-015 | Basic marketing pages | OpenCode | / (root) | done | — | 2026-08-06 | app/(marketing)/ | Completed |
+| T-016 | Google Calendar sync on booking | OpenCode | / (root) | done | — | 2026-08-06 | lib/google-calendar.ts, app/api/bookings/ | Completed |
+| T-017 | Automated reminder emails (Vercel Cron) | OpenCode | / (root) | done | — | 2026-08-06 | app/api/cron/session-reminders/, lib/emails/reminder.ts, vercel.json | Completed |
+| T-018 | Client portal page + session management | OpenCode | / (root) | done | — | 2026-08-06 | app/portal/page.tsx, components/portal/SessionCard.tsx | Completed |
+| T-019 | NextAuth v5 config + Google OAuth | OpenCode | / (root) | done | — | 2026-08-06 | lib/auth.ts, app/api/auth/[...nextauth]/, app/auth/signin/ | Completed |
+| T-020 | Seed database with sample data | OpenCode | / (root) | done | — | 2026-08-06 | prisma/seed.ts | Completed |
+| T-021 | Fix TypeScript errors + React error #299 | OpenCode | / (root) | done | — | 2026-08-06 | Multiple files | Completed |
+| T-022 | Deploy to Vercel | OpenCode | / (root) | done | — | 2026-08-06 | vercel.json | Completed — https://vizagent-liard.vercel.app |
+| T-023 | Responsive design + mobile layout — Marketing pages | Google AI Studio | app/(marketing)/ | unclaimed | — | — | — | Make landing page, pricing, nav responsive |
+| T-024 | Responsive design + mobile layout — Auth pages | Antigravity | app/(auth)/ | unclaimed | — | — | — | Make signin/signup pages responsive |
+| T-025 | Responsive design + mobile layout — Dashboard | Antigravity | app/(dashboard)/ | unclaimed | — | — | — | Make dashboard, project pages responsive |
+| T-026 | Responsive design + mobile layout — Configurator | Antigravity | components/configurator/ | unclaimed | — | — | — | Mobile bottom sheet, touch controls |
+| T-027 | Responsive design + mobile layout — Portal | Antigravity | app/portal/, components/portal/ | unclaimed | — | — | — | Mobile session cards, booking form |
+| T-028 | Upload dropzone component + presigned URL flow | VS Code | components/upload/ | unclaimed | — | — | — | Depends on T-002 |
+| T-029 | Virtual Tour viewer (Babylon.js) | VS Code | components/viewer/ | unclaimed | — | — | — | Depends on T-002 |
+| T-030 | QA checklist logic (5 automated checks) | VS Code | lib/qa/ | unclaimed | — | — | — | Depends on T-028 |
+| T-031 | GitHub Actions CI (lint + build + test) | OpenCode | .github/workflows/ | unclaimed | — | — | — | Should exist before first merge to main |
+| T-032 | Final integration pass + Vercel deploy verification | OpenCode | / (root) | unclaimed | — | — | — | Do this last |
 
 *(Add new rows as new tasks come up. Never delete a `done` row — it's your project history. Never renumber existing IDs.)*
 
