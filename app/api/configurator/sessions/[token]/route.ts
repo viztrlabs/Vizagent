@@ -3,9 +3,9 @@ import { prisma } from '@/lib/supabase/server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { token: string } }
+  { params }: { params: Promise<{ token: string }> }
 ) {
-  const { token } = params;
+  const { token } = await params;
 
   const session = await prisma.configuratorSession.findUnique({
     where: { shareToken: token },

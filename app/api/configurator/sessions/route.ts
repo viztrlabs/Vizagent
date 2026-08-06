@@ -15,7 +15,9 @@ export async function POST(request: NextRequest) {
 
   const session = await prisma.configuratorSession.create({
     data: {
-      ...validation.data,
+      projectId: validation.data.project_id,
+      hostId: validation.data.host_id,
+      config: validation.data.config,
       shareToken,
     },
   });

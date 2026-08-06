@@ -1,21 +1,20 @@
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { auth } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import { prisma } from '@/lib/supabase/server';
 import SessionCard from '@/components/portal/SessionCard';
 
 export default async function PortalPage() {
-  const session = await getServerSession(authOptions);
+  const session = await auth();
   if (!session) redirect('/auth/signin?callbackUrl=/portal');
 
   const sessions = await prisma.configuratorSession.findMany({
-    where: { host_id: session.user!.email! },
-    orderBy: { start_at: 'desc' },
+    where: { hostId: session.user!.email! },
+    orderBy: { startAt: 'desc' },
   });
 
-  const upcoming = sessions.filter(s => s.is_active && s.start_at && s.start_at > new Date());
-  const past = sessions.filter(s => s.is_active && s.start_at && s.start_at <= new Date());
-  const cancelled = sessions.filter(s => !s.is_active);
+  const upcoming = sessions.filter(s => s.isActive && s.startAt && s.startAt > new Date());
+  const past = sessions.filter(s => s.isActive && s.startAt && s.startAt <= new Date());
+  const cancelled = sessions.filter(s => !s.isActive);
 
   return (
     <main className="max-w-2xl mx-auto px-4 py-12">

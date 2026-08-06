@@ -3,9 +3,9 @@ import { prisma } from '@/lib/supabase/server';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = params;
+  const { id } = await params;
 
   const config = await prisma.configuration.findFirst({
     where: { xrAssetId: id, name: 'default' },
@@ -20,9 +20,9 @@ export async function GET(
 
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = params;
+  const { id } = await params;
   const body = await request.json();
 
   const config = await prisma.configuration.upsert({

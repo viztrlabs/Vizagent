@@ -37,7 +37,7 @@ export class InputHandler {
   }
 
   public dispose() {
-    this.scene.onPointerDown = null;
+    this.scene.onPointerDown = undefined;
     this.camera.onViewMatrixChangedObservable.clear();
   }
 }

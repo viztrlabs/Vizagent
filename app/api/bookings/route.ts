@@ -22,11 +22,11 @@ export async function POST(request: NextRequest) {
   // Create session
   const session = await prisma.configuratorSession.create({
     data: {
-      project_id,
-      host_id: 'admin', // Default host
+      projectId: project_id,
+      hostId: 'admin', // Default host
       config: '{}',
-      share_token: Math.random().toString(36).substring(2, 15),
-      start_at: new Date(`${date}T${time}:00`),
+      shareToken: Math.random().toString(36).substring(2, 15),
+      startAt: new Date(`${date}T${time}:00`),
     },
   });
 
@@ -48,14 +48,14 @@ export async function POST(request: NextRequest) {
       // Update session with gcal event ID
       await prisma.configuratorSession.update({
         where: { id: session.id },
-        data: { gcal_event_id: gcalEventId },
+        data: { gcalEventId: gcalEventId },
       });
     } catch (error) {
       console.error('Failed to add to Google Calendar:', error);
     }
   }
 
-  return NextResponse.json({ session, gcal_event_id: gcalEventId }, { status: 201 });
+  return NextResponse.json({ session, gcalEventId: gcalEventId }, { status: 201 });
 }
 
 export async function GET(request: NextRequest) {
@@ -67,8 +67,8 @@ export async function GET(request: NextRequest) {
   }
 
   const sessions = await prisma.configuratorSession.findMany({
-    where: { host_id: email },
-    orderBy: { start_at: 'desc' },
+    where: { hostId: email },
+    orderBy: { startAt: 'desc' },
   });
 
   return NextResponse.json({ sessions });

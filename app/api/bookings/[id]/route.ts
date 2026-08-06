@@ -5,9 +5,9 @@ import { getToken } from 'next-auth/jwt';
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
-  const { id } = params;
+  const { id } = await params;
 
   const session = await prisma.configuratorSession.findUnique({
     where: { id },
@@ -19,11 +19,11 @@ export async function DELETE(
 
   // Delete from Google Calendar if exists
   const token = await getToken({ req: request });
-  if (token?.accessToken && session.gcal_event_id) {
+  if (token?.accessToken && session.gcalEventId) {
     try {
       await deleteSessionFromCalendar(
         token.accessToken as string,
-        session.gcal_event_id
+        session.gcalEventId
       );
     } catch (error) {
       console.error('Failed to delete from Google Calendar:', error);
@@ -33,7 +33,7 @@ export async function DELETE(
   // Update session status to cancelled
   await prisma.configuratorSession.update({
     where: { id },
-    data: { is_active: false },
+    data: { isActive: false },
   });
 
   return NextResponse.json({ success: true });

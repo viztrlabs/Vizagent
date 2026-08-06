@@ -3,9 +3,9 @@ import { prisma } from '@/lib/supabase/server';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string; configId: string } }
+  { params }: { params: Promise<{ id: string; configId: string }> }
 ) {
-  const { id, configId } = params;
+  const { id, configId } = await params;
   const body = await request.json();
 
   const config = await prisma.configuration.update({
