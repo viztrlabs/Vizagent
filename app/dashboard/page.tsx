@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
+import { blurDataURL } from '@/lib/utils/blur-placeholder';
 
 const mockProjects = [
   {
@@ -38,7 +40,7 @@ const statusColors: Record<string, string> = {
 export default function DashboardPage() {
   const [searchQuery, setSearchQuery] = useState('');
 
-  const filteredProjects = mockProjects.filter(p =>
+  const filteredProjects = mockProjects.filter((p) =>
     p.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
@@ -80,9 +82,16 @@ export default function DashboardPage() {
             >
               {/* Thumbnail */}
               <div className="aspect-video bg-gray-900 relative overflow-hidden">
-                <div className="absolute inset-0 flex items-center justify-center text-gray-600">
-                  <span className="text-4xl">🏗️</span>
-                </div>
+                <Image
+                  src={project.thumbnail}
+                  alt={project.name}
+                  fill
+                  className="object-cover transition-transform duration-300 group-hover:scale-105"
+                  placeholder="blur"
+                  blurDataURL={blurDataURL}
+                  loading="lazy"
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                />
                 <div className="absolute top-3 right-3">
                   <span className={`text-xs px-2 py-1 rounded-full ${statusColors[project.status]}`}>
                     {project.status.replace('_', ' ')}

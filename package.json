@@ -10,6 +10,9 @@
     "typecheck": "tsc --noEmit",
     "test": "jest",
     "test:watch": "jest --watch",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "analyze": "ANALYZE=true next build",
     "db:migrate": "prisma migrate dev",
     "db:seed": "prisma db seed",
     "db:studio": "prisma studio",
@@ -43,6 +46,8 @@
     "zustand": "^5.0.14"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.3.0",
+    "@playwright/test": "^1.45.0",
     "@tailwindcss/postcss": "^4",
     "@types/jest": "^30.0.0",
     "@types/node": "^20.19.43",

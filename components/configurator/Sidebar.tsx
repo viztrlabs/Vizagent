@@ -1,11 +1,33 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { MaterialsPanel } from './MaterialsPanel';
-import { LightingPanel } from './LightingPanel';
-import { HotspotsPanel } from './HotspotsPanel';
-import { ExportPanel } from './ExportPanel';
-import { ARPanel } from './ARPanel';
+import dynamic from 'next/dynamic';
+import { PanelSkeleton } from '@/components/ui/Skeleton';
+
+const MaterialsPanel = dynamic(
+  () => import('./MaterialsPanel').then((mod) => mod.MaterialsPanel),
+  { ssr: false, loading: () => <PanelSkeleton /> }
+);
+
+const LightingPanel = dynamic(
+  () => import('./LightingPanel').then((mod) => mod.LightingPanel),
+  { ssr: false, loading: () => <PanelSkeleton /> }
+);
+
+const HotspotsPanel = dynamic(
+  () => import('./HotspotsPanel').then((mod) => mod.HotspotsPanel),
+  { ssr: false, loading: () => <PanelSkeleton /> }
+);
+
+const ExportPanel = dynamic(
+  () => import('./ExportPanel').then((mod) => mod.ExportPanel),
+  { ssr: false, loading: () => <PanelSkeleton /> }
+);
+
+const ARPanel = dynamic(
+  () => import('./ARPanel').then((mod) => mod.ARPanel),
+  { ssr: false, loading: () => <PanelSkeleton /> }
+);
 
 interface SidebarProps {
   projectId: string;
@@ -123,7 +145,7 @@ export function Sidebar({ projectId }: SidebarProps) {
             {/* Header */}
             <div className="flex items-center justify-between px-4 pb-3 border-b border-gray-800">
               <h3 className="font-heading text-cyan">
-                {tabs.find(t => t.id === activeTab)?.label}
+                {tabs.find((t) => t.id === activeTab)?.label}
               </h3>
               <button
                 onClick={() => setIsMobileOpen(false)}
