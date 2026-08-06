@@ -14,7 +14,7 @@ export function LightingPanel() {
         <div key={light.id} className="p-3 bg-surface rounded-md space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-sm">{light.name}</span>
-            <label className="relative inline-flex items-center cursor-pointer">
+            <label className="relative inline-flex items-center cursor-pointer min-h-touch min-w-touch">
               <input
                 type="checkbox"
                 checked={light.enabled}

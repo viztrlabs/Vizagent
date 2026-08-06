@@ -15,7 +15,7 @@ export function Toolbar({ projectId }: ToolbarProps) {
   const lastSavedAt = useConfiguratorStore((s) => s.lastSavedAt);
 
   return (
-    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-surface/90 backdrop-blur-sm rounded-lg p-2 sm:bottom-4 max-w-[calc(100vw-2rem)]">
+    <div className="absolute bottom-20 sm:bottom-4 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-surface/90 backdrop-blur-sm rounded-lg p-2 max-w-[calc(100vw-2rem)] z-30">
       {/* Undo/Redo */}
       <button
         onClick={undo}
