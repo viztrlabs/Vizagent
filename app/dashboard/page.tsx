@@ -53,7 +53,7 @@ export default function DashboardPage() {
           </div>
           <Link
             href="/projects/new"
-            className="px-6 py-3 bg-cyan text-bg rounded-lg font-medium hover:bg-cyan/90 transition-colors text-center min-h-touch"
+            className="w-full sm:w-auto px-6 py-3 bg-cyan text-bg rounded-lg font-medium hover:bg-cyan/90 transition-colors text-center min-h-touch"
           >
             + New Project
           </Link>
