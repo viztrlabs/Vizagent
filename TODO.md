@@ -49,7 +49,7 @@ Do not skip steps. Do not work on a task that isn't `unclaimed`.
 | T-024 | Responsive design — Auth pages | Antigravity | app/(auth)/, app/auth/ | unclaimed | — | — | — | Signin/signup forms responsive |
 | T-025 | Responsive design — Dashboard + Projects | Antigravity | app/(dashboard)/, app/projects/ | unclaimed | — | — | — | Dashboard, project list, create project |
 | T-026 | Responsive design — Configurator | Antigravity | components/configurator/ | unclaimed | — | — | — | Mobile bottom sheet, touch controls |
-| T-027 | Responsive design — Portal + Booking | Antigravity | app/portal/, app/book/, components/portal/ | in_progress | 2026-08-07 02:14 | — | — | Session cards, booking form |
+| T-027 | Responsive design — Portal + Booking | Antigravity | app/portal/, app/book/, components/portal/ | done | 2026-08-07 02:14 | 2026-08-07 02:16 | app/portal/page.tsx, components/portal/SessionCard.tsx, app/book/page.tsx | Session cards, booking form |
 | T-028 | GitHub Actions CI (lint + build + test) | OpenCode | .github/workflows/ | unclaimed | — | — | — | Should exist before first merge to main |
 | T-029 | Final integration pass + Vercel deploy verification | OpenCode | / (root) | unclaimed | — | — | — | Do this last |
 

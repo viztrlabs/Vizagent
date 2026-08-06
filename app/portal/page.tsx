@@ -25,7 +25,7 @@ export default async function PortalPage() {
         </div>
         <a
           href="/book"
-          className="text-sm border border-gray-700 rounded-lg px-4 py-2 hover:bg-surface transition text-white text-center min-h-touch flex items-center justify-center sm:inline-flex"
+          className="w-full sm:w-auto text-sm border border-gray-700 rounded-lg px-4 py-2 hover:bg-surface transition text-white text-center min-h-touch flex items-center justify-center sm:inline-flex"
         >
           + Book session
         </a>
