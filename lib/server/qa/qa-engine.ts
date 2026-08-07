@@ -61,3 +61,45 @@ export function checkMetadata(project: ProjectLike): QACheck {
       : 'Project metadata complete',
   };
 }
+
+export type GlbLoader = (glbUrl: string) => Promise<void>;
+
+export async function checkGlbLoadable(
+  assets: AssetLike[],
+  urlFor: (asset: AssetLike) => string,
+  loadGlb: GlbLoader
+): Promise<QACheck> {
+  const glbs = assets.filter((a) => /\.glb$/i.test(a.fileName));
+  if (!glbs.length) {
+    return { name: GLB_LOADABLE, status: 'pass', message: 'No GLB assets to validate' };
+  }
+  const failed: string[] = [];
+  for (const glb of glbs) {
+    try {
+      await loadGlb(urlFor(glb));
+    } catch {
+      failed.push(glb.fileName);
+    }
+  }
+  return {
+    name: GLB_LOADABLE,
+    status: failed.length ? 'fail' : 'pass',
+    message: failed.length
+      ? `GLB load failed: ${failed.join(', ')}`
+      : `${glbs.length} GLB asset(s) loaded successfully`,
+  };
+}
+
+export function runAllChecks(input: {
+  assets: AssetLike[];
+  project: ProjectLike;
+  urlFor: (a: AssetLike) => string;
+  loadGlb: GlbLoader;
+}): QACheck[] {
+  return [
+    checkRequiredPanorama(input.assets),
+    checkNaming(input.assets),
+    checkSizeLimit(input.assets),
+    checkMetadata(input.project),
+  ];
+}
