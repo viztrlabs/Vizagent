@@ -30,8 +30,9 @@ export interface Asset {
   fileSize: number;
   storagePath: string;
   thumbnailPath?: string;
-  status: 'uploaded' | 'validating' | 'ready' | 'failed';
+  status: 'uploaded' | 'uploading' | 'validating' | 'ready' | 'failed';
   createdAt: Date;
+  tenantId: string;
 }
 
 export interface QAReport {
