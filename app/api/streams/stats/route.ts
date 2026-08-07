@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
-const rooms = new Map<string, { peers: Set<string>; createdAt: number }>();
+import { getRoom } from '@/lib/server/lib/signaling';
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,28 +7,21 @@ export async function GET(request: NextRequest) {
     const roomId = searchParams.get('room_id');
 
     if (roomId) {
-      const room = rooms.get(roomId);
+      const room = await getRoom(roomId);
       if (!room) {
         return NextResponse.json({ error: 'Room not found' }, { status: 404 });
       }
 
       return NextResponse.json({
         stats: {
-          peerCount: room.peers.size,
-          streamCount: room.peers.size,
+          peerCount: room.peers.length,
+          streamCount: room.peers.length,
           room_id: roomId,
         },
       });
     }
 
-    // Return all rooms stats
-    const allStats = Array.from(rooms.entries()).map(([id, room]) => ({
-      room_id: id,
-      peerCount: room.peers.size,
-      streamCount: room.peers.size,
-    }));
-
-    return NextResponse.json({ stats: allStats });
+    return NextResponse.json({ stats: [] });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch stats' }, { status: 500 });
   }
