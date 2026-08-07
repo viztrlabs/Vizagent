@@ -1,23 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/supabase/server';
+import { prisma } from '@/lib/db/server';
+import { BookingRepository } from '@/lib/server/repositories/booking.repository';
+import { getTenantId } from '@/lib/server/lib/tenant';
+import { withTenant } from '@/lib/server/middleware/tenant';
 import { deleteSessionFromCalendar } from '@/lib/google-calendar';
 import { getToken } from 'next-auth/jwt';
+
+const bookingRepository = new BookingRepository();
 
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
+  const tenantId = await getTenantId();
 
-  const session = await prisma.configuratorSession.findUnique({
-    where: { id },
-  });
+  const session = await withTenant(prisma, tenantId, async () =>
+    bookingRepository.findByIdWithViewers(id, tenantId)
+  );
 
   if (!session) {
     return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
 
-  // Delete from Google Calendar if exists
   const token = await getToken({ req: request });
   if (token?.accessToken && session.gcalEventId) {
     try {
@@ -30,11 +35,9 @@ export async function DELETE(
     }
   }
 
-  // Update session status to cancelled
-  await prisma.configuratorSession.update({
-    where: { id },
-    data: { isActive: false },
-  });
+  await withTenant(prisma, tenantId, async () =>
+    bookingRepository.cancel(id, tenantId)
+  );
 
   return NextResponse.json({ success: true });
 }

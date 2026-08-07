@@ -1,62 +1,51 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/supabase/server';
-import { addSessionToCalendar } from '@/lib/google-calendar';
-import { getToken } from 'next-auth/jwt';
+import { prisma } from '@/lib/db/server';
+import { BookingRepository } from '@/lib/server/repositories/booking.repository';
+import { getTenantId } from '@/lib/server/lib/tenant';
+import { withTenant } from '@/lib/server/middleware/tenant';
+import { publish } from '@/lib/server/events/publisher';
+import { nanoid } from 'nanoid';
 
-const SERVICE_NAMES: Record<string, string> = {
-  'tour': 'Virtual Tour',
-  'xr': 'XR Configurator',
-  'render': '3D Rendering',
-};
-
-const SERVICE_DURATIONS: Record<string, number> = {
-  'tour': 60,
-  'xr': 90,
-  'render': 120,
-};
+const bookingRepository = new BookingRepository();
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { project_id, service, date, time, duration, client_name, email, project_type } = body;
 
-    // Create session
-    const session = await prisma.configuratorSession.create({
-      data: {
-        projectId: project_id,
-        hostId: 'admin', // Default host
-        config: '{}',
-        shareToken: Math.random().toString(36).substring(2, 15),
-        startAt: new Date(`${date}T${time}:00`),
+    const tenantId = await getTenantId();
+    const shareToken = nanoid(10);
+
+    const session = await withTenant(prisma, tenantId, async () =>
+      bookingRepository.createBooking(
+        {
+          projectId: project_id,
+          hostId: email || 'admin',
+          startAt: new Date(`${date}T${time}:00`),
+          shareToken,
+        },
+        tenantId
+      )
+    );
+
+    await publish({
+      id: nanoid(12),
+      type: 'BookingCreated',
+      aggregateId: session.id,
+      tenantId,
+      payload: {
+        service,
+        date,
+        time,
+        duration: duration || 60,
+        clientName: client_name,
+        projectType: project_type,
       },
+      occurredAt: new Date(),
+      metadata: {},
     });
 
-    // Try to add to Google Calendar
-    const token = await getToken({ req: request });
-    let gcalEventId = null;
-
-    if (token?.accessToken) {
-      try {
-        gcalEventId = await addSessionToCalendar(token.accessToken as string, {
-          id: session.id,
-          service: SERVICE_NAMES[service] || service,
-          date: `${date}T${time}:00`,
-          durationMinutes: duration || SERVICE_DURATIONS[service] || 60,
-          clientName: client_name,
-          projectType: project_type,
-        });
-
-        // Update session with gcal event ID
-        await prisma.configuratorSession.update({
-          where: { id: session.id },
-          data: { gcalEventId: gcalEventId },
-        });
-      } catch (error) {
-        console.error('Failed to add to Google Calendar:', error);
-      }
-    }
-
-    return NextResponse.json({ session, gcalEventId: gcalEventId }, { status: 201 });
+    return NextResponse.json({ session }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to create booking' }, { status: 500 });
   }
@@ -71,10 +60,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'email required' }, { status: 400 });
     }
 
-    const sessions = await prisma.configuratorSession.findMany({
-      where: { hostId: email },
-      orderBy: { startAt: 'desc' },
-    });
+    const tenantId = await getTenantId();
+    const sessions = await withTenant(prisma, tenantId, async () =>
+      bookingRepository.findByHost(email, tenantId)
+    );
 
     return NextResponse.json({ sessions });
   } catch (error) {

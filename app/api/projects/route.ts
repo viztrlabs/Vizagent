@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/supabase/server';
+import { prisma } from '@/lib/db/server';
+import { ProjectRepository } from '@/lib/server/repositories/project.repository';
+import { getTenantId } from '@/lib/server/lib/tenant';
+import { withTenant } from '@/lib/server/middleware/tenant';
 import { projectSchema } from '@/lib/validations';
+
+const projectRepository = new ProjectRepository();
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,10 +16,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'client_id required' }, { status: 400 });
     }
 
-    const projects = await prisma.project.findMany({
-      where: { clientId },
-      orderBy: { createdAt: 'desc' },
-    });
+    const tenantId = await getTenantId();
+    const projects = await withTenant(prisma, tenantId, async () =>
+      projectRepository.findByClient(clientId, tenantId)
+    );
 
     return NextResponse.json({ projects });
   } catch (error) {
@@ -31,16 +36,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: validation.error.issues }, { status: 400 });
     }
 
-    const project = await prisma.project.create({
-      data: {
-        name: validation.data.name,
-        description: validation.data.description,
-        clientId: body.client_id || 'demo-user',
-        serviceType: body.service_type || 'tour',
-        deadline: validation.data.deadline ? new Date(validation.data.deadline) : undefined,
-        budget: validation.data.budget,
-      },
-    });
+    const tenantId = await getTenantId();
+    const project = await withTenant(prisma, tenantId, async () =>
+      projectRepository.create(
+        {
+          name: validation.data.name,
+          description: validation.data.description,
+          clientId: body.client_id || 'demo-user',
+          serviceType: body.service_type || 'tour',
+          status: 'draft',
+          settings: JSON.stringify({
+            cameraHeight: 1.7,
+            autoRotate: false,
+            hotspotStyle: 'pin',
+          }),
+          budget: validation.data.budget,
+          deadline: validation.data.deadline ? new Date(validation.data.deadline) : undefined,
+        },
+        tenantId
+      )
+    );
 
     return NextResponse.json({ project }, { status: 201 });
   } catch (error) {

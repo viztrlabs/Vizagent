@@ -3,15 +3,15 @@ export interface Project {
   id: string;
   name: string;
   description?: string;
-  client_id: string;
-  service_type: 'tour';
+  clientId: string;
+  serviceType: 'tour';
   status: ProjectStatus;
   settings: ProjectSettings;
   budget?: number;
   deadline?: Date;
-  published_url?: string;
-  created_at: Date;
-  updated_at: Date;
+  publishedUrl?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export type ProjectStatus = 'draft' | 'uploaded' | 'qa_pending' | 'qa_passed' | 'published';
@@ -24,23 +24,23 @@ export interface ProjectSettings {
 
 export interface Asset {
   id: string;
-  project_id: string;
-  file_name: string;
-  file_type: string;
-  file_size: number;
-  storage_path: string;
-  thumbnail_path?: string;
+  projectId: string;
+  fileName: string;
+  fileType: string;
+  fileSize: number;
+  storagePath: string;
+  thumbnailPath?: string;
   status: 'uploaded' | 'validating' | 'ready' | 'failed';
-  created_at: Date;
+  createdAt: Date;
 }
 
 export interface QAReport {
   id: string;
-  project_id: string;
-  qa_status: 'pending' | 'running' | 'passed' | 'failed';
+  projectId: string;
+  qaStatus: 'pending' | 'running' | 'passed' | 'failed';
   checks: QACheck[];
   issues: string[];
-  checked_at?: Date;
+  checkedAt?: Date;
 }
 
 export interface QACheck {
@@ -58,35 +58,35 @@ export interface User {
 
 export interface Deployment {
   id: string;
-  project_id: string;
+  projectId: string;
   environment: 'preview' | 'production';
   status: 'pending' | 'deploying' | 'success' | 'failed';
-  preview_url?: string;
-  public_url?: string;
-  deployed_at?: Date;
+  previewUrl?: string;
+  publicUrl?: string;
+  deployedAt?: Date;
 }
 
 // XR Configurator types
 export interface XrAsset {
   id: string;
-  project_id: string;
+  projectId: string;
   type: 'model3d' | 'equirect';
   service: 'vr' | 'mr' | 'webAR' | 'tour' | 'webXR';
-  glb_url?: string;
-  equirect_url?: string;
-  usdz_url?: string;
-  file_size_bytes?: number;
-  created_at: Date;
-  updated_at: Date;
+  glbUrl?: string;
+  equirectUrl?: string;
+  usdzUrl?: string;
+  fileSizeBytes?: number;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Configuration {
   id: string;
-  xr_asset_id: string;
+  xrAssetId: string;
   name: string;
   data: string; // JSON stringified ConfigData
-  created_at: Date;
-  updated_at: Date;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface ConfigData {
@@ -133,22 +133,25 @@ export interface LightData {
 
 export interface ConfiguratorSession {
   id: string;
-  project_id: string;
-  host_id: string;
+  projectId: string;
+  hostId: string;
   config: string; // JSON stringified ConfigData
-  share_token: string;
-  is_active: boolean;
+  shareToken: string;
+  isActive: boolean;
   permissions: { canEdit: string[]; canView: string[]; isPublic: boolean };
-  created_at: Date;
-  updated_at: Date;
+  startAt?: Date;
+  reminderSentAt?: Date;
+  gcalEventId?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Viewer {
   id: string;
-  session_id: string;
-  user_id?: string;
-  joined_at: Date;
-  left_at?: Date;
+  sessionId: string;
+  userId?: string;
+  joinedAt: Date;
+  leftAt?: Date;
 }
 
 export interface PeerConnection {

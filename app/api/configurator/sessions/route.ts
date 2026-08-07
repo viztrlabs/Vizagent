@@ -1,7 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/supabase/server';
+import { prisma } from '@/lib/db/server';
+import { SessionRepository } from '@/lib/server/repositories/session.repository';
+import { getTenantId } from '@/lib/server/lib/tenant';
+import { withTenant } from '@/lib/server/middleware/tenant';
 import { configuratorSessionSchema } from '@/lib/validations';
 import { nanoid } from 'nanoid';
+import { publish } from '@/lib/server/events/publisher';
+
+const sessionRepository = new SessionRepository();
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,17 +19,35 @@ export async function POST(request: NextRequest) {
     }
 
     const shareToken = nanoid(10);
+    const tenantId = await getTenantId();
 
-    const session = await prisma.configuratorSession.create({
-      data: {
-        projectId: validation.data.project_id,
-        hostId: validation.data.host_id,
-        config: validation.data.config,
-        shareToken,
+    const session = await withTenant(prisma, tenantId, async () =>
+      sessionRepository.create(
+        {
+          projectId: validation.data.project_id,
+          hostId: validation.data.host_id,
+          config: validation.data.config,
+          shareToken,
+        },
+        tenantId
+      )
+    );
+
+    await publish({
+      id: nanoid(12),
+      type: 'SessionStarting',
+      aggregateId: session.id,
+      tenantId,
+      payload: {
+        projectId: session.projectId,
+        hostId: session.hostId,
+        startAt: session.startAt,
       },
+      occurredAt: new Date(),
+      metadata: {},
     });
 
-    return NextResponse.json({ session, share_token: shareToken }, { status: 201 });
+    return NextResponse.json({ session }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to create session' }, { status: 500 });
   }

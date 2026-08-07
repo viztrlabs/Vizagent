@@ -1,6 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/supabase/server';
+import { prisma } from '@/lib/db/server';
+import { XrAssetRepository } from '@/lib/server/repositories/xr-asset.repository';
+import { getTenantId } from '@/lib/server/lib/tenant';
+import { withTenant } from '@/lib/server/middleware/tenant';
 import { xrAssetSchema } from '@/lib/validations';
+import { getCdnUrl } from '@/lib/server/lib/cdn';
+import type { XrAsset } from '@/lib/types';
+
+const xrAssetRepository = new XrAssetRepository();
+
+function transformAsset(asset: unknown): XrAsset {
+  const a = asset as XrAsset;
+  return {
+    ...a,
+    glbUrl: getCdnUrl(a.glbUrl),
+    equirectUrl: getCdnUrl(a.equirectUrl),
+    usdzUrl: getCdnUrl(a.usdzUrl),
+  };
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,12 +28,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'project_id required' }, { status: 400 });
     }
 
-    const assets = await prisma.xrAsset.findMany({
-      where: { projectId },
-      orderBy: { createdAt: 'desc' },
-    });
+    const tenantId = await getTenantId();
+    const assets = await withTenant(prisma, tenantId, async () =>
+      xrAssetRepository.findByProject(projectId, tenantId)
+    );
 
-    return NextResponse.json({ assets });
+    return NextResponse.json({ assets: assets.map(transformAsset) });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch assets' }, { status: 500 });
   }
@@ -32,17 +49,21 @@ export async function POST(request: NextRequest) {
     }
 
     const { project_id, glb_url, equirect_url, usdz_url, ...rest } = validation.data;
-    const asset = await prisma.xrAsset.create({
-      data: {
-        ...rest,
-        projectId: project_id,
-        glbUrl: glb_url,
-        equirectUrl: equirect_url,
-        usdzUrl: usdz_url,
-      },
-    });
+    const tenantId = await getTenantId();
+    const asset = await withTenant(prisma, tenantId, async () =>
+      xrAssetRepository.create(
+        {
+          ...rest,
+          projectId: project_id,
+          glbUrl: glb_url,
+          equirectUrl: equirect_url,
+          usdzUrl: usdz_url,
+        },
+        tenantId
+      )
+    );
 
-    return NextResponse.json({ asset }, { status: 201 });
+    return NextResponse.json({ asset: transformAsset(asset) }, { status: 201 });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to create asset' }, { status: 500 });
   }
