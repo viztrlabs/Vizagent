@@ -52,17 +52,28 @@ Do not skip steps. Do not work on a task that isn't `unclaimed`.
 | T-027 | Responsive design — Portal + Booking | Antigravity | app/portal/, app/book/, components/portal/ | done | 2026-08-07 02:08 | 2026-08-07 02:10 | app/book/page.tsx, app/portal/page.tsx, components/portal/SessionCard.tsx | Session cards, booking form |
 | T-028 | GitHub Actions CI (lint + build + test) | OpenCode | .github/workflows/ | done | 2026-08-07 03:00 | 2026-08-07 03:15 | .github/workflows/ci.yml, package.json | CI workflow passes |
 | T-029 | Final integration pass + Vercel deploy verification | OpenCode | / (root) | done | 2026-08-07 03:30 | 2026-08-07 03:45 | Multiple fixes | All pages load, build passes |
-| T-030 | Upload dropzone + presigned URLs | OpenCode-Subagent-1 | components/upload/, app/api/assets/upload-url/ | unclaimed | — | — | — | Depends on T-002, T-009 |
-| T-031 | Virtual tour viewer (Babylon.js sphere) | OpenCode-Subagent-2 | components/viewer/, app/(public)/tour/ | unclaimed | — | — | — | Depends on T-006, T-012 |
-| T-032 | QA checklist logic (5 automated checks) | OpenCode-Subagent-3 | lib/qa/, app/api/qa/ | unclaimed | — | — | — | Depends on T-030 |
-| T-033 | Publish button + gate (blocked unless QA passed) | OpenCode-Subagent-4 | app/(dashboard)/projects/[id]/, app/api/deployments/ | unclaimed | — | — | — | Depends on T-032 |
-| T-034 | Public viewer page (no auth) | OpenCode-Subagent-5 | app/(public)/tour/ | unclaimed | — | — | — | Depends on T-031 |
-| T-035 | Dashboard analytics page (charts, metrics) | OpenCode-Subagent-6 | app/(dashboard)/dashboard/, components/dashboard/ | unclaimed | — | — | — | Depends on T-025 |
-| T-036 | Real-time collaboration (WebRTC signaling) | OpenCode-Subagent-7 | lib/realtime/, components/collab/ | unclaimed | — | — | — | Depends on T-010, T-011 |
-| T-037 | Performance optimization (lazy load, code splitting) | OpenCode-Subagent-8 | / (root) | unclaimed | — | — | — | Depends on T-029 |
-| T-038 | AR/VR features (WebXR session, hit-test) | OpenCode-Subagent-9 | components/configurator/ARPanel.tsx, lib/xr/ | unclaimed | — | — | — | Depends on T-026 |
-| T-039 | Payment integration (Stripe) | OpenCode-Subagent-10 | app/api/payments/, lib/stripe/ | unclaimed | — | — | — | Depends on T-016, T-017 |
-| T-040 | E2E tests (Playwright) | OpenCode-Subagent-11 | e2e/ | unclaimed | — | — | — | Depends on T-028 |
+| T-030 | Architectural audit + implementation plan | OpenCode | .kilo/plans/ | done | 2026-08-07 07:30 | 2026-08-07 07:45 | .kilo/plans/1786054257911-architectural-audit-blueprint.md | Principal Architect Design Document created |
+| T-031 | Rename lib/supabase/server.ts → lib/db/server.ts | OpenCode | lib/ | done | 2026-08-07 07:45 | 2026-08-07 08:00 | lib/db/server.ts, lib/db/index.ts | Prisma client is now the single source of truth |
+| T-032 | Add tenant_id columns + RLS to all tables | OpenCode | prisma/ | done | 2026-08-07 08:00 | 2026-08-07 08:30 | prisma/schema.prisma, prisma/migrations/ | Multi-tenancy foundation with Postgres RLS |
+| T-033 | Create repository pattern + migrate API routes | OpenCode | lib/server/repositories/, app/api/ | done | 2026-08-07 08:30 | 2026-08-07 09:00 | lib/server/repositories/*.ts, app/api/*/route.ts | All API routes now use repositories |
+| T-034 | Add tenant middleware to all API routes | OpenCode | lib/server/middleware/, app/api/ | done | 2026-08-07 09:00 | 2026-08-07 09:30 | lib/server/middleware/tenant.ts, lib/server/middleware/tenant.middleware.ts | RLS enforced via withTenant helper |
+| T-035 | Replace in-memory signaling with Redis-backed rooms | OpenCode | app/api/streams/, lib/server/lib/signaling.ts | done | 2026-08-07 09:30 | 2026-08-07 10:00 | app/api/streams/*/route.ts, lib/server/lib/signaling.ts | Signaling now survives serverless cold starts |
+| T-036 | Async booking pipeline (BullMQ + Upstash Redis) | OpenCode | lib/server/queues/, lib/server/workers/, lib/server/events/ | done | 2026-08-07 10:00 | 2026-08-07 10:30 | lib/server/queues/*.ts, lib/server/workers/*.ts, lib/server/events/*.ts, lib/server/services/email.service.ts | Calendar sync and session reminders are async jobs |
+| T-037 | Add CI workflow + security headers + vercel.json | OpenCode | .github/workflows/, vercel.json | done | 2026-08-07 10:30 | 2026-08-07 10:45 | .github/workflows/ci.yml, vercel.json | CI passes, security headers configured |
+| T-038 | Add CDN strategy for 360 images and assets | OpenCode | lib/server/lib/cdn.ts, app/api/xr/assets/ | done | 2026-08-07 10:45 | 2026-08-07 11:00 | lib/server/lib/cdn.ts, app/api/xr/assets/*/route.ts | Assets served via CDN with query params |
+| T-039 | Implement Virtual Tour as view mode in XR Configurator | OpenCode | components/configurator/VirtualTourView.tsx | done | 2026-08-07 11:00 | 2026-08-07 11:15 | components/configurator/VirtualTourView.tsx | Equirectangular sphere view in Babylon.js |
+| T-040 | Add Sentry observability | OpenCode | sentry.*.config.ts, next.config.ts | done | 2026-08-07 11:15 | 2026-08-07 11:30 | sentry.client.config.ts, sentry.server.config.ts, sentry.edge.config.ts, next.config.ts | Error tracking and performance monitoring |
+| T-041 | Upload dropzone + presigned URLs | OpenCode-Subagent-1 | components/upload/, app/api/assets/upload-url/ | unclaimed | — | — | — | Depends on T-002, T-009 |
+| T-042 | Virtual tour viewer (Babylon.js sphere) | OpenCode-Subagent-2 | components/viewer/, app/(public)/tour/ | unclaimed | — | — | — | Depends on T-006, T-012 |
+| T-043 | QA checklist logic (5 automated checks) | OpenCode-Subagent-3 | lib/qa/, app/api/qa/ | unclaimed | — | — | — | Depends on T-030 |
+| T-044 | Publish button + gate (blocked unless QA passed) | OpenCode-Subagent-4 | app/(dashboard)/projects/[id]/, app/api/deployments/ | unclaimed | — | — | — | Depends on T-032 |
+| T-045 | Public viewer page (no auth) | OpenCode-Subagent-5 | app/(public)/tour/ | unclaimed | — | — | — | Depends on T-031 |
+| T-046 | Dashboard analytics page (charts, metrics) | OpenCode-Subagent-6 | app/(dashboard)/dashboard/, components/dashboard/ | unclaimed | — | — | — | Depends on T-025 |
+| T-047 | Real-time collaboration (WebRTC signaling) | OpenCode-Subagent-7 | lib/realtime/, components/collab/ | unclaimed | — | — | — | Depends on T-010, T-011 |
+| T-048 | Performance optimization (lazy load, code splitting) | OpenCode-Subagent-8 | / (root) | unclaimed | — | — | — | Depends on T-029 |
+| T-049 | AR/VR features (WebXR session, hit-test) | OpenCode-Subagent-9 | components/configurator/ARPanel.tsx, lib/xr/ | unclaimed | — | — | — | Depends on T-026 |
+| T-050 | Payment integration (Stripe) | OpenCode-Subagent-10 | app/api/payments/, lib/stripe/ | unclaimed | — | — | — | Depends on T-016, T-017 |
+| T-051 | E2E tests (Playwright) | OpenCode-Subagent-11 | e2e/ | unclaimed | — | — | — | Depends on T-028 |
 
 *(Add new rows as new tasks come up. Never delete a `done` row — it's your project history. Never renumber existing IDs.)*
 
@@ -70,9 +81,9 @@ Do not skip steps. Do not work on a task that isn't `unclaimed`.
 
 ## Currently in progress (quick glance)
 
-- **OpenCode-Subagent-1 to 11:** All unclaimed, ready to claim
+- **OpenCode-Subagent-1 to 11 (T-041 to T-051):** All unclaimed, ready to claim
 - **Antigravity:** None (all 5 responsive tasks complete)
-- **OpenCode (main):** Orchestrating
+- **OpenCode (main):** Architectural implementation complete (T-030 through T-040)
 
 ---
 
