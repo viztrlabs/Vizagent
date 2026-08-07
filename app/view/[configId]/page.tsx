@@ -1,6 +1,4 @@
-import { Suspense } from 'react';
-import { BabylonCanvas } from '@/components/configurator/BabylonCanvas';
-import { StreamViewer } from '@/components/stream/StreamViewer';
+import ViewClient from '@/components/viewer/ViewClient';
 
 interface ViewPageProps {
   params: Promise<{ configId: string }>;
@@ -11,9 +9,7 @@ export default async function ViewPage({ params }: ViewPageProps) {
 
   return (
     <div className="h-screen bg-bg">
-      <Suspense fallback={<div className="w-full h-full flex items-center justify-center">Loading viewer...</div>}>
-        <BabylonCanvas modelUrl={`/api/config/${configId}/model`} />
-      </Suspense>
+      <ViewClient configId={configId} />
     </div>
   );
 }

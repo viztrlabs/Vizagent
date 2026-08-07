@@ -70,8 +70,7 @@ Do not skip steps. Do not work on a task that isn't `unclaimed`.
 | T-045 | Public viewer page (no auth) | OpenCode-Subagent-5 | app/(public)/tour/ | unclaimed | — | — | — | Depends on T-031 |
 | T-046 | Dashboard analytics page (charts, metrics) | OpenCode-Subagent-6 | app/(dashboard)/dashboard/, components/dashboard/ | unclaimed | — | — | — | Depends on T-025 |
 | T-047 | Real-time collaboration (WebRTC signaling) | OpenCode-Subagent-7 | lib/realtime/, components/collab/ | unclaimed | — | — | — | Depends on T-010, T-011 |
-| T-048 | Performance optimization (lazy load, code splitting) | OpenCode | / (root) | in_progress | 2026-08-07 15:30 | — | — | Depends on T-029 |
-| T-049 | AR/VR features (WebXR session, hit-test) | OpenCode-Subagent-9 | components/configurator/ARPanel.tsx, lib/xr/ | unclaimed | — | — | — | Depends on T-026 |
+| T-048 | Performance optimization (lazy load, code splitting) | OpenCode | / (root) | done | 2026-08-07 15:30 | 2026-08-07 16:00 | app/view/[configId]/, components/viewer/ViewClient.tsx, app/dashboard/loading.tsx, app/portal/loading.tsx, app/view/[configId]/loading.tsx, components/configurator/BabylonCanvas.tsx, components/configurator/VirtualTourView.tsx, components/stream/StreamViewer.tsx, lib/emails/reminder.ts | Route-level code splitting, dynamic imports for Babylon.js/WebRTC, memoized heavy components, loading skeletons, fixed broken email re-export || T-049 | AR/VR features (WebXR session, hit-test) | OpenCode-Subagent-9 | components/configurator/ARPanel.tsx, lib/xr/ | unclaimed | — | — | — | Depends on T-026 |
 | T-050 | Payment integration (Stripe) | OpenCode-Subagent-10 | app/api/payments/, lib/stripe/ | unclaimed | — | — | — | Depends on T-016, T-017 |
 | T-051 | E2E tests (Playwright) | OpenCode-Subagent-11 | e2e/ | unclaimed | — | — | — | Depends on T-028 |
 
