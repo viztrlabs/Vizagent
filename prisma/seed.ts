@@ -1,8 +1,11 @@
 import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 
-const adapter = new PrismaPg({ connectionString: process.env.DATABASE_URL! });
-const prisma = new PrismaClient({ adapter });
+const connectionString = process.env.DATABASE_URL!;
+const pool = new PrismaPg({ connectionString });
+const prisma = new PrismaClient({ adapter: pool });
+
+const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000000';
 
 async function main() {
   // Create a test user
@@ -13,6 +16,7 @@ async function main() {
       email: 'admin@viztr.io',
       name: 'Admin User',
       role: 'admin',
+      tenantId: DEFAULT_TENANT_ID,
     },
   });
 
@@ -32,6 +36,7 @@ async function main() {
         autoRotate: false,
         hotspotStyle: 'pin',
       }),
+      tenantId: DEFAULT_TENANT_ID,
     },
   });
 
@@ -44,6 +49,7 @@ async function main() {
       projectId: project.id,
       type: 'model3d',
       service: 'webXR',
+      tenantId: DEFAULT_TENANT_ID,
     },
   });
 
@@ -70,6 +76,7 @@ async function main() {
         }],
         camera: { position: [0, 1.7, 5], target: [0, 1.7, 0], fov: 60 },
       }),
+      tenantId: DEFAULT_TENANT_ID,
     },
   });
 
@@ -81,6 +88,7 @@ async function main() {
       config: '{}',
       shareToken: 'test-session-token-001',
       startAt: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      tenantId: DEFAULT_TENANT_ID,
     },
   });
 

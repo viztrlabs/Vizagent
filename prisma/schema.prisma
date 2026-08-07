@@ -12,6 +12,7 @@ model User {
   name      String?
   role      String   @default("client")
   avatarUrl String?
+  tenantId  String   @map("tenant_id")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
@@ -19,6 +20,7 @@ model User {
   deployments   Deployment[]
 
   @@map("users")
+  @@index([tenantId])
 }
 
 model Project {
@@ -34,6 +36,7 @@ model Project {
   publishedUrl String?   @map("published_url")
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
+  tenantId     String    @map("tenant_id")
 
   client      User          @relation(fields: [clientId], references: [id], onDelete: Cascade)
   assets      Asset[]
@@ -43,6 +46,7 @@ model Project {
 
   @@index([clientId])
   @@index([status])
+  @@index([tenantId])
   @@map("projects")
 }
 
@@ -57,10 +61,12 @@ model Asset {
   status        String   @default("uploaded")
   metadata      Json     @default("{}")
   createdAt     DateTime @default(now()) @map("created_at")
+  tenantId      String   @map("tenant_id")
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
+  @@index([tenantId])
   @@map("assets")
 }
 
@@ -72,10 +78,12 @@ model QAReport {
   issues    Json     @default("[]")
   checkedAt DateTime? @map("checked_at")
   createdAt DateTime @default(now()) @map("created_at")
+  tenantId  String   @map("tenant_id")
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
+  @@index([tenantId])
   @@map("qa_reports")
 }
 
@@ -90,11 +98,13 @@ model Deployment {
   deployedBy  String?   @map("deployed_by")
   deployedAt  DateTime? @map("deployed_at")
   createdAt   DateTime  @default(now()) @map("created_at")
+  tenantId    String    @map("tenant_id")
 
   project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   deployer User?   @relation(fields: [deployedBy], references: [id])
 
   @@index([projectId])
+  @@index([tenantId])
   @@map("deployments")
 }
 
@@ -109,11 +119,13 @@ model XrAsset {
   fileSizeBytes Int?     @map("file_size_bytes")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
+  tenantId      String   @map("tenant_id")
 
   project         Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
   configurations  Configuration[]
 
   @@index([projectId])
+  @@index([tenantId])
   @@map("xr_assets")
 }
 
@@ -124,33 +136,37 @@ model Configuration {
   data       String
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
+  tenantId   String   @map("tenant_id")
 
   xrAsset XrAsset @relation(fields: [xrAssetId], references: [id], onDelete: Cascade)
 
   @@unique([xrAssetId, name])
   @@index([xrAssetId])
+  @@index([tenantId])
   @@map("configurations")
 }
 
 model ConfiguratorSession {
-  id          String   @id @default(uuid())
-  projectId   String   @map("project_id")
-  hostId      String   @map("host_id")
+  id          String    @id @default(uuid())
+  projectId   String    @map("project_id")
+  hostId      String    @map("host_id")
   config      String
-  shareToken  String   @unique @map("share_token")
-  isActive    Boolean  @default(true) @map("is_active")
-  permissions Json     @default("{\"canEdit\": [], \"canView\": [], \"isPublic\": false}")
+  shareToken  String    @unique @map("share_token")
+  isActive    Boolean   @default(true) @map("is_active")
+  permissions Json      @default("{\"canEdit\": [], \"canView\": [], \"isPublic\": false}")
   startAt     DateTime? @map("start_at")
   reminderSentAt DateTime? @map("reminder_sent_at")
-  gcalEventId String?  @map("gcal_event_id")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
+  gcalEventId String?   @map("gcal_event_id")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+  tenantId    String    @map("tenant_id")
 
   viewers Viewer[]
 
   @@index([shareToken])
   @@index([hostId])
   @@index([startAt])
+  @@index([tenantId])
   @@map("configurator_sessions")
 }
 
@@ -160,9 +176,11 @@ model Viewer {
   userId    String?   @map("user_id")
   joinedAt  DateTime  @default(now()) @map("joined_at")
   leftAt    DateTime? @map("left_at")
+  tenantId  String    @map("tenant_id")
 
   session ConfiguratorSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@index([sessionId])
+  @@index([tenantId])
   @@map("viewers")
 }
