@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
           projectId,
           environment,
           status: 'success',
-          publicUrl: `/view/${projectId}`,
+          publicUrl: `/tour/${projectId}`,
         },
         tenantId
       );
