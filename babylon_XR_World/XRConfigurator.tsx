@@ -1,10 +1,9 @@
 // src/components/xr/XRConfigurator.tsx
 "use client";
 
-import { useEffect, useRef, useState, useCallback } from "react";
+import { useEffect, useRef, useState, useCallback, lazy, Suspense } from "react";
 import { Vector3, Quaternion } from "@babylonjs/core";
 import { useBabylonScene } from "./useBabylonScene";
-import { BabylonCanvas } from "./BabylonCanvas";
 import { MaterialsPanel } from "./panels/MaterialsPanel";
 import { LightingPanel } from "./panels/LightingPanel";
 import { HotspotsPanel } from "./panels/HotspotsPanel";
@@ -16,6 +15,8 @@ import {
   emptyConfiguration,
 } from "@/lib/xr/types";
 import { endXRSession } from "@/lib/xr/webxr";
+
+const BabylonCanvas = lazy(() => import("./BabylonCanvas").then(m => ({ default: m.BabylonCanvas })));
 
 type Tab = "materials" | "lighting" | "hotspots" | "export" | "arvr";
 
@@ -141,12 +142,14 @@ export default function XRConfigurator({
   return (
     <div className="viztr-configurator">
       <div className="viewport">
-        <BabylonCanvas
-          ref={canvasRef}
-          isLoading={scene.isModelLoading}
-          error={scene.loadError}
-          posterUrl={posterUrl ?? undefined}
-        />
+        <Suspense fallback={<div className="viztr-canvas-shell"><div className="viztr-spinner" aria-label="Loading canvas" /></div>}>
+          <BabylonCanvas
+            ref={canvasRef}
+            isLoading={scene.isModelLoading}
+            error={scene.loadError}
+            posterUrl={posterUrl ?? undefined}
+          />
+        </Suspense>
       </div>
 
       <aside className="side-panel">

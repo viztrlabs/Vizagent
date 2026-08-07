@@ -1,15 +1,14 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, lazy, Suspense } from 'react';
 import { Calendar, ChevronDown, RefreshCw } from 'lucide-react';
 import { StatsCards } from '@/components/dashboard/StatsCards';
-import { 
-  ViewsLineChart, 
-  ServiceBarChart, 
-  StatusDoughnutChart, 
-  ChartCard 
-} from '@/components/dashboard/Charts';
 import type { StatsData, ViewsOverTimeData, ProjectsByServiceData, ProjectStatusData, DateRange } from '@/lib/analytics';
+
+const ViewsLineChart = lazy(() => import('@/components/dashboard/Charts').then(m => ({ default: m.ViewsLineChart })));
+const ServiceBarChart = lazy(() => import('@/components/dashboard/Charts').then(m => ({ default: m.ServiceBarChart })));
+const StatusDoughnutChart = lazy(() => import('@/components/dashboard/Charts').then(m => ({ default: m.StatusDoughnutChart })));
+const ChartCard = lazy(() => import('@/components/dashboard/Charts').then(m => ({ default: m.ChartCard })));
 
 interface DashboardData {
   stats: StatsData;
@@ -137,42 +136,49 @@ export function DashboardClient() {
         {/* Charts Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Views Over Time - Line Chart */}
-          <ChartCard title="Views Over Time">
-            {data ? (
-              <ViewsLineChart data={data.viewsOverTime} />
-            ) : (
-              <div className="h-64 md:h-72 flex items-center justify-center bg-surface/50 rounded-xl border border-border">
-                <p className="text-gray-500 font-body">Loading...</p>
-              </div>
-            )}
-          </ChartCard>
+          <Suspense fallback={<div className="h-64 md:h-72 flex items-center justify-center bg-surface/50 rounded-xl border border-border"><p className="text-gray-500 font-body">Loading chart...</p></div>}>
+            <ChartCard title="Views Over Time">
+              {data ? (
+                <ViewsLineChart data={data.viewsOverTime} />
+              ) : (
+                <div className="h-64 md:h-72 flex items-center justify-center bg-surface/50 rounded-xl border border-border">
+                  <p className="text-gray-500 font-body">Loading...</p>
+                </div>
+              )}
+            </ChartCard>
+          </Suspense>
 
           {/* Projects by Service - Bar Chart */}
-          <ChartCard title="Projects by Service Type">
-            {data ? (
-              <ServiceBarChart data={data.projectsByService} />
-            ) : (
-              <div className="h-64 md:h-72 flex items-center justify-center bg-surface/50 rounded-xl border border-border">
-                <p className="text-gray-500 font-body">Loading...</p>
-              </div>
-            )}
-          </ChartCard>
+          <Suspense fallback={<div className="h-64 md:h-72 flex items-center justify-center bg-surface/50 rounded-xl border border-border"><p className="text-gray-500 font-body">Loading chart...</p></div>}>
+            <ChartCard title="Projects by Service Type">
+              {data ? (
+                <ServiceBarChart data={data.projectsByService} />
+              ) : (
+                <div className="h-64 md:h-72 flex items{center} justify-center bg-surface/50 rounded-xl border border-border">
+                  <p className="text-gray-500 font-body">Loading...</p>
+                </div>
+              )}
+            </ChartCard>
+          </Suspense>
         </div>
 
         {/* Project Status Distribution - Doughnut Chart */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <ChartCard title="Project Status Distribution" className="lg:col-span-2">
-            {data ? (
-              <StatusDoughnutChart data={data.projectStatus} />
-            ) : (
-              <div className="h-64 md:h-72 flex items-center justify-center bg-surface/50 rounded-xl border border-border">
-                <p className="text-gray-500 font-body">Loading...</p>
-              </div>
-            )}
-          </ChartCard>
+          <Suspense fallback={<div className="h-64 md:h-72 flex items-center justify-center bg-surface/50 rounded-xl border border-border"><p className="text-gray-500 font-body">Loading chart...</p></div>}>
+            <ChartCard title="Project Status Distribution" className="lg:col-span-2">
+              {data ? (
+                <StatusDoughnutChart data={data.projectStatus} />
+              ) : (
+                <div className="h-64 md:h-72 flex items-center justify-center bg-surface/50 rounded-xl border border-border">
+                  <p className="text-gray-500 font-body">Loading...</p>
+                </div>
+              )}
+            </ChartCard>
+          </Suspense>
 
           {/* Quick Stats Summary */}
-          <ChartCard title="Summary">
+          <Suspense fallback={<div className="h-64 flex items-center justify-center bg-surface/50 rounded-xl border border-border"><p className="text-gray-500 font-body">Loading...</p></div>}>
+            <ChartCard title="Summary">
             {data ? (
               <div className="space-y-4">
                 <div className="flex items-center justify-between p-4 bg-surface/50 rounded-xl border border-border">
