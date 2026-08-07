@@ -1,7 +1,7 @@
 // lib/xr/webxr.ts
 // WebXR session management for AR/VR features
 
-import { Scene, Vector3, WebXRDefaultExperience, WebXRFeatureName, WebXRHitTest, WebXRSessionManager } from "@babylonjs/core";
+import { Scene, Vector3, Quaternion, WebXRDefaultExperience, WebXRFeatureName, WebXRHitTest, WebXRSessionManager } from "@babylonjs/core";
 
 export type XRSessionType = "immersive-ar" | "immersive-vr";
 export type XRSessionState = "ready" | "starting" | "active" | "error" | "unsupported";
@@ -13,13 +13,6 @@ export interface XRSessionStatus {
 }
 
 type HitTestCallback = (position: Vector3, rotationQuaternion: Quaternion | null) => void;
-
-interface Quaternion {
-  x: number;
-  y: number;
-  z: number;
-  w: number;
-}
 
 let sessionManager: WebXRSessionManager | null = null;
 let currentSessionType: XRSessionType | null = null;
@@ -77,7 +70,7 @@ export async function startARSession(scene: Scene): Promise<boolean> {
     const hitTest = xr.baseExperience.featuresManager.enableFeature(
       WebXRFeatureName.HIT_TEST,
       "latest",
-      { xrController: xr.input },
+      { disablePermanentHitTest: false },
       false
     ) as WebXRHitTest;
 
@@ -86,7 +79,7 @@ export async function startARSession(scene: Scene): Promise<boolean> {
         if (results.length > 0 && hitTestCallback) {
           const hit = results[0];
           const position = hit.transformationMatrix.getTranslation();
-          const rotationQuaternion = hit.transformationMatrix.getRotationMatrix().toQuaternion();
+          const rotationQuaternion = Quaternion.FromRotationMatrix(hit.transformationMatrix.getRotationMatrix());
           hitTestCallback(position, rotationQuaternion);
         }
       });
