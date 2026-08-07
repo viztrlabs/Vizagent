@@ -46,6 +46,7 @@ export interface QACheck {
   name: string;
   status: 'pass' | 'fail' | 'warning';
   message: string;
+  details?: Record<string, unknown>;
 }
 
 export interface User {
