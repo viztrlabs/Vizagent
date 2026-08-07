@@ -10,7 +10,7 @@ export const GLB_LOADABLE = 'glb-loadable';
 const NAME_RE = /^[a-z0-9-]+\.(jpg|jpeg|png|glb|gltf|usdz|zip)$/i;
 const PANORAMA_RE = /\.(jpg|jpeg|png)$/i;
 
-export type AssetLike = { fileName: string; fileSize?: number | bigint };
+export type AssetLike = { fileName: string; fileSize?: number | bigint | null };
 export type ProjectLike = { name: string; description: string | null; clientId: string };
 
 export function checkRequiredPanorama(assets: AssetLike[]): QACheck {
