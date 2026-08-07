@@ -2,6 +2,9 @@ import NextAuth from 'next-auth';
 import GoogleProvider from 'next-auth/providers/google';
 import CredentialsProvider from 'next-auth/providers/credentials';
 
+const ADMIN_EMAIL = process.env.ADMIN_EMAIL;
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD;
+
 const {
   handlers: { GET, POST },
   auth,
@@ -20,26 +23,31 @@ const {
         },
       },
     }),
-    CredentialsProvider({
-      name: 'Credentials',
-      credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' },
-      },
-      async authorize(credentials) {
-        // TODO: Implement your own credential validation
-        // This is a placeholder for demo purposes
-        if (credentials?.email === 'admin@viztr.io' && credentials?.password === 'admin') {
-          return {
-            id: '1',
-            email: 'admin@viztr.io',
-            name: 'Admin',
-            role: 'admin',
-          };
-        }
-        return null;
-      },
-    }),
+    ...(ADMIN_EMAIL && ADMIN_PASSWORD
+      ? [
+          CredentialsProvider({
+            name: 'Credentials',
+            credentials: {
+              email: { label: 'Email', type: 'email' },
+              password: { label: 'Password', type: 'password' },
+            },
+            async authorize(credentials) {
+              if (
+                credentials?.email === ADMIN_EMAIL &&
+                credentials?.password === ADMIN_PASSWORD
+              ) {
+                return {
+                  id: '1',
+                  email: ADMIN_EMAIL,
+                  name: 'Admin',
+                  role: 'admin',
+                };
+              }
+              return null;
+            },
+          }),
+        ]
+      : []),
   ],
   callbacks: {
     async jwt({ token, user }) {

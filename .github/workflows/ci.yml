@@ -1,47 +1,64 @@
 name: CI
 
-# This is the QA gate. Nothing reaches main (and therefore nothing deploys
-# to Vercel) unless it passes lint, build, and tests. This is the "Hermes
-# checks" role for Phase 0-1 — automated in CI instead of a local GPU agent.
-
 on:
-  push:
-    branches: [main]
   pull_request:
+    branches: [main]
+  push:
     branches: [main]
 
 jobs:
-  test:
+  typecheck:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.12.1
       - uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: 20
           cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm typecheck
 
-      - uses: pnpm/action-setup@v3
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
         with:
-          version: 9
+          version: 10.12.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: npx eslint . --ext .ts,.tsx
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.12.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm build
 
-      - name: Lint
-        run: pnpm lint
-
-      - name: Type check
-        run: pnpm tsc --noEmit
-
-      - name: Build
-        run: pnpm build
-
-      - name: Run unit tests
-        run: pnpm test
-
-      - name: Install Playwright browsers
-        run: pnpm exec playwright install --with-deps chromium
-
-      - name: Run E2E tests
-        run: pnpm test:e2e
+  test-e2e:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.12.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'pnpm'
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm test:e2e

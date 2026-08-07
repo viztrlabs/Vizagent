@@ -31,7 +31,7 @@ export const metadata: Metadata = {
   description: "Create immersive 3D experiences for your architectural projects with real-time collaboration and AI-powered rendering.",
 };
 
-export default async function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   return (
     <html

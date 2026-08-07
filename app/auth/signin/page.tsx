@@ -115,7 +115,7 @@ export default function SignIn() {
         </div>
 
         <p className="mt-6 text-center text-xs text-gray-500">
-          Demo credentials: admin@viztr.io / admin
+          Demo credentials: {process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'admin@example.com'} / {process.env.NEXT_PUBLIC_ADMIN_PASSWORD || 'set ADMIN_PASSWORD in .env.local'}
         </p>
       </div>
     </div>
