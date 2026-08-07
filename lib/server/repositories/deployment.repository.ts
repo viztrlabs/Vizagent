@@ -18,7 +18,6 @@ export class DeploymentRepository {
         ...data,
         tenantId,
         deployedAt: new Date(),
-        project: { connect: { id: data.projectId } },
       },
     });
   }
