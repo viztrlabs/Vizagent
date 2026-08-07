@@ -65,7 +65,7 @@ Do not skip steps. Do not work on a task that isn't `unclaimed`.
 | T-040 | Add Sentry observability | OpenCode | sentry.*.config.ts, next.config.ts | done | 2026-08-07 11:15 | 2026-08-07 11:30 | sentry.client.config.ts, sentry.server.config.ts, sentry.edge.config.ts, next.config.ts | Error tracking and performance monitoring |
 | T-041 | Upload dropzone + presigned URLs | OpenCode | components/upload/, app/api/assets/ | done | 2026-08-08 12:00 | 2026-08-08 12:35 | components/upload/UploadDropzone.tsx, lib/server/lib/r2.ts, lib/server/lib/r2.test.ts, lib/server/repositories/asset.repository.ts, lib/validations.ts, lib/utils/format.ts, app/api/assets/, package.json, jest.config.ts, .babelrc (removed) | Cloudflare R2 multipart presigned uploads with signed read URLs |
 | T-042 | Virtual tour viewer (Babylon.js sphere) | OpenCode-Subagent-2 | components/viewer/, app/(public)/tour/ | unclaimed | — | — | — | Depends on T-006, T-012 |
-| T-043 | QA checklist logic (5 automated checks) | OpenCode-Subagent-3 | lib/qa/, app/api/qa/ | unclaimed | — | — | — | Depends on T-030 |
+| T-043 | QA checklist logic (5 automated checks) | OpenCode | lib/server/qa/, lib/server/repositories/qa.repository.ts, lib/server/queues/qa.queue.ts, lib/server/workers/qa.worker.ts, app/api/qa/ | done | 2026-08-08 13:10 | 2026-08-08 13:45 | lib/server/qa/qa-engine.ts, lib/server/qa/glb-loader.server.ts, lib/server/qa/qa-engine.test.ts, lib/server/repositories/qa.repository.ts, lib/server/queues/qa.queue.ts, lib/server/workers/qa.worker.ts, app/api/qa/route.ts | 5-check QA via BullMQ: panorama present, naming, size limit, metadata complete, GLB loadability (binary parse). Pass → qa_passed (T-044 gate) |
 | T-044 | Publish button + gate (blocked unless QA passed) | OpenCode-Subagent-4 | app/(dashboard)/projects/[id]/, app/api/deployments/ | unclaimed | — | — | — | Depends on T-032 |
 | T-045 | Public viewer page (no auth) | OpenCode-Subagent-5 | app/(public)/tour/ | unclaimed | — | — | — | Depends on T-031 |
 | T-046 | Dashboard analytics page (charts, metrics) | OpenCode-Subagent-6 | app/(dashboard)/dashboard/, components/dashboard/ | unclaimed | — | — | — | Depends on T-025 |
@@ -80,9 +80,9 @@ Do not skip steps. Do not work on a task that isn't `unclaimed`.
 
 ## Currently in progress (quick glance)
 
-- **OpenCode-Subagent-1 to 11 (T-041 to T-051):** All unclaimed, ready to claim
+- **OpenCode-Subagent-1 to 11 (T-041 to T-051):** T-041 (upload dropzone) and T-043 (QA checklist) done by OpenCode. Remaining unclaimed: T-042 (finish), T-044, T-045, T-046, T-047, T-049, T-050. T-051 (E2E tests) already committed
 - **Antigravity:** None (all 5 responsive tasks complete)
-- **OpenCode (main):** Architectural implementation complete (T-030 through T-040)
+- **OpenCode (main):** Architectural implementation complete (T-030 through T-040); T-041 and T-043 built
 
 ---
 
