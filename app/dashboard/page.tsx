@@ -53,12 +53,20 @@ export default function DashboardPage() {
             <h1 className="font-display text-3xl sm:text-4xl text-white">Projects</h1>
             <p className="text-gray-400 mt-1 text-sm sm:text-base">Manage your architectural visualizations</p>
           </div>
-          <Link
-            href="/projects/new"
-            className="w-full sm:w-auto px-6 py-3 bg-cyan text-bg rounded-lg font-medium hover:bg-cyan/90 transition-colors text-center min-h-touch"
-          >
-            + New Project
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/analytics"
+              className="px-4 py-2 text-sm text-gray-300 hover:text-white border border-gray-700 rounded-lg transition-colors"
+            >
+              Analytics
+            </Link>
+            <Link
+              href="/projects/new"
+              className="w-full sm:w-auto px-6 py-3 bg-cyan text-bg rounded-lg font-medium hover:bg-cyan/90 transition-colors text-center min-h-touch"
+            >
+              + New Project
+            </Link>
+          </div>
         </div>
 
         {/* Search */}
