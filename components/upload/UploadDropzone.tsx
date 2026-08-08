@@ -52,11 +52,11 @@ export function UploadDropzone({ projectId, onUploadComplete, className }: Uploa
     });
 
     if (!response.ok) {
-      const error = await response.json();
-      throw new Error(error.message || 'Failed to get upload URL');
+      const errorData = await response.json() as { message?: string };
+      throw new Error(errorData.message || 'Failed to get upload URL');
     }
 
-    return response.json();
+    return response.json() as Promise<{ asset_id: string; upload_url: string; public_url: string }>;
   };
 
   const uploadToSupabase = async (file: File, uploadUrl: string, storagePath: string) => {
@@ -86,11 +86,11 @@ export function UploadDropzone({ projectId, onUploadComplete, className }: Uploa
     });
 
     if (!completeResponse.ok) {
-      const error = await completeResponse.json();
-      throw new Error(error.message || 'Failed to register asset');
+      const errorData = await completeResponse.json() as { message?: string };
+      throw new Error(errorData.message || 'Failed to register asset');
     }
 
-    return completeResponse.json();
+    return completeResponse.json() as Promise<{ id: string }>;
   };
 
   const handleFileUpload = async (file: File) => {
@@ -127,7 +127,7 @@ export function UploadDropzone({ projectId, onUploadComplete, className }: Uploa
       if (onUploadComplete) {
         onUploadComplete({ id: asset.id, publicUrl: public_url });
       }
-    } catch (err) {
+    } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Upload failed');
       setUploading(false);
       setProgress(0);
