@@ -123,8 +123,8 @@ export function useVirtualTourScene(config: TourConfig, autoRotate: boolean) {
 
       engine.runRenderLoop(() => {
         if (autoRotateRef.current && cameraRef.current && !isInVRRef.current) {
-          cameraRef.current.alpha +=
-            config.settings.autoRotateSpeed * (engine.getDeltaTime() / 1000);
+          const delta = Math.min(engine.getDeltaTime(), 100) / 1000;
+          cameraRef.current.alpha += config.settings.autoRotateSpeed * delta;
         }
         scene.render();
       });
