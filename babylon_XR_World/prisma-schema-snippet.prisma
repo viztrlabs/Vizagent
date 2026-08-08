@@ -1,0 +1,44 @@
+// Add these models to your existing schema.prisma
+// (alongside your current User/Project/Session models)
+
+model XrAsset {
+  id             String          @id @default(cuid())
+  projectId      String
+  type           XrAssetType     // model3d | equirect
+  service        XrServiceType   // vr | mr | webAR | tour | webXR
+  glbUrl         String?
+  equirectUrl    String?
+  usdzUrl        String?
+  fileSizeBytes  Int?
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+  configurations Configuration[]
+
+  @@index([projectId])
+}
+
+model Configuration {
+  id         String   @id @default(cuid())
+  xrAssetId  String
+  name       String   // "default", "orange", "product-selector", etc.
+  data       String   @db.Text // JSON-serialized XRConfiguration
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  xrAsset XrAsset @relation(fields: [xrAssetId], references: [id], onDelete: Cascade)
+
+  @@unique([xrAssetId, name])
+}
+
+enum XrAssetType {
+  model3d
+  equirect
+}
+
+enum XrServiceType {
+  vr
+  mr
+  webAR
+  tour
+  webXR
+}

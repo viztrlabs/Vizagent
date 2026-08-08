@@ -154,7 +154,7 @@ export function DashboardClient() {
               {data ? (
                 <ServiceBarChart data={data.projectsByService} />
               ) : (
-                <div className="h-64 md:h-72 flex items{center} justify-center bg-surface/50 rounded-xl border border-border">
+                <div className="h-64 md:h-72 flex items-center justify-center bg-surface/50 rounded-xl border border-border">
                   <p className="text-gray-500 font-body">Loading...</p>
                 </div>
               )}
@@ -233,6 +233,7 @@ export function DashboardClient() {
               </div>
             )}
           </ChartCard>
+          </Suspense>
         </div>
       </div>
     </div>

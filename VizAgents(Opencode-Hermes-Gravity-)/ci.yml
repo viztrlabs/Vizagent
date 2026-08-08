@@ -1,0 +1,41 @@
+name: CI
+
+# This is the QA gate. Nothing reaches main (and therefore nothing deploys
+# to Vercel) unless it passes lint, build, and tests. This is the "Hermes
+# checks" role for Phase 0-1 — automated in CI instead of a local GPU agent.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+
+      - uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Type check
+        run: pnpm tsc --noEmit
+
+      - name: Build
+        run: pnpm build
+
+      - name: Run tests
+        run: pnpm test
