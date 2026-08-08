@@ -1274,11 +1274,13 @@ git commit -m "feat: add main virtual tour viewer component"
 `app/(public)/tour/[id]/page.tsx`:
 ```ts
 import type { Metadata } from 'next';
-import { lazy, Suspense } from 'react';
+import dynamic from 'next/dynamic';
+import { Suspense } from 'react';
 import type { TourConfig } from '@/lib/tour/types';
 
-const VirtualTourViewer = lazy(() =>
-  import('@/components/viewer/VirtualTourViewer').then((m) => ({ default: m.VirtualTourViewer }))
+const VirtualTourViewer = dynamic(
+  () => import('@/components/viewer/VirtualTourViewer').then((m) => m.VirtualTourViewer),
+  { ssr: false }
 );
 
 interface TourPageProps {
