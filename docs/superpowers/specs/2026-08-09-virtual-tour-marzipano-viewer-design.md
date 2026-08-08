@@ -15,7 +15,7 @@
 - **Decision:** This slice covers panorama + controls + multi-scene navigation. The admin hotspot-placement editor, floor-plan pop-up, VR entry, and everything else from the 44-feature reference are separate later slices.
 - **Decision:** Scenes are modeled as **asset-as-scene via metadata** — each `image/jpeg|png` asset becomes a scene; per-scene data lives in `assets.metadata` (jsonb); global settings stay in `projects.settings` (jsonb). No schema migration.
 - **Decision:** Navigation is **ordered prev/next arrows** (by scene order) plus **optional link hotspots** (`targetSceneId` on a hotspot renders a Marzipano link hotspot).
-- **Decision:** Use Marzipano `Source.fromImage(url)` (in-browser equirect source, works with existing JPEG/PNG assets). No tile pyramid in this slice.
+- **Decision:** Use Marzipano `ImageUrlSource.fromString(url)` (placeholder-free template) over a single-level `EquirectGeometry([{ width }])` — the verified in-browser equirect source in marzipano@0.10.2, works with existing JPEG/PNG assets. No tile pyramid in this slice.
 
 ## 2. Data Model
 
@@ -25,7 +25,7 @@ New shapes in `lib/tour/types.ts`:
 interface TourView {
   yaw: number;   // radians
   pitch: number; // radians
-  fov: number;   // radians
+  fov?: number;  // radians (defaults to a viewer constant when absent)
 }
 
 interface TourHotspot {
@@ -77,12 +77,12 @@ Marzipano's yaw convention differs from Babylon's `ArcRotateCamera.alpha`. The m
 
 ## 3. Architecture & Components
 
-**New dependency:** `marzipano` (Apache-2.0). The npm package ships a UMD build and **no TypeScript types** → add a local declaration file `types/marzipano.d.ts` covering the APIs used (Viewer, Source.fromImage, Scene, createScene, switchScene, setAutorotateEnabled, lookTo, viewport events, dispose). Loaded client-only via `next/dynamic` `ssr: false` so Marzipano never enters a server bundle.
+**New dependency:** `marzipano@0.10.2` (Apache-2.0). The npm package ships `src/index.js` (CommonJS, UMD-compatible) and **no TypeScript types** → add a local declaration file `types/marzipano.d.ts` covering the APIs used. Note: the spec's API names were verified against the 0.10.2 source — there is no `Source.fromImage`, `setAutorotateEnabled`, `dispose`, or Scene `complete` event. The real APIs are: `Marzipano.Viewer` (create/destroy), `ImageUrlSource.fromString(url)` for a single image, `EquirectGeometry([{ width }])`, `RectilinearView` + `limit.traditional`, `viewer.createScene`, `scene.switchTo`, `scene.lookTo`, `viewer.setIdleMovement` + `Marzipano.autorotate` for auto-rotate, `scene.hotspotContainer().createHotspot`, Layer `renderComplete` / TextureStore `textureError` for load state, and `viewer.destroy()` for cleanup. Loaded client-only via `next/dynamic` `ssr: false` so Marzipano never enters a server bundle.
 
 **Components:**
 
 - `components/marzipano/MarzipanoTourViewer.tsx` (`'use client'`) — owner component. Owns the `Marzipano.Viewer` lifecycle (create on mount, dispose on unmount), builds scenes from `TourConfig`, renders overlays: bottom-center controls (Play/Pause + prev/next arrows), fullscreen, loading state, and error surface. Replaces the removed `components/viewer/*`.
-- `components/marzipano/useMarzipanoTour.ts` (`'use client'`) — the imperative seam: `{ containerRef, goToScene(id), goNext(), goPrev(), toggleAutorotate, isPlaying, currentSceneIndex, isLoading, error }`. Wraps `Marzipano.Viewer` (create, `createScene` per scene with `Equirect` geometry + initial view, `switchScene` transitions, `setAutorotateEnabled`, lookTo). Includes the load-callback/error plumbing and cleanup.
+- `components/marzipano/useMarzipanoTour.ts` (`'use client'`) — the imperative seam: `{ containerRef, goToScene(id), goNext(), goPrev(), toggleAutorotate, isPlaying, currentSceneIndex, isLoading, error }`. Wraps `Marzipano.Viewer` (create, `createScene` per scene with `EquirectGeometry` + initial view, `scene.switchTo` transitions, `setIdleMovement` + `Marzipano.autorotate`, lookTo). Includes the load-callback/error plumbing and cleanup.
 - `components/marzipano/navigation.ts` (pure, no DOM) — scene-order navigation math: `nextIndex(current, length)` / `prevIndex(current, length)` with wraparound, and scene resolution (`resolveStartScene(scenes, startSceneId)`). Unit-testable.
 - `app/(public)/tour/[id]/page.tsx` — unchanged shape: server component fetches `TourConfig` (reworked for multi-scene), renders the client component; not-found state on fetch failure.
 - `app/(public)/tour/[id]/TourPageClient.tsx` — renders `MarzipanoTourViewer` instead of the Babylon viewer (keeps `dynamic(..., { ssr: false })`).
@@ -95,12 +95,12 @@ Marzipano's yaw convention differs from Babylon's `ArcRotateCamera.alpha`. The m
 
 ## 4. Controls & Interaction
 
-- **Play/Pause (bottom-center, left):** toggles `viewer.setAutorotateEnabled(isPlaying, autoRotateSpeed)`. Icon swaps between play/pause; `aria-pressed` reflects state; Marzipano stops auto-rotate on user drag natively.
+- **Play/Pause (bottom-center, left):** starts/stops auto-rotate via `viewer.setIdleMovement(0, Marzipano.autorotate({ yawSpeed: autoRotateSpeed }))` (continuous spin, auto-resumes after a user drag) and `viewer.setIdleMovement(Infinity)` to pause. Icon swaps between play/pause; `aria-pressed` reflects state.
 - **Prev/Next arrows (bottom-center, right):** `goPrev()`/`goNext()` step through ordered scenes with smooth `switchScene` cross-fade transitions. **Hidden when the tour has ≤ 1 scene.** Navigation wraps around the list.
 - **Fullscreen:** one button toggling the browser Fullscreen API on the viewer container (controls are descendants, so they stay visible). `fullscreenchange` listener syncs state; promise rejections caught.
 - **Link hotspots:** click → `switchScene` to the target scene. Regular hotspots with `url` → `window.open(url, '_blank', 'noopener,noreferrer')`. Info-only hotspots (no url/target) → no action in this slice.
 - **Hotspot markers:** Marzipano renders hotspots as **DOM elements** overlaid on the viewport via each scene's `hotspotContainer` (`scene.hotspotContainer().createHotspot(el, { yaw, pitch })`). The viewer creates a small marker element per hotspot whose appearance follows `settings.hotspotStyle` (`pin` vs `minimal`). Markers are `pointer-events: auto`, focusable, and `aria-label`-labelled.
-- **Loading state:** spinner overlay while the first scene's texture loads; a 15s timeout guarantees the overlay clears. Texture **load failure** → error state.
+- **Loading state:** spinner overlay while the first scene's texture loads, signalled by the start scene's Layer `renderComplete`; a 15s timeout guarantees the overlay clears. Texture **load failure** (TextureStore `textureError`) → error state.
 - **Idle fade:** controls hide after ~3s inactivity, reappear on `pointermove`/`keydown` (timer ref cleared on each event).
 - **Accessibility:** `prefers-reduced-motion` → auto-rotate defaults off and CSS transitions disabled; arrow keys navigate scenes when the viewer container is focused; ARIA labels + `role="status"` on loading/error; touch swipe/pinch from Marzipano natively.
 - **Responsive/dark:** full-screen on mobile, centered `max-w-4xl` on desktop, `#080a0f` background, cyan accent (`#0d9488`/`#06b6d4`) — consistent with the current page.
