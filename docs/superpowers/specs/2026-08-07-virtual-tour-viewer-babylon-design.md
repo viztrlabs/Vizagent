@@ -6,15 +6,15 @@ Build a public-facing Virtual Tour viewer using Babylon.js PhotoDome for equirec
 ## Requirements
 
 ### Core Features (T-031)
-1. **PhotoDome Panorama** — Render equirectangular 360° image on a sphere using Babylon.js `PhotoDome`
-2. **Orbit Controls** — Mouse drag (desktop) / touch drag (mobile) for yaw/pitch navigation
-3. **Auto-rotate** — Optional continuous rotation from project settings
-4. **Hotspot Markers** — Clickable pins on sphere with labels, descriptions, and links
-5. **Fullscreen Button** — Browser Fullscreen API toggle
-6. **VR Button** — WebXR session for Cardboard/Daydream (immersive-vr)
-7. **Data Loading** — Fetch tour config (image URL, hotspots, settings) from API
-8. **Responsive Layout** — Full-screen on mobile, max-w-4xl centered on desktop
-9. **Dark Theme** — Compatible with VizTR dark design system
+- [x] **PhotoDome Panorama** — Render equirectangular 360° image on a sphere using Babylon.js `PhotoDome`
+- [x] **Orbit Controls** — Mouse drag (desktop) / touch drag (mobile) for yaw/pitch navigation
+- [x] **Auto-rotate** — Optional continuous rotation from project settings
+- [x] **Hotspot Markers** — Clickable pins on sphere with labels, descriptions, and links
+- [x] **Fullscreen Button** — Browser Fullscreen API toggle
+- [x] **VR Button** — WebXR session for Cardboard/Daydream (immersive-vr)
+- [x] **Data Loading** — Fetch tour config (image URL, hotspots, settings) from API
+- [x] **Responsive Layout** — Full-screen on mobile, max-w-4xl centered on desktop
+- [x] **Dark Theme** — Compatible with VizTR dark design system
 
 ### Technical Constraints
 - Babylon.js 9.x (core, loaders, GUI, inspectors)
