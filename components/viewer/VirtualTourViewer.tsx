@@ -13,15 +13,23 @@ interface VirtualTourViewerProps {
 
 export function VirtualTourViewer({ config, className = '' }: VirtualTourViewerProps) {
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [autoRotate, setAutoRotate] = useState(config.settings.autoRotate);
+  const [autoRotate, setAutoRotate] = useState(() => {
+    if (typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return false;
+    }
+    return config.settings.autoRotate;
+  });
   const [showControls, setShowControls] = useState(true);
   const hideTimerRef = useRef<number>(0);
+  const viewerRef = useRef<HTMLDivElement | null>(null);
 
   const {
     canvasRef,
     getGuiManager,
     isLoading,
     error,
+    vrError,
+    clearVrError,
     isVRSupported,
     isInVR,
     enterVR,
@@ -40,6 +48,7 @@ export function VirtualTourViewer({ config, className = '' }: VirtualTourViewerP
       window.clearTimeout(hideTimerRef.current);
       hideTimerRef.current = window.setTimeout(() => setShowControls(false), 3000);
     };
+    hideTimerRef.current = window.setTimeout(() => setShowControls(false), 3000);
     window.addEventListener('pointermove', show);
     window.addEventListener('keydown', show);
     return () => {
@@ -49,13 +58,23 @@ export function VirtualTourViewer({ config, className = '' }: VirtualTourViewerP
     };
   }, []);
 
+  useEffect(() => {
+    if (!vrError) return;
+    const timer = window.setTimeout(clearVrError, 5000);
+    return () => window.clearTimeout(timer);
+  }, [vrError, clearVrError]);
+
   const toggleFullscreen = useCallback(() => {
     if (!document.fullscreenElement) {
-      canvasRef.current?.requestFullscreen().then(() => setIsFullscreen(true));
+      viewerRef.current?.requestFullscreen().catch(() => {
+        setIsFullscreen(!!document.fullscreenElement);
+      });
     } else {
-      document.exitFullscreen().then(() => setIsFullscreen(false));
+      document.exitFullscreen().catch(() => {
+        setIsFullscreen(!!document.fullscreenElement);
+      });
     }
-  }, [canvasRef]);
+  }, []);
 
   const handleHotspotSelect = useCallback((hotspot: TourHotspot) => {
     if (hotspot.url) {
@@ -105,12 +124,12 @@ export function VirtualTourViewer({ config, className = '' }: VirtualTourViewerP
   }
 
   return (
-    <div className={`viztr-tour-viewer ${className}`} style={{ position: 'relative', width: '100%', height: '100%' }}>
+    <div ref={viewerRef} className={`viztr-tour-viewer ${className}`} style={{ position: 'relative', width: '100%', height: '100%' }}>
       <canvas ref={canvasRef} className="viztr-tour-canvas" />
 
       {isLoading && (
         <div className="viztr-tour-overlay">
-          <div className="viztr-spinner" aria-label="Loading tour" />
+          <div className="viztr-spinner" role="status" aria-label="Loading tour" />
         </div>
       )}
 
@@ -126,6 +145,12 @@ export function VirtualTourViewer({ config, className = '' }: VirtualTourViewerP
           onToggleVR={isInVR ? exitVR : enterVR}
           onToggleAutoRotate={() => setAutoRotate((v) => !v)}
         />
+      )}
+
+      {vrError && (
+        <div className="viztr-tour-toast" role="status">
+          {vrError}
+        </div>
       )}
 
       {config.hotspots.map((hotspot) => (
@@ -161,6 +186,21 @@ export function VirtualTourViewer({ config, className = '' }: VirtualTourViewerP
           justify-content: center;
           background: #080a0f;
           z-index: 10;
+        }
+        .viztr-tour-toast {
+          position: absolute;
+          bottom: 16px;
+          left: 50%;
+          transform: translateX(-50%);
+          max-width: calc(100% - 32px);
+          padding: 10px 16px;
+          background: rgba(13, 17, 23, 0.9);
+          border: 1px solid rgba(255, 255, 255, 0.1);
+          color: #fca5a5;
+          font-size: 14px;
+          border-radius: 8px;
+          z-index: 20;
+          text-align: center;
         }
         .viztr-spinner {
           width: 40px;

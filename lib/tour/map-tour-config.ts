@@ -26,6 +26,10 @@ function parseSettings(raw: unknown): Record<string, unknown> {
   return {};
 }
 
+function isSafeUrl(value: unknown): value is string {
+  return typeof value === 'string' && /^https?:\/\//i.test(value);
+}
+
 function normalizeHotspots(raw: unknown): TourHotspot[] {
   if (!Array.isArray(raw)) return [];
   return raw.filter(
@@ -40,7 +44,7 @@ function normalizeHotspots(raw: unknown): TourHotspot[] {
     id: h.id as string,
     label: h.label as string,
     description: typeof h.description === 'string' ? h.description : undefined,
-    url: typeof h.url === 'string' ? h.url : undefined,
+    url: isSafeUrl(h.url) ? h.url : undefined,
     yaw: h.yaw as number,
     pitch: h.pitch as number,
   }));

@@ -73,7 +73,7 @@ export function TourPageClient({ config }: TourPageClientProps) {
         <Suspense
           fallback={
             <div className="viztr-tour-fallback">
-              <div className="viztr-spinner" aria-label="Loading tour" />
+              <div className="viztr-spinner" role="status" aria-label="Loading tour" />
             </div>
           }
         >

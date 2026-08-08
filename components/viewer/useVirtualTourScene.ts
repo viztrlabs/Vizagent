@@ -19,6 +19,7 @@ export function useVirtualTourScene(config: TourConfig, autoRotate: boolean) {
 
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [vrError, setVrError] = useState<string | null>(null);
   const [isVRSupported, setIsVRSupported] = useState(false);
   const [isInVR, setIsInVR] = useState(false);
 
@@ -47,6 +48,7 @@ export function useVirtualTourScene(config: TourConfig, autoRotate: boolean) {
       engineRef.current.dispose();
       engineRef.current = null;
     }
+    xrExperienceRef.current = null;
   }, []);
 
   const checkVRSupport = useCallback(async () => {
@@ -68,6 +70,7 @@ export function useVirtualTourScene(config: TourConfig, autoRotate: boolean) {
 
     setIsLoading(true);
     setError(null);
+    setVrError(null);
 
     try {
       const engine = new Engine(canvas, true, {
@@ -120,12 +123,22 @@ export function useVirtualTourScene(config: TourConfig, autoRotate: boolean) {
 
       engine.runRenderLoop(() => {
         if (autoRotateRef.current && cameraRef.current && !isInVRRef.current) {
-          cameraRef.current.alpha += config.settings.autoRotateSpeed * 0.001;
+          cameraRef.current.alpha +=
+            config.settings.autoRotateSpeed * (engine.getDeltaTime() / 1000);
         }
         scene.render();
       });
 
       const onKey = (e: KeyboardEvent) => {
+        const target = e.target as HTMLElement | null;
+        if (
+          target &&
+          (target.tagName === 'INPUT' ||
+            target.tagName === 'TEXTAREA' ||
+            target.isContentEditable)
+        ) {
+          return;
+        }
         const cam = cameraRef.current;
         if (!cam) return;
         const step = 0.05;
@@ -148,6 +161,15 @@ export function useVirtualTourScene(config: TourConfig, autoRotate: boolean) {
 
       const timer = window.setTimeout(finishLoading, 15000);
       let rafId = 0;
+
+      photoDome.texture.getInternalTexture()?.onErrorObservable.add(() => {
+        if (settled) return;
+        settled = true;
+        window.clearTimeout(timer);
+        window.cancelAnimationFrame(rafId);
+        setError('Failed to load the tour panorama');
+        setIsLoading(false);
+      });
 
       const awaitDome = () => {
         if (settled) return;
@@ -176,19 +198,24 @@ export function useVirtualTourScene(config: TourConfig, autoRotate: boolean) {
 
   const enterVR = useCallback(async () => {
     const scene = sceneRef.current;
-    if (!scene) return;
+    if (!scene || isInVRRef.current) return;
     try {
-      const xr = await scene.createDefaultXRExperienceAsync({
-        optionalFeatures: ['hit-test', 'local-floor', 'bounded-floor'],
-      });
-      xrExperienceRef.current = xr;
-      xr.baseExperience.sessionManager.onXRSessionInit.add(() => setIsInVR(true));
+      let xr = xrExperienceRef.current;
+      if (!xr) {
+        xr = await scene.createDefaultXRExperienceAsync({
+          optionalFeatures: ['hit-test', 'local-floor', 'bounded-floor'],
+        });
+        xrExperienceRef.current = xr;
+        xr.baseExperience.sessionManager.onXRSessionInit.add(() => setIsInVR(true));
+        xr.baseExperience.sessionManager.onXRSessionEnded.add(() => setIsInVR(false));
+      }
+      setVrError(null);
       await xr.baseExperience.enterXRAsync('immersive-vr', 'local-floor', undefined, {
         optionalFeatures: ['hit-test', 'local-floor', 'bounded-floor'],
       });
     } catch (err) {
       console.error('Failed to enter VR:', err);
-      setError('Failed to enter VR mode');
+      setVrError('Could not start VR. Make sure a headset is available, then try again.');
     }
   }, []);
 
@@ -205,6 +232,7 @@ export function useVirtualTourScene(config: TourConfig, autoRotate: boolean) {
 
   const getScene = useCallback(() => sceneRef.current, []);
   const getGuiManager = useCallback(() => guiManagerRef.current, []);
+  const clearVrError = useCallback(() => setVrError(null), []);
 
   return {
     canvasRef,
@@ -212,6 +240,8 @@ export function useVirtualTourScene(config: TourConfig, autoRotate: boolean) {
     getGuiManager,
     isLoading,
     error,
+    vrError,
+    clearVrError,
     isVRSupported,
     isInVR,
     enterVR,

@@ -102,4 +102,26 @@ describe('mapTourConfig', () => {
     });
     expect(config!.hotspots[1].url).toBe('https://example.com');
   });
+
+  it('drops hotspots whose url is not http(s) to prevent script execution', () => {
+    const config = mapTourConfig({
+      project: {
+        id: 'p1',
+        name: 'Sunset Villa',
+        settings: {
+          hotspots: [
+            { id: 'h1', label: 'Unsafe', yaw: 0, pitch: 0, url: 'javascript:alert(1)' },
+            { id: 'h2', label: 'Data', yaw: 0, pitch: 0, url: 'data:text/html,x' },
+            { id: 'h3', label: 'Safe', yaw: 0, pitch: 0, url: 'https://example.com' },
+          ],
+        },
+      },
+      assets: [imageAsset],
+      publicUrlFor: urlFor,
+    });
+    expect(config!.hotspots).toHaveLength(3);
+    expect(config!.hotspots[0].url).toBeUndefined();
+    expect(config!.hotspots[1].url).toBeUndefined();
+    expect(config!.hotspots[2].url).toBe('https://example.com');
+  });
 });
