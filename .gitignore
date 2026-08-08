@@ -32,3 +32,6 @@ typecheck_output.txt
 
 # superpowers scratch workspace
 .superpowers/
+
+# git worktrees
+.worktrees/
