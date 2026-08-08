@@ -18,6 +18,7 @@ model User {
 
   projects      Project[]
   deployments   Deployment[]
+  subscriptions Subscription[]
 
   @@map("users")
   @@index([tenantId])
@@ -183,4 +184,25 @@ model Viewer {
   @@index([sessionId])
   @@index([tenantId])
   @@map("viewers")
+}
+
+model Subscription {
+  id                 String    @id @default(uuid())
+  userId             String    @map("user_id")
+  tenantId           String    @map("tenant_id")
+  stripeCustomerId   String    @unique @map("stripe_customer_id")
+  stripeSubscriptionId String  @unique @map("stripe_subscription_id")
+  stripePriceId      String    @map("stripe_price_id")
+  tier               String
+  status             String
+  currentPeriodStart DateTime? @map("current_period_start")
+  currentPeriodEnd   DateTime? @map("current_period_end")
+  createdAt          DateTime  @default(now()) @map("created_at")
+  updatedAt          DateTime  @updatedAt @map("updated_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([userId])
+  @@map("subscriptions")
 }

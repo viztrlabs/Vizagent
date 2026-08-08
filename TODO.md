@@ -71,7 +71,7 @@ Do not skip steps. Do not work on a task that isn't `unclaimed`.
 | T-046 | Dashboard analytics page (charts, metrics) | OpenCode | app/(dashboard)/analytics/, components/dashboard/ | done | 2026-08-08 15:15 | 2026-08-08 15:30 | app/(dashboard)/analytics/page.tsx, components/dashboard/ProjectStatusChart.tsx, lib/server/repositories/analytics.repository.ts, analytics.repository.test.ts | Project status breakdown bar chart (recharts) + stat cards (total/published/qa_passed/assets) |
 | T-047 | Real-time collaboration (WebRTC signaling) | OpenCode-Subagent-7 | lib/realtime/, components/collab/ | unclaimed | — | — | — | Depends on T-010, T-011 |
 | T-048 | Performance optimization (lazy load, code splitting) | OpenCode | / (root) | done | 2026-08-07 15:30 | 2026-08-07 16:00 | app/view/[configId]/, components/viewer/ViewClient.tsx, app/dashboard/loading.tsx, app/portal/loading.tsx, app/view/[configId]/loading.tsx, components/configurator/BabylonCanvas.tsx, components/configurator/VirtualTourView.tsx, components/stream/StreamViewer.tsx, lib/emails/reminder.ts | Route-level code splitting, dynamic imports for Babylon.js/WebRTC, memoized heavy components, loading skeletons, fixed broken email re-export || T-049 | AR/VR features (WebXR session, hit-test) | OpenCode-Subagent-9 | components/configurator/ARPanel.tsx, lib/xr/ | unclaimed | — | — | — | Depends on T-026 |
-| T-050 | Payment integration (Stripe) | OpenCode-Subagent-10 | app/api/payments/, lib/stripe/ | unclaimed | — | — | — | Depends on T-016, T-017 |
+| T-050 | Payment integration (Stripe) | OpenCode | app/api/payments/, lib/stripe/ | done | 2026-08-08 15:40 | 2026-08-08 16:00 | lib/stripe/server.ts, lib/stripe/tiers.ts, lib/stripe/tiers.test.ts, lib/server/repositories/subscription.repository.ts, app/api/payments/checkout/route.ts, app/api/payments/portal/route.ts, app/api/payments/webhook/route.ts, app/(marketing)/pricing/page.tsx, prisma/schema.prisma (Subscription), prisma/migrations/ | Stripe subscriptions: 3 tiers (Starter/Pro/Enterprise), Checkout + Customer Portal, webhook sync, pricing page |
 | T-051 | E2E tests (Playwright) | OpenCode-Subagent-11 | e2e/ | unclaimed | — | — | — | Depends on T-028 |
 
 *(Add new rows as new tasks come up. Never delete a `done` row — it's your project history. Never renumber existing IDs.)*
@@ -80,7 +80,7 @@ Do not skip steps. Do not work on a task that isn't `unclaimed`.
 
 ## Currently in progress (quick glance)
 
-- **OpenCode-Subagent-1 to 11 (T-041 to T-051):** T-041 (upload dropzone), T-043 (QA checklist), T-044 (publish+gate), T-045 (public viewer), T-046 (analytics) done by OpenCode. Remaining unclaimed: T-042 (finish), T-047, T-049, T-050. T-051 (E2E tests) already committed
+- **OpenCode-Subagent-1 to 11 (T-041 to T-051):** T-041 (upload dropzone), T-043 (QA checklist), T-044 (publish+gate), T-045 (public viewer), T-046 (analytics), T-050 (Stripe subscriptions) done by OpenCode. Remaining unclaimed: T-042 (finish), T-047, T-049. T-051 (E2E tests) already committed
 - **Antigravity:** None (all 5 responsive tasks complete)
 - **OpenCode (main):** Architectural implementation complete (T-030 through T-040); T-041, T-043, T-044 built
 
