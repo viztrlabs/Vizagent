@@ -885,6 +885,8 @@ Expected: FAIL with "Cannot find module './client'"
 
 - [ ] **Step 3: Implement `lib/ai/client.ts`**
 
+Note: config is loaded per-call (not at module scope) so env changes are honored — module-scope `const config = loadConfig()` froze env at import time and broke per-test env overrides.
+
 ```ts
 import { loadConfig, parseProviderRef } from './config';
 import { AIProviderError } from './errors';
@@ -894,9 +896,7 @@ import { OpenAIProvider } from './providers/openai';
 import { AnthropicProvider } from './providers/anthropic';
 import { OllamaProvider } from './providers/ollama';
 
-const config = loadConfig();
-
-function getProvider(ref: string): AIProvider {
+function getProvider(ref: string, config: ReturnType<typeof loadConfig>): AIProvider {
   const { provider, model } = parseProviderRef(ref, config);
   switch (provider) {
     case 'openai': {
@@ -917,16 +917,18 @@ function getProvider(ref: string): AIProvider {
 }
 
 export async function generate(req: GenerateRequest): Promise<GenerateResult> {
+  const config = loadConfig();
   const ref = req.provider ?? config.defaultProvider;
   const { provider, model } = parseProviderRef(ref, config);
-  const aiProvider = getProvider(ref);
+  const aiProvider = getProvider(ref, config);
   const { text, usage } = await aiProvider.complete(req);
   return { text, provider, model, usage };
 }
 
 export async function* streamGenerate(req: GenerateRequest): AsyncIterable<StreamChunk> {
+  const config = loadConfig();
   const ref = req.provider ?? config.defaultProvider;
-  const aiProvider = getProvider(ref);
+  const aiProvider = getProvider(ref, config);
   yield* aiProvider.stream(req);
 }
 ```
