@@ -64,7 +64,7 @@ Do not skip steps. Do not work on a task that isn't `unclaimed`.
 | T-039 | Implement Virtual Tour as view mode in XR Configurator | OpenCode | components/configurator/VirtualTourView.tsx | done | 2026-08-07 11:00 | 2026-08-07 11:15 | components/configurator/VirtualTourView.tsx | Equirectangular sphere view in Babylon.js |
 | T-040 | Add Sentry observability | OpenCode | sentry.*.config.ts, next.config.ts | done | 2026-08-07 11:15 | 2026-08-07 11:30 | sentry.client.config.ts, sentry.server.config.ts, sentry.edge.config.ts, next.config.ts | Error tracking and performance monitoring |
 | T-041 | Upload dropzone + presigned URLs | OpenCode | components/upload/, app/api/assets/ | done | 2026-08-08 12:00 | 2026-08-08 12:35 | components/upload/UploadDropzone.tsx, lib/server/lib/r2.ts, lib/server/lib/r2.test.ts, lib/server/repositories/asset.repository.ts, lib/validations.ts, lib/utils/format.ts, app/api/assets/, package.json, jest.config.ts, .babelrc (removed) | Cloudflare R2 multipart presigned uploads with signed read URLs |
-| T-042 | Virtual tour viewer (Babylon.js sphere) | OpenCode-Subagent-2 | components/viewer/, app/(public)/tour/ | unclaimed | — | — | — | Depends on T-006, T-012 |
+| T-042 | Virtual tour viewer (Babylon.js sphere) | OpenCode | components/viewer/, app/(public)/tour/ | done | 2026-08-08 17:00 | 2026-08-08 17:10 | components/viewer/ViewClient.tsx | Wired to real panorama assets via GET /api/assets; renders VirtualTourView sphere |
 | T-043 | QA checklist logic (5 automated checks) | OpenCode | lib/server/qa/, lib/server/repositories/qa.repository.ts, lib/server/queues/qa.queue.ts, lib/server/workers/qa.worker.ts, app/api/qa/ | done | 2026-08-08 13:10 | 2026-08-08 13:45 | lib/server/qa/qa-engine.ts, lib/server/qa/glb-loader.server.ts, lib/server/qa/qa-engine.test.ts, lib/server/repositories/qa.repository.ts, lib/server/queues/qa.queue.ts, lib/server/workers/qa.worker.ts, app/api/qa/route.ts | 5-check QA via BullMQ: panorama present, naming, size limit, metadata complete, GLB loadability (binary parse). Pass → qa_passed (T-044 gate) |
 | T-044 | Publish button + gate (blocked unless QA passed) | OpenCode | app/(dashboard)/projects/[id]/, app/api/deployments/ | done | 2026-08-08 14:00 | 2026-08-08 14:30 | app/(dashboard)/projects/[id]/page.tsx, app/(dashboard)/projects/[id]/ProjectDetailClient.tsx, lib/server/repositories/deployment.repository.ts, app/api/deployments/route.ts, app/api/deployments/[id]/route.ts, deployment.repository.test.ts | QA-gated Publish → Deployment record + publicUrl; project hub with QA summary + re-run + upload |
 | T-045 | Public viewer page (no auth) | OpenCode | app/(public)/tour/ | done | 2026-08-08 14:45 | 2026-08-08 15:05 | app/api/public/tour/[id]/route.ts, app/(public)/tour/[id]/page.tsx, components/viewer/PublicTourViewer.tsx | No-auth public viewer; fetches signed asset URLs via public API, renders panorama or GLB |
@@ -80,9 +80,9 @@ Do not skip steps. Do not work on a task that isn't `unclaimed`.
 
 ## Currently in progress (quick glance)
 
-- **OpenCode-Subagent-1 to 11 (T-041 to T-051):** T-041 (upload dropzone), T-043 (QA checklist), T-044 (publish+gate), T-045 (public viewer), T-046 (analytics), T-050 (Stripe subscriptions) done by OpenCode. Remaining unclaimed: T-042 (finish). T-051 (E2E tests) already committed
+- **OpenCode-Subagent-1 to 11 (T-041 to T-051):** ALL complete. T-041 (upload), T-042 (tour viewer), T-043 (QA), T-044 (publish), T-045 (public viewer), T-046 (analytics), T-047 (collab), T-049 (AR/VR), T-050 (Stripe) done by OpenCode. T-048 (perf) and T-051 (E2E) committed earlier.
 - **Antigravity:** None (all 5 responsive tasks complete)
-- **OpenCode (main):** Architectural implementation complete (T-030 through T-040); T-041, T-043, T-044 built
+- **OpenCode (main):** Architectural implementation complete (T-030 through T-040); all Phase 2 features (T-041..T-051) now built
 
 ---
 
