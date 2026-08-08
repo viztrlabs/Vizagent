@@ -73,6 +73,8 @@ Do not skip steps. Do not work on a task that isn't `unclaimed`.
 | T-048 | Performance optimization (lazy load, code splitting) | OpenCode | / (root) | done | 2026-08-07 15:30 | 2026-08-07 16:00 | app/view/[configId]/, components/viewer/ViewClient.tsx, app/dashboard/loading.tsx, app/portal/loading.tsx, app/view/[configId]/loading.tsx, components/configurator/BabylonCanvas.tsx, components/configurator/VirtualTourView.tsx, components/stream/StreamViewer.tsx, lib/emails/reminder.ts | Route-level code splitting, dynamic imports for Babylon.js/WebRTC, memoized heavy components, loading skeletons, fixed broken email re-export || T-049 | AR/VR features (WebXR session, hit-test) | OpenCode | components/configurator/ARPanel.tsx, lib/xr/ | done | 2026-08-08 16:40 | 2026-08-08 16:55 | lib/xr/webxr-session.ts, lib/xr/webxr-session.test.ts, lib/xr/scene-understanding.ts, components/configurator/ARPanel.tsx | WebXR AR/VR sessions, hit-test, plane detection, anchors, feature detection UI |
 | T-050 | Payment integration (Stripe) | OpenCode | app/api/payments/, lib/stripe/ | done | 2026-08-08 15:40 | 2026-08-08 16:00 | lib/stripe/server.ts, lib/stripe/tiers.ts, lib/stripe/tiers.test.ts, lib/server/repositories/subscription.repository.ts, app/api/payments/checkout/route.ts, app/api/payments/portal/route.ts, app/api/payments/webhook/route.ts, app/(marketing)/pricing/page.tsx, prisma/schema.prisma (Subscription), prisma/migrations/ | Stripe subscriptions: 3 tiers (Starter/Pro/Enterprise), Checkout + Customer Portal, webhook sync, pricing page |
 | T-051 | E2E tests (Playwright) | OpenCode-Subagent-11 | e2e/ | unclaimed | — | — | — | Depends on T-028 |
+| T-052 | AI Service Layer (multi-provider: OpenAI/Anthropic/Ollama) | OpenCode | lib/ai/ | done | 2026-08-08 18:00 | 2026-08-08 18:40 | lib/ai/types.ts, lib/ai/errors.ts, lib/ai/config.ts, lib/ai/client.ts, lib/ai/providers/{provider,openai,anthropic,ollama}.ts, lib/ai/*.test.ts, package.json, pnpm-lock.yaml, README.md, docs/superpowers/plans/2026-08-08-ai-service-layer.md | Phase 3 sub-project 1. Provider interface (complete/stream) + env routing (AI_DEFAULT_PROVIDER + per-call override) + generate()/streamGenerate(); 19 AI tests pass, pushed to main |
+| T-053 | AI Scene Generation (config + env image, BullMQ) | OpenCode | lib/ai/, app/api/ai/scenes/, lib/server/ | in_progress | 2026-08-08 18:45 | — | docs/superpowers/specs/2026-08-08-ai-scene-generation-design.md | Phase 3 sub-project 2. Design spec approved; implementation plan not yet written. LLM ConfigData + OpenAI env image → R2 → save as Configuration variant; AI Scene panel in configurator |
 
 *(Add new rows as new tasks come up. Never delete a `done` row — it's your project history. Never renumber existing IDs.)*
 
@@ -82,7 +84,7 @@ Do not skip steps. Do not work on a task that isn't `unclaimed`.
 
 - **OpenCode-Subagent-1 to 11 (T-041 to T-051):** ALL complete. T-041 (upload), T-042 (tour viewer), T-043 (QA), T-044 (publish), T-045 (public viewer), T-046 (analytics), T-047 (collab), T-049 (AR/VR), T-050 (Stripe) done by OpenCode. T-048 (perf) and T-051 (E2E) committed earlier.
 - **Antigravity:** None (all 5 responsive tasks complete)
-- **OpenCode (main):** Architectural implementation complete (T-030 through T-040); all Phase 2 features (T-041..T-051) now built
+- **OpenCode (main):** Architectural implementation complete (T-030 through T-040); all Phase 2 features (T-041..T-051) now built. Phase 3 started: T-052 (AI Service Layer) done, T-053 (AI Scene Generation) in progress.
 
 ---
 
