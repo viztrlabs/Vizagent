@@ -147,19 +147,22 @@ export function useVirtualTourScene(config: TourConfig, autoRotate: boolean) {
       };
 
       const timer = window.setTimeout(finishLoading, 15000);
+      let rafId = 0;
 
       const awaitDome = () => {
+        if (settled) return;
         if (photoDome.texture.isReady()) {
           window.clearTimeout(timer);
           finishLoading();
         } else {
-          requestAnimationFrame(awaitDome);
+          rafId = requestAnimationFrame(awaitDome);
         }
       };
       awaitDome();
 
       return () => {
         window.clearTimeout(timer);
+        window.cancelAnimationFrame(rafId);
         window.removeEventListener('resize', resize);
         window.removeEventListener('keydown', onKey);
         disposeScene();
