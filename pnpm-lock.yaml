@@ -11,6 +11,9 @@ importers:
       '@babylonjs/core':
         specifier: ^9.19.1
         version: 9.19.1
+      '@babylonjs/gui':
+        specifier: ^9.20.0
+        version: 9.20.0(@babylonjs/core@9.19.1)
       '@babylonjs/loaders':
         specifier: ^9.19.1
         version: 9.19.1(@babylonjs/core@9.19.1)(babylonjs-gltf2interface@9.19.1)
@@ -117,6 +120,11 @@ packages:
 
   '@babylonjs/core@9.19.1':
     resolution: {integrity: sha512-Uu2VchxBGBEEUh73YoobP1U5aNGO7AH4nZB2hs1azxd9fWxj5C1obIVs5wcA05fppAsYPJiNy/+HfaaPdoqbbQ==}
+
+  '@babylonjs/gui@9.20.0':
+    resolution: {integrity: sha512-Cg2+MvXD6hj8w2ikAhPPO9Qd77pRgcHPh5HwDHtHq7mGqFIl8O96HVH/tSEA6+N495gqWPFCaFSQcN1suc+7CA==}
+    peerDependencies:
+      '@babylonjs/core': ^9.0.0
 
   '@babylonjs/loaders@9.19.1':
     resolution: {integrity: sha512-53TNVB9w1PiAuZOanhLztd6OZRjyq0i4/ff7skqTgXwB9KulpKwPMO70nZR7lAiszE4p92XNTrjv+pMMIR0y1w==}
@@ -2725,6 +2733,10 @@ snapshots:
   '@alloc/quick-lru@5.2.0': {}
 
   '@babylonjs/core@9.19.1': {}
+
+  '@babylonjs/gui@9.20.0(@babylonjs/core@9.19.1)':
+    dependencies:
+      '@babylonjs/core': 9.19.1
 
   '@babylonjs/loaders@9.19.1(@babylonjs/core@9.19.1)(babylonjs-gltf2interface@9.19.1)':
     dependencies:
