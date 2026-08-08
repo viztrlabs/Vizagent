@@ -1,0 +1,55 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PUBLIC
+  CLIENT
+  STAFF
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  role      Role     @default(CLIENT)
+  createdAt DateTime @default(now())
+  sessions  Session[]
+}
+
+model Session {
+  id              String        @id @default(cuid())
+  email           String
+  firstName       String
+  lastName        String
+  company         String?
+  serviceId       String
+  projectType     String
+  notes           String?
+  date            String
+  time            String
+  startAt         DateTime
+  durationMinutes Int
+  status          BookingStatus @default(CONFIRMED)
+  reminderSentAt  DateTime?
+  gcalEventId     String?
+  createdAt       DateTime      @default(now())
+
+  @@index([email])
+  @@index([status])
+  @@index([startAt])
+}
