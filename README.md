@@ -57,7 +57,22 @@ RESEND_API_KEY="re_your_resend_api_key"
 CRON_SECRET="your-cron-secret"
 ```
 
-**8. Test the application:**
+**8. AI providers (optional — used by scene generation, QA, and tagging):**
+
+Default provider is OpenAI. Set `AI_DEFAULT_PROVIDER=ollama` to use a local
+Ollama server, or override per-call by passing `provider: 'local'` / `provider: 'openai/gpt-4o'`.
+
+```env
+AI_DEFAULT_PROVIDER="openai"
+OPENAI_API_KEY="sk-..."
+OPENAI_MODEL="gpt-4o-mini"
+ANTHROPIC_API_KEY="sk-ant-..."
+ANTHROPIC_MODEL="claude-3-5-sonnet-latest"
+OLLAMA_BASE_URL="http://localhost:11434"
+OLLAMA_MODEL="llama3.1"
+```
+
+**9. Test the application:**
 ```bash
 cd C:\Users\Arch_Viz\Desktop\VizAgent
 pnpm dev
