@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import { Header } from '@/components/Header';
 
 export const metadata: Metadata = {
   title: 'VizTR',
@@ -19,7 +20,10 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
-      <body className="min-h-screen bg-bg text-white antialiased">{children}</body>
+      <body className="min-h-screen bg-bg text-white antialiased">
+        <Header />
+        <main className="pt-16">{children}</main>
+      </body>
     </html>
   );
 }

@@ -6,7 +6,7 @@ import type { PixelStreamingConfig, StreamState, StreamStats } from '@/lib/pixel
 interface UsePixelStreamingResult {
   state: StreamState;
   stats: StreamStats;
-  videoRef: React.RefObject<HTMLVideoElement>;
+  videoRef: React.RefObject<HTMLVideoElement | null>;
   connect: () => void;
   reconnect: () => void;
   toggleMute: () => void;
@@ -14,7 +14,7 @@ interface UsePixelStreamingResult {
 }
 
 export function usePixelStreaming(config: PixelStreamingConfig): UsePixelStreamingResult {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const wsRef = useRef<WebSocket | null>(null);
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const statsIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
