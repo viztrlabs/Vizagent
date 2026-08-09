@@ -49,6 +49,8 @@ model Session {
   gcalEventId     String?
   createdAt       DateTime      @default(now())
 
+  user   User   @relation(fields: [email], references: [email])
+
   @@index([email])
   @@index([status])
   @@index([startAt])
