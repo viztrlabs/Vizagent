@@ -22,7 +22,17 @@ const SERVICE_DURATIONS: Record<string, number> = {
 
 export async function POST(req: NextRequest) {
   try {
-    const body = await req.json();
+    const body: {
+      firstName?: string;
+      lastName?: string;
+      email?: string;
+      company?: string;
+      serviceId?: string;
+      projectType?: string;
+      date?: string;
+      time?: string;
+      notes?: string;
+    } = await req.json();
     const {
       firstName,
       lastName,
@@ -66,7 +76,7 @@ export async function POST(req: NextRequest) {
       from: 'VizTR <bookings@viztr.io>',
       to: email,
       subject: `Session confirmed — ${SERVICE_NAMES[serviceId] || serviceId}`,
-      html: confirmationEmailHTML({
+      html: await confirmationEmailHTML({
         id: session.id,
         serviceId: SERVICE_NAMES[serviceId] || serviceId,
         firstName,

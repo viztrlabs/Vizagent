@@ -34,10 +34,11 @@
     "**/*.tsx",
     ".next/types/**/*.ts"
   ],
-  "exclude": [
+"exclude": [
     "node_modules",
     "babylon_XR_World",
     "VizAgents(Opencode-Hermes-Gravity-)",
+    "VizTR-OS",
     "components/configurator",
     "lib/xr"
   ]

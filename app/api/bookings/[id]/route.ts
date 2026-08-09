@@ -4,11 +4,12 @@ import { deleteCalendarEvent } from '@/lib/google-calendar';
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
+  const { id } = await params;
   try {
     const session = await prisma.session.findUnique({
-      where: { id: params.id },
+      where: { id },
     });
 
     if (!session) {
@@ -24,7 +25,7 @@ export async function DELETE(
     }
 
     await prisma.session.update({
-      where: { id: params.id },
+      where: { id },
       data: { status: 'CANCELLED' },
     });
 

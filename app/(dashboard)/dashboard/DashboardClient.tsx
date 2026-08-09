@@ -40,7 +40,7 @@ export function DashboardClient() {
         throw new Error('Failed to fetch dashboard data');
       }
       const result = await response.json();
-      setData(result);
+      setData(result as DashboardData);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
     } finally {

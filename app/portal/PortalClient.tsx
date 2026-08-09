@@ -3,7 +3,7 @@
 import { SessionCard } from '@/components/portal/SessionCard';
 
 interface PortalClientProps {
-  user: { email: string | null | undefined };
+  user: { email?: string | null };
   sessions: any[];
   upcoming: any[];
   past: any[];

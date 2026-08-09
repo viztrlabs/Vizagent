@@ -30,7 +30,7 @@ async function fetchTourConfig(tourId: string): Promise<TourConfig | null> {
       next: { revalidate: 60 },
     });
     if (!response.ok) return null;
-    const body = await response.json();
+    const body: any = await response.json();
     return body?.success && body.data ? (body.data as TourConfig) : null;
   } catch (err) {
     console.error('Failed to fetch tour config:', err);

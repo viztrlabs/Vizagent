@@ -38,7 +38,7 @@ export async function GET(req: NextRequest) {
         from: 'VizTR <bookings@viztr.io>',
         to: session.email,
         subject: `Your session starts in 1 hour — ${session.id}`,
-        html: reminderEmailHTML({
+        html: await reminderEmailHTML({
           id: session.id,
           serviceId: SERVICE_NAMES[session.serviceId] || session.serviceId,
           firstName: session.firstName,
