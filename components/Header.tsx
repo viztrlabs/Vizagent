@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Menu, X, Upload, Video, Users, Settings, LayoutDashboard, VideoIcon, Upload as UploadIcon, Users as UsersIcon, Settings as SettingsIcon, LayoutDashboard as LayoutDashboardIcon } from 'lucide-react';
 import { useState } from 'react';
+import { AuthButton } from '@/components/AuthButton';
 
 const navItems = [
   { href: '/', label: 'Upload', icon: UploadIcon },
@@ -43,6 +44,10 @@ export function Header() {
             ))}
           </nav>
 
+          <div className="hidden md:flex items-center gap-2">
+            <AuthButton />
+          </div>
+
           <button
             className="md:hidden p-2 text-gray-300 hover:text-white"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -70,6 +75,9 @@ export function Header() {
                   {item.label}
                 </Link>
               ))}
+              <div className="px-3 pt-2 mt-2 border-t border-white/10">
+                <AuthButton />
+              </div>
             </nav>
           </div>
         )}

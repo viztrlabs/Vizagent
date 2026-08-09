@@ -7,32 +7,166 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-enum Role {
-  PUBLIC
-  CLIENT
-  STAFF
-  ADMIN
-  SUPER_ADMIN
-}
-
-enum BookingStatus {
-  PENDING
-  CONFIRMED
-  COMPLETED
-  CANCELLED
-}
-
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
+  id        String  @id
+  email     String
   name      String?
-  role      Role     @default(CLIENT)
-  createdAt DateTime @default(now())
-  sessions  Session[]
+  role      String  @default("client")
+  avatarUrl String?
+  created_at DateTime @default(now()) @db.Timestamp(0)
+  updated_at DateTime @db.Timestamp(0)
+  tenant_id String
+
+  clientProjects Project[]     @relation("projects_client_id_fkey")
+  deployments    Deployment[] @relation("deployments_deployed_by_fkey")
+
+  @@map("users")
+}
+
+model Project {
+  id           String    @id
+  name         String
+  description  String?
+  client_id    String
+  service_type String    @default("tour")
+  status       String    @default("draft")
+  settings     Json      @default("{\"autoRotate\": false, \"cameraHeight\": 1.7, \"hotspotStyle\": \"pin\"}")
+  budget       Decimal?
+  deadline     DateTime? @db.Timestamp(0)
+  published_url String?
+  created_at   DateTime  @default(now()) @db.Timestamp(0)
+  updated_at   DateTime  @db.Timestamp(0)
+  tenant_id    String
+
+  client      User          @relation("projects_client_id_fkey", fields: [client_id], references: [id])
+  assets      Asset[]
+  qaReports   QaReport[]
+  deployments Deployment[] @relation("deployments_project_id_fkey")
+  xrAssets    XrAsset[]
+
+  @@map("projects")
+}
+
+model Asset {
+  id             String   @id
+  project_id     String
+  file_name      String
+  file_type      String
+  file_size      BigInt?
+  storage_path   String
+  thumbnail_path String?
+  status         String   @default("uploaded")
+  metadata       Json     @default("{}")
+  created_at     DateTime @default(now()) @db.Timestamp(0)
+  tenant_id      String
+
+  project Project @relation(fields: [project_id], references: [id])
+
+  @@map("assets")
+}
+
+model QaReport {
+  id         String    @id
+  project_id String
+  qa_status  String
+  checks     Json      @default("[]")
+  issues     Json      @default("[]")
+  checked_at DateTime? @db.Timestamp(0)
+  created_at DateTime  @default(now()) @db.Timestamp(0)
+  tenant_id  String
+
+  project Project @relation(fields: [project_id], references: [id])
+
+  @@map("qa_reports")
+}
+
+model Deployment {
+  id          String    @id
+  project_id  String
+  environment String
+  status      String
+  preview_url String?
+  public_url  String?
+  commit_sha  String?
+  deployed_by String?
+  deployed_at DateTime? @db.Timestamp(0)
+  created_at  DateTime  @default(now()) @db.Timestamp(0)
+  tenant_id   String
+
+  project    Project @relation("deployments_project_id_fkey", fields: [project_id], references: [id])
+  deployedBy User?   @relation("deployments_deployed_by_fkey", fields: [deployed_by], references: [id])
+
+  @@map("deployments")
+}
+
+model XrAsset {
+  id              String    @id
+  project_id      String
+  type            String    @default("model3d")
+  service         String    @default("webXR")
+  glb_url         String?
+  equirect_url    String?
+  usdz_url        String?
+  file_size_bytes Int?
+  created_at      DateTime  @default(now()) @db.Timestamp(0)
+  updated_at      DateTime  @db.Timestamp(0)
+  tenant_id       String
+
+  project        Project         @relation(fields: [project_id], references: [id])
+  configurations Configuration[]
+
+  @@map("xr_assets")
+}
+
+model Configuration {
+  id          String   @id
+  xr_asset_id String
+  name        String   @default("default")
+  data        String
+  created_at  DateTime @default(now()) @db.Timestamp(0)
+  updated_at  DateTime @db.Timestamp(0)
+  tenant_id   String
+
+  xrAsset XrAsset @relation(fields: [xr_asset_id], references: [id])
+
+  @@map("configurations")
+}
+
+model ConfiguratorSession {
+  id               String    @id
+  project_id       String
+  host_id          String
+  config           String
+  share_token      String
+  is_active        Boolean   @default(true)
+  permissions      Json      @default("{\"canEdit\": [], \"canView\": [], \"isPublic\": false}")
+  start_at         DateTime? @db.Timestamp(0)
+  reminder_sent_at DateTime? @db.Timestamp(0)
+  gcal_event_id    String?
+  created_at       DateTime  @default(now()) @db.Timestamp(0)
+  updated_at       DateTime  @db.Timestamp(0)
+  tenant_id        String
+
+  viewers Viewer[]
+
+  @@map("configurator_sessions")
+}
+
+model Viewer {
+  id         String    @id
+  session_id String
+  user_id    String?
+  joined_at  DateTime  @default(now()) @db.Timestamp(0)
+  left_at    DateTime? @db.Timestamp(0)
+  tenant_id  String
+
+  session ConfiguratorSession @relation(fields: [session_id], references: [id])
+
+  @@map("viewers")
 }
 
 model Session {
-  id              String        @id @default(cuid())
+  id              String    @id @default(cuid())
   email           String
   firstName       String
   lastName        String
@@ -42,16 +176,15 @@ model Session {
   notes           String?
   date            String
   time            String
-  startAt         DateTime
+  startAt         DateTime  @db.Timestamp(0)
   durationMinutes Int
-  status          BookingStatus @default(CONFIRMED)
-  reminderSentAt  DateTime?
+  status          String    @default("CONFIRMED")
+  reminderSentAt  DateTime? @db.Timestamp(0)
   gcalEventId     String?
-  createdAt       DateTime      @default(now())
-
-  user   User   @relation(fields: [email], references: [email])
+  createdAt       DateTime  @default(now()) @db.Timestamp(0)
 
   @@index([email])
   @@index([status])
   @@index([startAt])
+  @@map("sessions")
 }
