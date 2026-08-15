@@ -1,14 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/auth';
+import { getCurrentAuth } from '@/lib/auth/session';
 import { createCheckoutSession } from '@/lib/stripe/server';
 import { getPriceId } from '@/lib/stripe/tiers';
+import { rateLimit, clientIp } from '@/lib/server/middleware/rate-limit';
+import { auditLog } from '@/lib/server/audit/audit-logger';
+
+// M0.5: bound checkout attempts to mitigate automated abuse / Stripe spam.
+const CHECKOUT_LIMIT = { limit: 5, windowMs: 60_000, prefix: 'checkout' };
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await auth();
-    if (!session?.user) {
+    const { dbUser } = await getCurrentAuth();
+    if (!dbUser) {
       return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
+
+    // Per-user rate limit (falls back to IP when user info isn't yet resolved).
+    const limited = rateLimit(request, {
+      ...CHECKOUT_LIMIT,
+      key: dbUser.id ?? clientIp(request),
+    });
+    if (limited) return limited;
 
     const body = await request.json();
     const { tier } = body as { tier?: string };
@@ -21,11 +33,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid tier' }, { status: 400 });
     }
 
-    const userId = session.user.id;
-    if (!userId) {
-      return NextResponse.json({ error: 'User ID not found' }, { status: 401 });
-    }
-    const tenantId = (session.user as { tenantId?: string }).tenantId ?? '00000000-0000-0000-0000-000000000000';
+    const userId = dbUser.id;
+    const tenantId = dbUser.tenantId;
 
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000';
 
@@ -35,6 +44,16 @@ export async function POST(request: NextRequest) {
       tenantId,
       successUrl: `${baseUrl}/dashboard?subscription=success`,
       cancelUrl: `${baseUrl}/pricing?subscription=canceled`,
+    });
+
+    // P1.2: audit successful checkout creation
+    await auditLog({
+      action: 'checkout.create',
+      resource: 'payment',
+      resourceId: checkoutSession.id,
+      changes: { tier, priceId },
+      ip: clientIp(request),
+      userAgent: request.headers.get('user-agent') ?? undefined,
     });
 
     return NextResponse.json({ url: checkoutSession.url });

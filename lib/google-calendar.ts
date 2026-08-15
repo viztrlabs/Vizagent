@@ -5,7 +5,7 @@ export async function addSessionToCalendar(
   session: {
     id: string;
     service: string;
-    date: string;        // ISO string
+    date: string;
     durationMinutes: number;
     clientName: string;
     projectType: string;
@@ -39,23 +39,24 @@ export async function addSessionToCalendar(
           { method: 'email', minutes: 60 },
         ],
       },
-      colorId: '9',  // blueberry — matches VizTR brand
+      colorId: '9',
     },
   });
 
   return event.data.id;
 }
 
-export async function deleteSessionFromCalendar(
+export async function deleteCalendarEvent(
   accessToken: string,
-  gcalEventId: string
+  eventId: string
 ) {
   const auth = new google.auth.OAuth2();
   auth.setCredentials({ access_token: accessToken });
 
   const calendar = google.calendar({ version: 'v3', auth });
+
   await calendar.events.delete({
     calendarId: 'primary',
-    eventId: gcalEventId,
+    eventId,
   });
 }

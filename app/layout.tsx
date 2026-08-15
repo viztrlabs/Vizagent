@@ -1,45 +1,54 @@
-import type { Metadata } from "next";
-import { DM_Sans, Syne, Bebas_Neue } from "next/font/google";
-import { auth } from "@/lib/auth";
-import Providers from "@/components/providers";
-import "./globals.css";
+import type { Metadata, Viewport } from 'next';
+import { Space_Grotesk, Inter, JetBrains_Mono } from 'next/font/google';
+import './globals.css';
+import { Header } from '@/components/Header';
+import { ThemeProvider } from '@/components/theme-provider';
 
-const dmSans = DM_Sans({
-  variable: "--font-dm-sans",
-  subsets: ["latin"],
-  display: "swap",
-  preload: true,
+const spaceGrotesk = Space_Grotesk({
+  subsets: ['latin'],
+  variable: '--font-space-grotesk',
+  display: 'swap',
 });
 
-const syne = Syne({
-  variable: "--font-syne",
-  subsets: ["latin"],
-  display: "swap",
-  preload: true,
+const inter = Inter({
+  subsets: ['latin'],
+  variable: '--font-inter',
+  display: 'swap',
 });
 
-const bebasNeue = Bebas_Neue({
-  variable: "--font-bebas-neue",
-  weight: "400",
-  subsets: ["latin"],
-  display: "swap",
-  preload: true,
+const jetBrainsMono = JetBrains_Mono({
+  subsets: ['latin'],
+  variable: '--font-jetbrains-mono',
+  display: 'swap',
 });
 
 export const metadata: Metadata = {
-  title: "VizTR - Architectural Visualization Platform",
-  description: "Create immersive 3D experiences for your architectural projects with real-time collaboration and AI-powered rendering.",
+  title: 'VizTR',
+  description: 'Architectural Visualization Platform',
 };
 
-export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth();
+export const viewport: Viewport = {
+  themeColor: '#080a0f',
+  width: 'device-width',
+  initialScale: 1,
+};
+
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html
       lang="en"
-      className={`${dmSans.variable} ${syne.variable} ${bebasNeue.variable} h-full antialiased`}
+      suppressHydrationWarning
+      className={`${spaceGrotesk.variable} ${inter.variable} ${jetBrainsMono.variable}`}
     >
-      <body className="min-h-full flex flex-col bg-bg text-white font-body">
-        <Providers session={session}>{children}</Providers>
+      <body className="min-h-screen bg-bg text-foreground antialiased">
+        <ThemeProvider>
+          <Header />
+          <main className="pt-16">{children}</main>
+        </ThemeProvider>
       </body>
     </html>
   );

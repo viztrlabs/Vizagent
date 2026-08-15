@@ -10,12 +10,14 @@ export class DeploymentRepository {
       previewUrl?: string;
       deployedBy?: string;
       commitSha?: string;
+      mode?: string;
     },
     tenantId: string
   ) {
     return prisma.deployment.create({
       data: {
         ...data,
+        mode: data.mode ?? 'tour',
         tenantId,
         deployedAt: new Date(),
       },

@@ -3,7 +3,7 @@ import type { QACheck } from '@/lib/types';
 
 export class QARepository {
   async startQA(projectId: string, tenantId: string) {
-    const report = await prisma.qAReport.create({
+    const report = await prisma.qaReport.create({
       data: {
         projectId,
         qaStatus: 'running',
@@ -27,7 +27,7 @@ export class QARepository {
     checkedAt: Date,
     tenantId: string
   ) {
-    return prisma.qAReport.update({
+    return prisma.qaReport.update({
       where: { id, tenantId },
       data: { qaStatus, checks: checks as unknown as object[], issues: issues as unknown as string[], checkedAt },
     });
@@ -41,7 +41,7 @@ export class QARepository {
   }
 
   async findByProject(projectId: string, tenantId: string) {
-    return prisma.qAReport.findFirst({
+    return prisma.qaReport.findFirst({
       where: { projectId, tenantId },
       orderBy: { createdAt: 'desc' },
     });

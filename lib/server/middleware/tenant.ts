@@ -5,7 +5,7 @@ export async function withTenant<T>(
   tenantId: string,
   fn: () => Promise<T>
 ): Promise<T> {
-  await prisma.$executeRaw`SET LOCAL app.current_tenant = ${tenantId}`;
+  await prisma.$executeRaw`SELECT set_config('app.current_tenant', ${tenantId}, true)`;
   try {
     return await fn();
   } finally {

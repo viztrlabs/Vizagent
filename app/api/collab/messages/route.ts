@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { listMessages, postMessage } from '@/lib/realtime/presence';
+import { rateLimit } from '@/lib/server/middleware/rate-limit';
+
+// M0.5: bound chat posting rate to mitigate spam. GET (list) is read-only, so
+// only POST is gated. Per-IP fixed window.
+const CHAT_LIMIT = { limit: 30, windowMs: 60_000, prefix: 'collab-chat' };
 
 export async function GET(request: NextRequest) {
   try {
@@ -17,6 +22,9 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    const limited = rateLimit(request, CHAT_LIMIT);
+    if (limited) return limited;
+
     const body = await request.json();
     const { room_id, user_id, name, text, type } = body as {
       room_id?: string;

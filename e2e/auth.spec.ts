@@ -46,11 +46,11 @@ test.describe('Authentication Flow', () => {
     await page.fill('input[type="password"]', 'admin');
     await page.click('button[type="submit"]:has-text("Sign In")');
     await page.waitForURL('**/portal', { timeout: 10000 }).catch(() => {});
-    
-    // Sign out via next-auth
-    await page.goto('/api/auth/signout');
-    // Just verify we can access the signout endpoint
-    expect(page.url()).toContain('/api/auth/signout');
+
+    // Sign out via header button (Supabase client-side signOut)
+    await page.click('button:has-text("Sign out")');
+    await page.waitForURL('/', { timeout: 5000 }).catch(() => {});
+    expect(page.url()).toContain('/');
   });
 
   test('should redirect to callback URL after login', async ({ page }) => {

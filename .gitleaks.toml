@@ -1,0 +1,34 @@
+# VizTR secret-scanning config for Gitleaks (M0.5).
+#
+# Usage (CI + local): `gitleaks detect --source . --config .gitleaks.toml --no-banner`
+# The CI job in .github/workflows/ci.yml runs this on every push/PR.
+title = "VizTR gitleaks config"
+
+# Extend the default rule set (AWS keys, GitHub tokens, Stripe, Supabase JWT, etc.).
+[extend]
+useDefault = true
+
+# Repo-wide allowlist of known non-secrets. Scoped tightly: lockfiles, the
+# committed `.env.example` template (documented `your-…` placeholder values),
+# fixture data used by tests, and the fixed NULL_TENANT constant.
+[[allowlist]]
+description = "VizTR repo allowlist (lockfiles, env template, test fixtures, constants)"
+paths = [
+  '''(^|/)pnpm-lock\.yaml$''',
+  '''(^|/)package-lock\.json$''',
+  '''(^|/)yarn\.lock$''',
+  '''(^|/)\.env\.example$''',
+  '''(^|/)\.env\.local\.example$''',
+]
+regexes = [
+  '''your-[a-z0-9_.-]+''',                 # .env.example placeholder values
+  '''your_project|your-project|your_anon|your-r2''',
+  '''postgresql://postgres:postgres@''',    # local dev default creds (dev only)
+  '''redis://localhost''',
+  '''http://localhost''',                    # local dev URLs
+  '''00000000-0000-0000-0000-000000000000''',# NULL_TENANT constant (lib/supabase + repositories)
+  '''["']?test(-|_)?(key|token|secret)["']''', # obvious test keys/mocks
+  '''placeholder''',
+  '''example\.com''',
+  '''<your[^>]*>''',
+]

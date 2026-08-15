@@ -1,8 +1,5 @@
-import * as Sentry from '@sentry/nextjs';
-
-Sentry.init({
-  dsn: process.env.NEXT_PUBLIC_SENTRY_DSN,
-  tracesSampleRate: 0.1,
-});
-
-export default Sentry;
+// Sentry edge init — DISABLED until @sentry/nextjs is installed.
+// The dependency is not in package.json and was never wired into
+// next.config.ts (stripped during the M0.1 auth cutover cleanup).
+// Re-enable by adding @sentry/nextjs and restoring the init below.
+export {};

@@ -1,9 +1,6 @@
 import { PrismaClient } from '@prisma/client';
-import { PrismaPg } from '@prisma/adapter-pg';
 
-const connectionString = process.env.DATABASE_URL!;
-const pool = new PrismaPg({ connectionString });
-const prisma = new PrismaClient({ adapter: pool });
+const prisma = new PrismaClient();
 
 const DEFAULT_TENANT_ID = '00000000-0000-0000-0000-000000000000';
 
@@ -15,7 +12,7 @@ async function main() {
     create: {
       email: 'admin@viztr.io',
       name: 'Admin User',
-      role: 'admin',
+      role: 'ADMIN',
       tenantId: DEFAULT_TENANT_ID,
     },
   });

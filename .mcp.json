@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "hermes-host": {
+      "command": "node",
+      "args": ["C:\\Users\\Arch_Viz\\Desktop\\VizTR\\OpenWork\\hermes-claude-bridge\\index.js"],
+      "transport": "stdio"
+    }
+  }
+}

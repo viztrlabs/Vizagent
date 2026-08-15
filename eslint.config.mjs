@@ -1,18 +1,28 @@
-import { defineConfig, globalIgnores } from "eslint/config";
-import nextVitals from "eslint-config-next/core-web-vitals";
-import nextTs from "eslint-config-next/typescript";
+import { defineConfig, globalIgnores } from 'eslint/config'
+import nextVitals from 'eslint-config-next/core-web-vitals'
+import nextTs from 'eslint-config-next/typescript'
 
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
-  // Override default ignores of eslint-config-next.
   globalIgnores([
-    // Default ignores of eslint-config-next:
-    ".next/**",
-    "out/**",
-    "build/**",
-    "next-env.d.ts",
+    '.next/**',
+    'out/**',
+    'build/**',
+    'next-env.d.ts',
+    '.worktrees/**',
+    'VizTR-OS/**',
+    'babylon_XR_World/**',
+    'Extended Features/**',
+    'VizAgents(Opencode-Hermes-Gravity-)/**',
+    'node_modules/**',
   ]),
-]);
+  {
+    files: ['next.config.js', 'local/**/*.js'],
+    rules: {
+      '@typescript-eslint/no-require-imports': 'off',
+    },
+  },
+])
 
-export default eslintConfig;
+export default eslintConfig

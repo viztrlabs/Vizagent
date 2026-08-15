@@ -4,7 +4,6 @@ import { AssetRepository } from '@/lib/server/repositories/asset.repository';
 import { getTenantId } from '@/lib/server/lib/tenant';
 import { withTenant } from '@/lib/server/middleware/tenant';
 import { presignGetObject } from '@/lib/server/lib/r2';
-import type { Asset } from '@/lib/types';
 
 const assetRepository = new AssetRepository();
 
@@ -34,7 +33,7 @@ export async function GET(request: NextRequest) {
           status: asset.status,
           createdAt: asset.createdAt,
           readUrl,
-        } as Asset & { readUrl: string | null };
+        };
       })
     );
 

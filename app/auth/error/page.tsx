@@ -1,5 +1,6 @@
 'use client';
 
+import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -19,7 +20,7 @@ const errorMessages: Record<string, string> = {
   SessionRequired: 'Please sign in to access this page.',
 };
 
-export default function AuthError() {
+function AuthErrorContent() {
   const searchParams = useSearchParams();
   const error = searchParams.get('error') || 'default';
   const errorMessage = errorMessages[error] || errorMessages.default;
@@ -54,5 +55,21 @@ export default function AuthError() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function AuthError() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-bg px-4 py-8">
+          <div className="w-full max-w-md p-6 sm:p-8 bg-surface rounded-xl border border-gray-800 text-center text-gray-400">
+            Loading...
+          </div>
+        </div>
+      }
+    >
+      <AuthErrorContent />
+    </Suspense>
   );
 }

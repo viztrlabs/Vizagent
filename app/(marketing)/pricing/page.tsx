@@ -20,7 +20,7 @@ export default function PricingPage() {
       });
       const data = await res.json();
       if (res.ok && data.url) {
-        window.location.href = data.url;
+        window.location.assign(data.url);
       } else {
         setError(data.error || 'Failed to start checkout');
       }
@@ -36,7 +36,7 @@ export default function PricingPage() {
       const res = await fetch('/api/payments/portal', { method: 'POST' });
       const data = await res.json();
       if (res.ok && data.url) {
-        window.location.href = data.url;
+        window.location.assign(data.url);
       } else {
         setError(data.error || 'Failed to open billing portal');
       }

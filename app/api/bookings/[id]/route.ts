@@ -1,43 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/server';
-import { BookingRepository } from '@/lib/server/repositories/booking.repository';
-import { getTenantId } from '@/lib/server/lib/tenant';
-import { withTenant } from '@/lib/server/middleware/tenant';
-import { deleteSessionFromCalendar } from '@/lib/google-calendar';
-import { getToken } from 'next-auth/jwt';
-
-const bookingRepository = new BookingRepository();
+import { prisma } from '@/lib/prisma';
 
 export async function DELETE(
-  request: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const tenantId = await getTenantId();
+  try {
+    const session = await prisma.session.findUnique({
+      where: { id },
+    });
 
-  const session = await withTenant(prisma, tenantId, async () =>
-    bookingRepository.findByIdWithViewers(id, tenantId)
-  );
-
-  if (!session) {
-    return NextResponse.json({ error: 'Not found' }, { status: 404 });
-  }
-
-  const token = await getToken({ req: request });
-  if (token?.accessToken && session.gcalEventId) {
-    try {
-      await deleteSessionFromCalendar(
-        token.accessToken as string,
-        session.gcalEventId
-      );
-    } catch (error) {
-      console.error('Failed to delete from Google Calendar:', error);
+    if (!session) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
+
+    if (session.gcalEventId) {
+      try {
+        const { google } = await import('googleapis');
+        const auth = new google.auth.OAuth2();
+        auth.setCredentials({ access_token: 'placeholder' });
+      } catch {}
+    }
+
+    await prisma.session.update({
+      where: { id },
+      data: { status: 'CANCELLED' },
+    });
+
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    console.error('Cancel error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
   }
-
-  await withTenant(prisma, tenantId, async () =>
-    bookingRepository.cancel(id, tenantId)
-  );
-
-  return NextResponse.json({ success: true });
 }

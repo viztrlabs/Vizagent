@@ -29,9 +29,26 @@ export function CollabChat({ roomId, userId, userName }: CollabChatProps) {
   }
 
   useEffect(() => {
-    loadMessages();
-    const interval = setInterval(loadMessages, POLL_INTERVAL);
-    return () => clearInterval(interval);
+    let cancelled = false;
+
+    async function poll() {
+      try {
+        const res = await fetch(`/api/collab/messages?room_id=${encodeURIComponent(roomId)}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (!cancelled) setMessages(data.messages || []);
+        }
+      } catch {
+        // ignore poll errors
+      }
+    }
+
+    poll();
+    const interval = setInterval(poll, POLL_INTERVAL);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
   }, [roomId]);
 
   useEffect(() => {

@@ -42,7 +42,7 @@ const worker = new Worker(
               timeZone: 'Asia/Kolkata',
             }) || 'TBD'} IST
           </p>
-          <a href="${process.env.NEXTAUTH_URL}/portal"
+          <a href="${process.env.NEXT_PUBLIC_BASE_URL ?? 'http://localhost:3000'}/portal"
              style="display: block; background: #00e5ff; color: #080a0f; text-align: center;
                     padding: 12px; border-radius: 8px; text-decoration: none; font-size: 14px;
                     font-weight: 500; margin-bottom: 16px">

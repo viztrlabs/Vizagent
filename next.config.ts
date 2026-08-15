@@ -1,6 +1,5 @@
 import type { NextConfig } from "next";
 import withBundleAnalyzer from '@next/bundle-analyzer';
-import { withSentryConfig } from '@sentry/nextjs';
 
 const bundleAnalyzer = withBundleAnalyzer({
   enabled: process.env.ANALYZE === 'true',
@@ -27,15 +26,6 @@ const nextConfig: NextConfig = {
   },
   async headers() {
     return [
-      {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'Cache-Control',
-            value: 'public, max-age=31536000, immutable',
-          },
-        ],
-      },
       {
         source: '/_next/static/:path*',
         headers: [
@@ -67,7 +57,4 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default withSentryConfig(bundleAnalyzer(nextConfig), {
-  silent: true,
-  sourcemaps: {},
-});
+export default bundleAnalyzer(nextConfig);

@@ -39,10 +39,10 @@ const tabs = [
   { id: 'hotspots', label: 'Hotspots', icon: '📍' },
   { id: 'export', label: 'Export', icon: '📤' },
   { id: 'ar', label: 'AR', icon: '📱' },
-];
+] as const;
 
 export function Sidebar({ projectId }: SidebarProps) {
-  const [activeTab, setActiveTab] = useState('materials');
+  const [activeTab, setActiveTab] = useState<'materials' | 'lighting' | 'hotspots' | 'export' | 'ar'>('materials');
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);

@@ -1,43 +1,39 @@
-import { PublicTourViewer } from '@/components/viewer/PublicTourViewer';
+import type { Metadata } from 'next';
+import type { TourConfig } from '@/lib/tour/types';
+import { TourPageClient } from './TourPageClient';
 
-interface PublicAsset {
-  id: string;
-  fileName: string;
-  fileType: string;
-  size: number;
-  url: string;
+interface TourPageProps {
+  params: Promise<{ id: string }>;
 }
 
-export default async function PublicTourPage({ params }: { params: Promise<{ id: string }> }) {
+export const metadata: Metadata = {
+  title: 'Virtual Tour | VizTR',
+  description: 'Explore immersive 360° virtual tours',
+  openGraph: {
+    type: 'website',
+    title: 'Virtual Tour | VizTR',
+    description: 'Explore immersive 360° virtual tours',
+  },
+};
+
+export default async function TourPage({ params }: TourPageProps) {
   const { id } = await params;
+  const tourConfig = await fetchTourConfig(id);
 
-  const base = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-  const res = await fetch(`${base}/api/public/tour/${id}`, { cache: 'no-store' });
+  return <TourPageClient config={tourConfig} />;
+}
 
-  if (!res.ok) {
-    return (
-      <div className="min-h-screen bg-bg flex items-center justify-center">
-        <div className="text-center">
-          <h1 className="text-2xl text-white mb-2">Tour not available</h1>
-          <p className="text-gray-400">This tour could not be found or is not published.</p>
-        </div>
-      </div>
-    );
+async function fetchTourConfig(tourId: string): Promise<TourConfig | null> {
+  const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+  try {
+    const response = await fetch(`${base}/api/tours/${tourId}`, {
+      next: { revalidate: 60 },
+    });
+    if (!response.ok) return null;
+    const body: { success: boolean; data?: TourConfig } = await response.json();
+    return body.success && body.data ? body.data : null;
+  } catch (err) {
+    console.error('Failed to fetch tour config:', err);
+    return null;
   }
-
-  const data = await res.json();
-  const assets: PublicAsset[] = data.assets || [];
-
-  return (
-    <div className="h-screen bg-bg flex flex-col">
-      <header className="flex items-center justify-between px-4 py-3 bg-surface border-b border-gray-800">
-        <h1 className="font-display text-lg text-white truncate">
-          {data.project?.name || 'Virtual Tour'}
-        </h1>
-      </header>
-      <div className="flex-1 relative">
-        <PublicTourViewer assets={assets} />
-      </div>
-    </div>
-  );
 }

@@ -1,7 +1,9 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import Footer from '@/components/Footer';
+import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function MarketingLayout({
   children,
@@ -14,13 +16,14 @@ export default function MarketingLayout({
     <div className="min-h-screen bg-bg flex flex-col">
       <header className="border-b border-gray-800">
         <nav className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <a href="/" className="font-display text-2xl text-cyan">VizTR</a>
+          <Link href="/" className="font-display text-2xl text-cyan">VizTR</Link>
 
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-6">
             <a href="/pricing" className="text-gray-400 hover:text-white transition-colors">Pricing</a>
             <a href="/dashboard" className="text-gray-400 hover:text-white transition-colors">Dashboard</a>
             <a href="/login" className="text-gray-400 hover:text-white transition-colors">Login</a>
+            <ThemeToggle />
             <a href="/auth/signin" className="px-4 py-2 bg-cyan text-bg rounded-md font-medium hover:bg-cyan/90 transition-colors min-h-touch">Sign Up</a>
           </div>
 
@@ -53,7 +56,7 @@ export default function MarketingLayout({
           }`}
         >
           <div className="p-4 border-b border-gray-800 flex justify-between items-center">
-            <a href="/" className="font-display text-2xl text-cyan">VizTR</a>
+            <Link href="/" className="font-display text-2xl text-cyan">VizTR</Link>
             <button
               onClick={() => setMobileMenuOpen(false)}
               className="p-2 min-h-touch min-w-touch text-gray-400 hover:text-white"
@@ -87,7 +90,10 @@ export default function MarketingLayout({
               Login
             </a>
           </div>
-          <div className="p-4 border-t border-gray-800">
+          <div className="p-4 border-t border-gray-800 space-y-3">
+            <div className="flex justify-center">
+              <ThemeToggle />
+            </div>
             <a
               href="/auth/signin"
               className="block w-full py-3 bg-cyan text-bg rounded-md font-medium text-center min-h-touch"
