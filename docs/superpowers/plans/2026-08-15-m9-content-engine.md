@@ -283,6 +283,105 @@ In `createPageService`, wrap the JSON-valued inputs:
 
 Do the same in `updatePageService` sections create map, `duplicatePage`, and `restorePageVersion` (snapshot decode is handled by the typed casts below).
 
+- [ ] **Step 3b: Fix tenant-scoped update/delete in existing page functions**
+
+The `db.page` → `prisma.page` replace exposes a TS error in `updatePageService` (`prisma.page.update({ where: { id, tenantId }, ... })`, ~line 202) and `deletePageService` (`prisma.page.delete({ where: { id, tenantId } })`, ~line 236) — Prisma `update`/`delete` `where` accepts only unique fields. Fix both:
+
+`updatePageService`: replace the `const page = await prisma.page.update({ where: { id, tenantId }, ... })` block with:
+
+```ts
+const updated = await prisma.page.updateMany({
+  where: { id, tenantId },
+  data: {
+    title: input.title ?? existing.title,
+    description: input.description ?? existing.description,
+    slug: input.slug ?? existing.slug,
+    status: input.status ?? existing.status,
+    seo: cleanJson({
+      ...((existing.seo as Record<string, unknown>) ?? {}),
+      ...(input.seo ?? {}),
+    }),
+    updatedBy: dbUser.id,
+    version: { increment: 1 },
+    sections: sectionsUpdate,
+  },
+});
+if (updated.count === 0) throw new Error('Page not found');
+
+const page = await prisma.page.findFirst({
+  where: { id, tenantId },
+  include: { sections: { include: { blocks: true }, orderBy: { order: 'asc' } } },
+});
+if (!page) throw new Error('Page not found');
+```
+
+`deletePageService`: replace `await db.page.delete({ where: { id, tenantId } });` with:
+
+```ts
+const deleted = await prisma.page.deleteMany({ where: { id, tenantId } });
+if (deleted.count === 0) throw new Error('Page not found');
+```
+
+`restorePageVersion`: replace the `const page = await db.page.update({ where: { id: pageId, tenantId }, ... })` block with:
+
+```ts
+const restored = await prisma.page.updateMany({
+  where: { id: pageId, tenantId },
+  data: {
+    title: snapshot.title,
+    description: snapshot.description,
+    slug: snapshot.slug,
+    status: snapshot.status,
+    seo: cleanJson(snapshot.seo ?? {}),
+    sections: {
+      deleteMany: {},
+      create: snapshot.sections.map((section, i) => ({
+        ...section,
+        order: i,
+        blocks: { create: section.blocks.map((block, j) => ({ ...block, order: j })) },
+      })),
+    },
+    updatedBy: dbUser.id,
+    version: { increment: 1 },
+  },
+});
+if (restored.count === 0) throw new Error('Page not found');
+
+const page = await prisma.page.findFirst({
+  where: { id: pageId, tenantId },
+  include: { sections: { include: { blocks: true }, orderBy: { order: 'asc' } } },
+});
+if (!page) throw new Error('Page not found');
+```
+
+`reorderSections`: replace the `db.$transaction(sectionIds.map(...))` block with:
+
+```ts
+await prisma.$transaction(
+  sectionIds.map((id, index) =>
+    prisma.section.updateMany({
+      where: { id, pageId, tenantId },
+      data: { order: index },
+    })
+  )
+);
+```
+
+`reorderBlocks`: replace the `db.$transaction(blockIds.map(...))` block with:
+
+```ts
+await prisma.$transaction(
+  blockIds.map((id, index) =>
+    prisma.block.updateMany({
+      where: { id, sectionId, tenantId },
+      data: { order: index },
+    })
+  )
+);
+```
+
+> NOTE: Step 4 below (fix `updatePageService` seo spread) becomes redundant after Step 3b; skip its duplicate `seo: cleanJson(...)` replacement if already applied — apply it only if the Step 3b block above was not applied. The implementer should apply Step 3b's version and treat Step 4's seo block as already handled.
+
 - [ ] **Step 4: Fix `updatePageService` seo spread**
 
 Current line: `seo: { ...existing.seo, ...input.seo }`. `existing.seo` is `JsonValue` (unwritable). Replace with:
@@ -438,7 +537,7 @@ export async function updateSectionService(sectionId: string, input: Partial<Sec
   const hasPermission = await requirePermission('content.write');
   if (!hasPermission) throw new Error('Forbidden: content.write required');
 
-  const section = await prisma.section.update({
+  const update = await prisma.section.updateMany({
     where: { id: sectionId, tenantId },
     data: {
       name: input.name,
@@ -447,8 +546,14 @@ export async function updateSectionService(sectionId: string, input: Partial<Sec
       padding: input.padding ? cleanJson(input.padding) : undefined,
       container: input.container,
     },
+  });
+  if (update.count === 0) throw new Error('Section not found');
+
+  const section = await prisma.section.findFirst({
+    where: { id: sectionId, tenantId },
     include: { blocks: { orderBy: { order: 'asc' } } },
   });
+  if (!section) throw new Error('Section not found');
 
   await auditLog({ action: 'section.update', resource: 'section', resourceId: sectionId, changes: { pageId: section.pageId } });
   return {
@@ -473,7 +578,8 @@ export async function deleteSectionService(sectionId: string): Promise<void> {
   const hasPermission = await requirePermission('content.write');
   if (!hasPermission) throw new Error('Forbidden: content.write required');
 
-  await prisma.section.delete({ where: { id: sectionId, tenantId } });
+  const update = await prisma.section.deleteMany({ where: { id: sectionId, tenantId } });
+  if (update.count === 0) throw new Error('Section not found');
   await auditLog({ action: 'section.delete', resource: 'section', resourceId: sectionId });
 }
 
@@ -509,13 +615,17 @@ export async function updateBlockService(blockId: string, input: { type?: string
   const hasPermission = await requirePermission('content.write');
   if (!hasPermission) throw new Error('Forbidden: content.write required');
 
-  const block = await prisma.block.update({
+  const update = await prisma.block.updateMany({
     where: { id: blockId, tenantId },
     data: {
       type: input.type,
       props: input.props ? cleanJson(input.props) : undefined,
     },
   });
+  if (update.count === 0) throw new Error('Block not found');
+
+  const block = await prisma.block.findFirst({ where: { id: blockId, tenantId } });
+  if (!block) throw new Error('Block not found');
 
   await auditLog({ action: 'block.update', resource: 'block', resourceId: blockId });
   return { id: block.id, type: block.type as Block['type'], props: block.props as Block['props'], order: block.order };
@@ -526,7 +636,8 @@ export async function deleteBlockService(blockId: string): Promise<void> {
   const hasPermission = await requirePermission('content.write');
   if (!hasPermission) throw new Error('Forbidden: content.write required');
 
-  await prisma.block.delete({ where: { id: blockId, tenantId } });
+  const update = await prisma.block.deleteMany({ where: { id: blockId, tenantId } });
+  if (update.count === 0) throw new Error('Block not found');
   await auditLog({ action: 'block.delete', resource: 'block', resourceId: blockId });
 }
 ```
@@ -835,6 +946,9 @@ vi.mock('@/lib/db/server', () => ({
       ),
     },
     section: {
+      findFirst: vi.fn(async ({ where }: { where: { id: string; tenantId: string } }) =>
+        where.id === 's-1' && where.tenantId === 'tenant-1' ? { id: 's-1', pageId: 'p1' } : null
+      ),
       aggregate: vi.fn(async () => ({ _max: { order: 1 } })),
       create: vi.fn(async ({ data }: { data: { pageId: string; name: string; tenantId: string } }) => {
         const id = `s-${++sectionSeq}`;
