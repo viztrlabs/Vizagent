@@ -35,7 +35,17 @@ export type Permission =
   | 'collab.annotate'
   | 'collab.comment'
   | 'approvals.request'
-  | 'approvals.manage';
+  | 'approvals.manage'
+  | 'admin.users.read'
+  | 'admin.users.write'
+  | 'admin.rbac.read'
+  | 'admin.rbac.write'
+  | 'admin.audit.read'
+  | 'admin.monitoring.read'
+  | 'admin.billing.read'
+  | 'admin.billing.write'
+  | 'admin.agents.read'
+  | 'admin.agents.control';
 
 const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
   SUPER_ADMIN: [
@@ -53,6 +63,16 @@ const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
     'collab.comment',
     'approvals.request',
     'approvals.manage',
+    'admin.users.read',
+    'admin.users.write',
+    'admin.rbac.read',
+    'admin.rbac.write',
+    'admin.audit.read',
+    'admin.monitoring.read',
+    'admin.billing.read',
+    'admin.billing.write',
+    'admin.agents.read',
+    'admin.agents.control',
   ],
   ADMIN: [
     'users.read',
@@ -68,6 +88,12 @@ const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
     'collab.comment',
     'approvals.request',
     'approvals.manage',
+    'admin.users.read',
+    'admin.rbac.read',
+    'admin.audit.read',
+    'admin.monitoring.read',
+    'admin.billing.read',
+    'admin.agents.read',
   ],
   USER: [
     'projects.read',
