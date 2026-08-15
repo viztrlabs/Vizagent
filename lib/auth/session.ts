@@ -30,7 +30,12 @@ export type Permission =
   | 'billing.read'
   | 'settings.write'
   | 'audit.read'
-  | 'content.write';
+  | 'content.write'
+  | 'client.portals.read'
+  | 'collab.annotate'
+  | 'collab.comment'
+  | 'approvals.request'
+  | 'approvals.manage';
 
 const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
   SUPER_ADMIN: [
@@ -42,6 +47,12 @@ const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
     'billing.read',
     'settings.write',
     'audit.read',
+    'content.write',
+    'client.portals.read',
+    'collab.annotate',
+    'collab.comment',
+    'approvals.request',
+    'approvals.manage',
   ],
   ADMIN: [
     'users.read',
@@ -52,9 +63,26 @@ const ROLE_PERMISSIONS: Record<AppRole, Permission[]> = {
     'settings.write',
     'audit.read',
     'content.write',
+    'client.portals.read',
+    'collab.annotate',
+    'collab.comment',
+    'approvals.request',
+    'approvals.manage',
   ],
-  USER: ['projects.read', 'deployments.write'],
-  CLIENT: ['projects.read'],
+  USER: [
+    'projects.read',
+    'deployments.write',
+    'collab.annotate',
+    'collab.comment',
+    'approvals.request',
+  ],
+  CLIENT: [
+    'projects.read',
+    'client.portals.read',
+    'collab.annotate',
+    'collab.comment',
+    'approvals.request',
+  ],
 };
 
 export function hasPermission(role: AppRole, permission: Permission | Permission[]): boolean {
