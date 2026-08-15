@@ -184,7 +184,13 @@ git commit -m "feat(content): add Page/Section/Block/PageVersion models"
 - [ ] **Step 1: Generate DDL from schema**
 
 Run: `npx prisma migrate diff --from-empty --to-schema-datamodel prisma/schema.prisma --script`
-Expected: SQL creating all tables. Copy only the `CREATE TABLE "pages"`, `"sections"`, `"blocks"`, `"page_versions"` statements into the migration file (do NOT include the pre-existing M11 models' tables — those are a separate migration).
+Expected: SQL creating all tables. Copy into the migration file ONLY the statements for the four content tables — the `CREATE TABLE "pages"`, `"sections"`, `"blocks"`, `"page_versions"` statements **plus their indexes** (`CREATE INDEX "pages_tenant_id_idx"`, `"pages_status_idx"`, `CREATE UNIQUE INDEX "pages_slug_tenant_id_key"`, `"sections_page_id_idx"`, `"sections_tenant_id_idx"`, `"blocks_section_id_idx"`, `"blocks_tenant_id_idx"`, `"page_versions_page_id_idx"`) **plus the FK constraints** (`ALTER TABLE ... ADD CONSTRAINT "sections_page_id_fkey" / "blocks_section_id_fkey" / "page_versions_page_id_fkey" ... ON DELETE CASCADE`) **plus the RLS block below**. Do NOT include any other tables' statements (pre-existing models and the M11 models' tables — those are separate migrations).
+
+> **NOTE (plan fix):** the schema's `@@unique([slug, tenantId])` and the `onDelete: Cascade`
+> relations are load-bearing (the service relies on the `slug_tenantId` compound key for
+> upsert/duplicate checks and on cascade deletes when removing pages). Omitting the indexes
+> and FK constraints — as an earlier draft of this step implied — would leave the live tables
+> diverged from the Prisma schema. Include them.
 
 Create `prisma/migrations/20260815000000_m9_content_engine/migration.sql` containing the 4 `CREATE TABLE` statements plus:
 

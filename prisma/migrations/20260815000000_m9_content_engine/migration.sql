@@ -75,6 +75,21 @@ CREATE TABLE "page_versions" (
     CONSTRAINT "page_versions_pkey" PRIMARY KEY ("id")
 );
 
+-- CreateIndex
+CREATE INDEX "pages_tenant_id_idx" ON "pages"("tenant_id");
+CREATE INDEX "pages_status_idx" ON "pages"("status");
+CREATE UNIQUE INDEX "pages_slug_tenant_id_key" ON "pages"("slug", "tenant_id");
+CREATE INDEX "sections_page_id_idx" ON "sections"("page_id");
+CREATE INDEX "sections_tenant_id_idx" ON "sections"("tenant_id");
+CREATE INDEX "blocks_section_id_idx" ON "blocks"("section_id");
+CREATE INDEX "blocks_tenant_id_idx" ON "blocks"("tenant_id");
+CREATE INDEX "page_versions_page_id_idx" ON "page_versions"("page_id");
+
+-- AddForeignKey
+ALTER TABLE "sections" ADD CONSTRAINT "sections_page_id_fkey" FOREIGN KEY ("page_id") REFERENCES "pages"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "blocks" ADD CONSTRAINT "blocks_section_id_fkey" FOREIGN KEY ("section_id") REFERENCES "sections"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "page_versions" ADD CONSTRAINT "page_versions_page_id_fkey" FOREIGN KEY ("page_id") REFERENCES "pages"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+
 ALTER TABLE "pages" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "tenant_isolation" ON "pages" USING ("tenant_id" = current_setting('app.current_tenant')::TEXT);
 
