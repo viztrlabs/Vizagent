@@ -199,8 +199,14 @@ ALTER TABLE "blocks" ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "tenant_isolation" ON "blocks" USING ("tenant_id" = current_setting('app.current_tenant')::TEXT);
 
 ALTER TABLE "page_versions" ENABLE ROW LEVEL SECURITY;
-CREATE POLICY "tenant_isolation" ON "page_versions" USING ("tenant_id" = current_setting('app.current_tenant')::TEXT);
+CREATE POLICY "tenant_isolation" ON "page_versions"
+  USING ("page_id" IN (SELECT id FROM "pages" WHERE "tenant_id" = current_setting('app.current_tenant')::TEXT));
 ```
+
+> **NOTE (plan fix):** `PageVersion` has **no** `tenant_id` column by design (spec §5.1:
+> page-level tenant gating in `getPageVersions` makes it unnecessary). The policy above
+> therefore scopes `page_versions` rows through their parent `pages` row instead of a
+> direct `tenant_id` comparison, matching the house RLS pattern's intent.
 
 - [ ] **Step 2: Apply to Supabase via MCP**
 
