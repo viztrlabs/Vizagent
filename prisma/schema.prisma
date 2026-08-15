@@ -380,3 +380,88 @@ model ProjectVersion {
   @@index([tenantId])
   @@map("project_versions")
 }
+
+model Page {
+  id             String    @id @default(uuid())
+  slug           String
+  title          String
+  description    String?
+  status         String    @default("draft")
+  seo            Json?
+  openGraph      Json?
+  twitterCard    Json?
+  schemaOrg      Json?
+  isPlaceholder  Boolean   @default(false) @map("is_placeholder")
+  placeholderKey String?   @map("placeholder_key")
+  publishedAt    DateTime? @map("published_at")
+  createdBy      String    @map("created_by")
+  updatedBy      String    @map("updated_by")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  version        Int       @default(1)
+  tenantId       String    @map("tenant_id")
+
+  sections Section[]
+  versions PageVersion[]
+
+  @@unique([slug, tenantId])
+  @@index([tenantId])
+  @@index([status])
+  @@map("pages")
+}
+
+model Section {
+  id             String   @id @default(uuid())
+  pageId         String   @map("page_id")
+  name           String
+  layout         String
+  background     Json?
+  padding        Json?
+  container      String?
+  order          Int      @default(0)
+  isPlaceholder  Boolean  @default(false) @map("is_placeholder")
+  placeholderKey String?  @map("placeholder_key")
+  tenantId       String   @map("tenant_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  page   Page    @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  blocks Block[]
+
+  @@index([pageId])
+  @@index([tenantId])
+  @@map("sections")
+}
+
+model Block {
+  id             String   @id @default(uuid())
+  sectionId      String   @map("section_id")
+  type           String
+  props          Json?
+  order          Int      @default(0)
+  isPlaceholder  Boolean  @default(false) @map("is_placeholder")
+  placeholderKey String?  @map("placeholder_key")
+  tenantId       String   @map("tenant_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  section Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@index([sectionId])
+  @@index([tenantId])
+  @@map("blocks")
+}
+
+model PageVersion {
+  id                String   @id @default(uuid())
+  pageId            String   @map("page_id")
+  snapshot          Json
+  changeDescription String?  @map("change_description")
+  createdBy         String   @map("created_by")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  page Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([pageId])
+  @@map("page_versions")
+}
