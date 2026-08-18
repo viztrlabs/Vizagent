@@ -1,54 +1,60 @@
-import { prisma } from '../../db/server';
-import { getCurrentAuth } from '../../auth/session';
-import type { Prisma } from '@prisma/client';
+import { prisma } from '../../../lib/db/server';
+import { getCurrentAuth } from '../../../lib/auth/session';
 
 export interface AuditLogInput {
   action: string;
   resource: string;
   resourceId?: string | null;
-  changes?: any;
+  changes?: Record<string, unknown>;
   ip?: string;
   userAgent?: string;
 }
 
-/**
- * P1.2: Append an audit log entry for the current authenticated caller.
- *
- * Failures to write the audit record are swallowed so they never break the
- * primary request path. The `actorRole` is derived server-side from the DB
- * User row (never trusted from the client).
- */
-export async function auditLog(input: AuditLogInput): Promise<void> {
-  try {
-    const { dbUser, role } = await getCurrentAuth();
-    const actorId = dbUser?.id ?? 'anonymous';
-    const actorRole = role;
+export interface AuditLogEntry {
+  id: string;
+  actorId: string;
+  actorRole: string;
+  action: string;
+  resource: string;
+  resourceId: string | null;
+  changes: any;
+  ip?: string | undefined;
+  userAgent?: string | undefined;
+  createdAt: Date;
+}
 
-    // Convert Date objects in changes to ISO strings for JSON compatibility
-    let processedChanges = input.changes;
-    if (processedChanges && typeof processedChanges === 'object') {
-      processedChanges = JSON.parse(
-        JSON.stringify(processedChanges, (key, value) =>
-          value instanceof Date ? value.toISOString() : value
-        )
-      );
-    }
+export async function auditLog(input: AuditLogInput): Promise<AuditLogEntry> {
+  const { dbUser, role } = await getCurrentAuth();
+  const actorId = dbUser?.id ?? 'anonymous';
+  const actorRole = role;
 
-    await prisma.auditLog.create({
-      data: {
-        actorId,
-        actorRole,
-        action: input.action,
-        resource: input.resource,
-        resourceId: input.resourceId,
-        changes: processedChanges,
-        ip: input.ip,
-        userAgent: input.userAgent,
-      },
-    });
-  } catch {
-    // Swallow audit failures — never block the primary request.
-  }
+  const entry = await prisma.auditLog.create({
+    data: {
+      actorId,
+      actorRole,
+      action: input.action,
+      resource: input.resource,
+      resourceId: input.resourceId,
+      // Prisma `Json` fields are typed `any` in the generated client.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      changes: input.changes as any,
+      ip: input.ip,
+      userAgent: input.userAgent,
+    },
+  });
+
+  return {
+    id: entry.id,
+    actorId: entry.actorId,
+    actorRole: entry.actorRole,
+    action: entry.action,
+    resource: entry.resource,
+    resourceId: entry.resourceId,
+    changes: entry.changes,
+    ip: entry.ip ?? undefined,
+    userAgent: entry.userAgent ?? undefined,
+    createdAt: entry.createdAt,
+  };
 }
 
 export async function listAuditLogs(
@@ -60,20 +66,7 @@ export async function listAuditLogs(
     resourceId: string | null;
     createdAt: [gte: Date, lte: Date];
   }> = {}
-): Promise<
-  Array<{
-    id: string;
-    actorId: string;
-    actorRole: string;
-    action: string;
-    resource: string;
-    resourceId: string | null;
-    changes: Prisma.JsonValue;
-    ip?: string | undefined;
-    userAgent?: string | undefined;
-    createdAt: Date;
-  }>
-> {
+): Promise<AuditLogEntry[]> {
   const where: any = {};
 
   if (filter.actorId) {

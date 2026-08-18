@@ -1,6 +1,6 @@
 import { cache } from 'react';
-import { prisma } from '@/lib/db/server';
-import { getSessionUser } from '@/lib/supabase/server-client';
+import { prisma } from '../../lib/db/server';
+import { getSessionUser } from '../../lib/supabase/server-client';
 
 /**
  * Application roles. Stored on the DB `User.role`. `SUPER_ADMIN` overrides all

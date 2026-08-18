@@ -1,382 +1,227 @@
-generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
-}
+// This is a reconstructed Prisma schema for the admin layer models.
+// It includes only the models used by the admin services, plus the AuditLog model.
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-// M0.5: role enum replaces the free-text `role String @default("client")` field.
-// Maps to the locked hierarchy SUPER_ADMIN > ADMIN > USER (studio) > CLIENT.
 enum Role {
-  CLIENT
-  USER
-  ADMIN
   SUPER_ADMIN
+  ADMIN
+  STAFF
+  CLIENT
 }
 
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  name      String?
-  role      Role     @default(CLIENT)
-  avatarUrl String?
-  tenantId  String   @map("tenant_id")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  projects      Project[]
-  deployments   Deployment[]
-  subscriptions Subscription[]
-
-  @@map("users")
-  @@index([tenantId])
-}
-
-model Project {
-  id           String    @id @default(uuid())
-  name         String
-  description  String?
-  clientId     String    @map("client_id")
-  serviceType  String    @default("tour") @map("service_type")
-  status       String    @default("draft")
-  settings     Json      @default("{\"cameraHeight\": 1.7, \"autoRotate\": false, \"hotspotStyle\": \"pin\"}")
-  budget       Decimal?  @db.Decimal(10, 2)
-  deadline     DateTime?
-  publishedUrl String?   @map("published_url")
-  createdAt    DateTime  @default(now()) @map("created_at")
-  updatedAt    DateTime  @updatedAt @map("updated_at")
-  tenantId     String    @map("tenant_id")
-
-  client      User          @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  assets      Asset[]
-  qaReports   QaReport[]
-  deployments Deployment[]
-  xrAssets    XrAsset[]
-
-  @@index([clientId])
-  @@index([status])
-  @@index([tenantId])
-  @@map("projects")
-}
-
-model Asset {
-  id                String   @id @default(uuid())
-  projectId         String   @map("project_id")
-  fileName          String   @map("file_name")
-  fileType          String   @map("file_type")
-  fileSize          BigInt?  @map("file_size")
-  storagePath       String   @map("storage_path")
-  thumbnailPath     String?  @map("thumbnail_path")
-  status            String   @default("uploaded")
-  metadata          Json     @default("{}")
-  createdAt         DateTime @default(now()) @map("created_at")
-  tenantId          String   @map("tenant_id")
-  // M4: optimization fields
-  optimizedPath     String?  @map("optimized_path")
-  optimizedStatus   String?  @map("optimized_status")
-  optimizedAt       DateTime? @map("optimized_at")
-  tilingPath        String?  @map("tiling_path")
-  tilingStatus      String?  @map("tiling_status")
-  tilingAt          DateTime? @map("tiling_at")
-  // optimization metadata
-  originalWidth     Int?     @map("original_width")
-  originalHeight    Int?     @map("original_height")
-  optimizedWidth    Int?     @map("optimized_width")
-  optimizedHeight   Int?     @map("optimized_height")
-  compressionRatio  Float?   @map("compression_ratio")
-
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@index([projectId])
-  @@index([tenantId])
-  @@map("assets")
-}
-
-model QaReport {
-  id        String   @id @default(uuid())
-  projectId String   @map("project_id")
-  qaStatus  String   @map("qa_status")
-  checks    Json     @default("[]")
-  issues    Json     @default("[]")
-  checkedAt DateTime? @map("checked_at")
-  createdAt DateTime @default(now()) @map("created_at")
-  tenantId  String   @map("tenant_id")
-
-  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-
-  @@index([projectId])
-  @@index([tenantId])
-  @@map("qa_reports")
-}
-
-model Deployment {
-  id          String    @id @default(uuid())
-  projectId   String    @map("project_id")
-  environment String
-  status      String
-  previewUrl  String?   @map("preview_url")
-  publicUrl   String?   @map("public_url")
-  commitSha   String?   @map("commit_sha")
-  deployedBy  String?   @map("deployed_by")
-  deployedAt  DateTime? @map("deployed_at")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  tenantId    String    @map("tenant_id")
-  // M8: deployment mode and approval tracking
-  mode        String
-  approvalId  String?   @unique @map("approval_id")
-
-  project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  deployer User?   @relation(fields: [deployedBy], references: [id])
-  approval Approval? @relation(fields: [approvalId], references: [id], onDelete: SetNull)
-
-  @@index([projectId])
-  @@index([tenantId])
-  @@map("deployments")
-}
-
-model XrAsset {
   id            String   @id @default(uuid())
-  projectId     String   @map("project_id")
-  type          String   @default("model3d")
-  service       String   @default("webXR")
-  glbUrl        String?  @map("glb_url")
-  equirectUrl   String?  @map("equirect_url")
-  usdzUrl       String?  @map("usdz_url")
-  fileSizeBytes Int?     @map("file_size_bytes")
-  createdAt     DateTime @default(now()) @map("created_at")
-  updatedAt     DateTime @updatedAt @map("updated_at")
-  tenantId      String   @map("tenant_id")
+  email         String   @unique
+  name          String?
+  role          Role     @default(CLIENT)
+  isSuspended   Boolean  @default(false)
+  suspensionReason String?
+  suspendedAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  tenantId      String   @default("")
 
-  project         Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
-  configurations  Configuration[]
-
-  @@index([projectId])
-  @@index([tenantId])
-  @@map("xr_assets")
+  // Relations
+  tickets        SupportTicket[]   @relation("SupportTicketUserIdToUserId")
+  sentMessages   SupportTicketMessage[] @relation("SupportTicketMessageSenderIdToUserId")
+  exportRequests DataExportRequest[] @relation("DataExportRequestUserIdToUserId")
+  impersonationAsAdmin ImpersonationLog[] @relation("ImpersonationLogAdmin")
+  impersonationAsTarget ImpersonationLog[] @relation("ImpersonationLogTarget")
 }
 
-model Approval {
-  id          String    @id @default(uuid())
-  resource    String
-  resourceId  String
-  actorId     String
-  actorRole   String
-  status      String    @default("pending") // pending, approved, rejected
-  notes       String?
-  token       String    @unique @map("token")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-  tenantId    String    @map("tenant_id")
-  deployment  Deployment?
+model SupportTicket {
+  id        String   @id @default(uuid())
+  userId    String
+  subject   String
+  message   String?  // The initial message or description
+  status    String   @default("open") // open, in_progress, resolved, closed
+  priority  String   @default("low") // low, medium, high, urgent
+  tenantId  String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  resolvedAt DateTime?
 
-  @@index([resource, resourceId])
-  @@index([actorId])
-  @@index([tenantId])
-  @@map("approvals")
+  // Relations
+  user      User     @relation("SupportTicketUserIdToUserId", fields: [userId], references: [id])
+  messages  SupportTicketMessage[] @relation("SupportTicketMessageTicketIdToSupportTicketId")
 }
 
-model Configuration {
-  id         String   @id @default(uuid())
-  xrAssetId  String   @map("xr_asset_id")
-  name       String   @default("default")
-  data       String
-  createdAt  DateTime @default(now()) @map("created_at")
-  updatedAt  DateTime @updatedAt @map("updated_at")
-  tenantId   String   @map("tenant_id")
+model SupportTicketMessage {
+  id        String   @id @default(uuid())
+  ticketId  String
+  senderId  String   // Could be user or admin
+  content   String
+  createdAt DateTime @default(now())
+  tenantId  String   @default("")
 
-  xrAsset XrAsset @relation(fields: [xrAssetId], references: [id], onDelete: Cascade)
-
-  @@unique([xrAssetId, name])
-  @@index([xrAssetId])
-  @@index([tenantId])
-  @@map("configurations")
+  // Relations
+  ticket    SupportTicket @relation("SupportTicketMessageTicketIdToSupportTicketId", fields: [ticketId], references: [id])
+  sender    User     @relation("SupportTicketMessageSenderIdToUserId", fields: [senderId], references: [id])
 }
 
-model ConfiguratorSession {
-  id          String    @id @default(uuid())
-  projectId   String    @map("project_id")
-  hostId      String    @map("host_id")
-  config      String
-  shareToken  String    @unique @map("share_token")
-  isActive    Boolean   @default(true) @map("is_active")
-  permissions Json      @default("{\"canEdit\": [], \"canView\": [], \"isPublic\": false}")
-  startAt     DateTime? @map("start_at")
-  reminderSentAt DateTime? @map("reminder_sent_at")
-  gcalEventId String?   @map("gcal_event_id")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-  tenantId    String    @map("tenant_id")
-
-  viewers Viewer[]
-
-  @@index([shareToken])
-  @@index([hostId])
-  @@index([startAt])
-  @@index([tenantId])
-  @@map("configurator_sessions")
+model JobExecution {
+  id        String   @id @default(uuid())
+  jobId     String   // Identifier for the job type (e.g., "rendering", "backup")
+  status    String   @default("pending") // pending, running, completed, failed, cancelled
+  progress  Int?     @default(0) // 0-100
+  error     String?  // Error message if failed
+  attempts  Int      @default(0)
+  finishedAt DateTime?
+  failedAt  DateTime?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenantId  String   @default("")
 }
 
-model Viewer {
-  id        String    @id @default(uuid())
-  sessionId String    @map("session_id")
-  userId    String?   @map("user_id")
-  joinedAt  DateTime  @default(now()) @map("joined_at")
-  leftAt    DateTime? @map("left_at")
-  tenantId  String    @map("tenant_id")
+model DataExportRequest {
+  id        String   @id @default(uuid())
+  userId    String
+  format    String   // e.g., "csv", "json", "pdf"
+  status    String   @default("pending") // pending, processing, completed, failed
+  filePath  String?  // Path to the exported file
+  requestedAt DateTime @default(now())
+  completedAt DateTime?
+  error     String?  // Error message if failed
+  tenantId  String   @default("")
 
-  session ConfiguratorSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
-
-  @@index([sessionId])
-  @@index([tenantId])
-  @@map("viewers")
+  // Relations
+  user      User     @relation("DataExportRequestUserIdToUserId", fields: [userId], references: [id])
 }
 
-model Subscription {
-  id                 String    @id @default(uuid())
-  userId             String    @map("user_id")
-  tenantId           String    @map("tenant_id")
-  stripeCustomerId   String    @unique @map("stripe_customer_id")
-  stripeSubscriptionId String  @unique @map("stripe_subscription_id")
-  stripePriceId      String    @map("stripe_price_id")
-  tier               String
-  status             String
-  currentPeriodStart DateTime? @map("current_period_start")
-  currentPeriodEnd   DateTime? @map("current_period_end")
-  createdAt          DateTime  @default(now()) @map("created_at")
-  updatedAt          DateTime  @updatedAt @map("updated_at")
+model ImpersonationLog {
+  id        String   @id @default(uuid())
+  adminUserId String   // The admin who initiated impersonation
+  targetUserId String   // The user being impersonated
+  status    String   @default("active") // active, revoked, expired
+  expiresAt DateTime  // When the impersonation expires
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  tenantId  String   @default("")
 
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([tenantId])
-  @@index([userId])
-  @@map("subscriptions")
-}
-model Session {
-  id              String    @id @default(cuid())
-  email           String
-  firstName       String
-  lastName        String
-  company         String?
-  serviceId       String
-  projectType     String
-  notes           String?
-  date            String
-  time            String
-  startAt         DateTime  @db.Timestamp(0)
-  durationMinutes Int
-  status          String    @default("CONFIRMED")
-  reminderSentAt  DateTime? @db.Timestamp(0)
-  gcalEventId     String?
-  createdAt       DateTime  @default(now()) @db.Timestamp(0)
-
-  @@index([email])
-  @@index([status])
-  @@index([startAt])
-  @@map("sessions")
+  // Relations
+  adminUser User     @relation("ImpersonationLogAdmin", fields: [adminUserId], references: [id])
+  targetUser User     @relation("ImpersonationLogTarget", fields: [targetUserId], references: [id])
 }
 
 model AuditLog {
   id         String    @id @default(uuid())
-  actorId    String    @map("actor_id")
-  actorRole  String    @map("actor_role")
+  actorId    String
+  actorRole  String
   action     String
   resource   String
-  resourceId String?   @map("resource_id")
+  resourceId String?
   changes    Json?
   ip         String?
-  userAgent  String?   @map("user_agent")
-  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
+  userAgent  String?
+  createdAt  DateTime  @default(now())
 
   @@index([actorId])
   @@index([action])
   @@index([resource])
   @@index([createdAt])
-  @@map("audit_logs")
 }
 
-model Annotation {
+/// M13: CRM models — leads, contacts, deals, tasks
+enum LeadStatus {
+  NEW
+  CONTACTED
+  QUALIFIED
+  UNQUALIFIED
+  CONVERTED
+}
+
+enum DealStage {
+  PROSPECT
+  QUOTE
+  NEGOTIATION
+  CLOSED_WON
+  CLOSED_LOST
+}
+
+model Lead {
+  id          String     @id @default(uuid())
+  email       String     @unique
+  name        String?
+  company     String?
+  phone       String?
+  status      LeadStatus @default(NEW)
+  source      String?    // how they found us
+  tenantId    String     @default("")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
+
+  // Relations
+  contacts    Contact[]
+  deals       Deal[]
+  tasks       Task[]
+
+  @@index([tenantId])
+  @@index([status])
+}
+
+model Contact {
   id          String   @id @default(uuid())
-  projectId   String   @map("project_id")
-  authorId    String   @map("author_id")
-  position    Json
-  content     String
-  resolved    Boolean  @default(false)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  tenantId    String   @map("tenant_id")
+  leadId      String
+  name        String
+  email       String?
+  phone       String?
+  role        String?    // job title at company
+  tenantId    String     @default("")
+  createdAt   DateTime   @default(now())
+  updatedAt   DateTime   @updatedAt
 
-  @@index([projectId])
-  @@index([authorId])
+  // Relations
+  lead        Lead       @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  deals       Deal[]
+
+  @@index([leadId])
   @@index([tenantId])
-  @@map("annotations")
 }
 
-model Comment {
-  id        String   @id @default(uuid())
-  projectId String   @map("project_id")
-  authorId  String   @map("author_id")
-  parentId  String?  @map("parent_id")
-  content   String
-  mentions  String[]
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  tenantId  String   @map("tenant_id")
+model Deal {
+  id          String    @id @default(uuid())
+  leadId      String
+  contactId   String?
+  title       String
+  stage       DealStage @default(PROSPECT)
+  value       Float?
+  currency    String    @default("USD")
+  closeDate   DateTime?
+  tenantId    String    @default("")
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
-  @@index([projectId])
-  @@index([authorId])
-  @@index([parentId])
+  // Relations
+  lead        Lead      @relation(fields: [leadId], references: [id])
+  contact     Contact?  @relation(fields: [contactId], references: [id])
+  tasks       Task[]
+
+  @@index([leadId])
+  @@index([stage])
   @@index([tenantId])
-  @@map("comments")
 }
 
-model ApprovalWorkflow {
+model Task {
   id          String   @id @default(uuid())
-  projectId   String   @map("project_id")
-  requesterId String   @map("requester_id")
-  approverId  String   @map("approver_id")
-  status      String   @default("pending") // pending, approved, rejected
-  notes       String?
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  tenantId    String   @map("tenant_id")
+  title       String
+  description String?
+  completed   Boolean  @default(false)
+  dueDate     DateTime?
+  leadId      String?
+  dealId      String?
+  tenantId    String   @default("")
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
-  @@index([projectId])
-  @@index([requesterId])
-  @@index([approverId])
+  // Relations
+  lead        Lead?    @relation(fields: [leadId], references: [id])
+  deal        Deal?    @relation(fields: [dealId], references: [id])
+
+  @@index([leadId])
+  @@index([dealId])
   @@index([tenantId])
-  @@map("approval_workflows")
-}
-
-model Deliverable {
-  id        String    @id @default(uuid())
-  projectId String    @map("project_id")
-  name      String
-  type      String
-  url       String
-  password  String?
-  expiresAt DateTime?
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  tenantId  String    @map("tenant_id")
-
-  @@index([projectId])
-  @@index([tenantId])
-  @@map("deliverables")
-}
-
-model ProjectVersion {
-  id        String   @id @default(uuid())
-  projectId String   @map("project_id")
-  version   String
-  changes   Json
-  createdAt DateTime @default(now()) @map("created_at")
-  createdBy String   @map("created_by")
-  tenantId  String   @map("tenant_id")
-
-  @@index([projectId])
-  @@index([tenantId])
-  @@map("project_versions")
 }
