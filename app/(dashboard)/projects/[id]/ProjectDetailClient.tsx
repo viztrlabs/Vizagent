@@ -162,11 +162,57 @@ export function ProjectDetailClient({
             <ul className="space-y-2">
               {deployments.map((d) => (
                 <li key={d.id} className="flex items-center justify-between text-sm">
-                  <span className="text-white">{d.environment}</span>
-                  <span className="text-gray-400">{new Date(d.createdAt).toLocaleString()}</span>
+                  <div className="flex items-center gap-3">
+                    <span className="text-white capitalize">{d.environment}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full ${
+                      d.status === 'ready' ? 'bg-green-900/30 text-green-400'
+                        : d.status === 'failed' ? 'bg-red-900/30 text-red-400'
+                        : d.status === 'building' ? 'bg-yellow-900/30 text-yellow-400'
+                        : d.status === 'rolled_back' ? 'bg-gray-900/30 text-gray-400'
+                        : 'bg-gray-800 text-gray-400'
+                    }`}>
+                      {d.status}
+                    </span>
+                    {d.publicUrl && (
+                      <a
+                        href={d.publicUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-cyan hover:underline text-xs"
+                      >
+                        Live URL
+                      </a>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="text-gray-500 text-xs">
+                      {new Date(d.createdAt).toLocaleString()}
+                    </span>
+                    {d.environment === 'production' && d.status === 'ready' && (
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={async () => {
+                          try {
+                            await fetch(`/api/deployments/${d.id}/rollback`, { method: 'POST' });
+                            window.location.reload();
+                          } catch {}
+                        }}
+                      >
+                        Rollback
+                      </Button>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>
+          </section>
+        )}
+
+        {deployments.length === 0 && (
+          <section className="bg-surface rounded-xl border border-gray-800 p-5">
+            <h2 className="text-lg font-medium text-white mb-3">Deployment History</h2>
+            <p className="text-gray-500 text-sm">No deployments yet. Publish your project to see deployment history.</p>
           </section>
         )}
       </div>
