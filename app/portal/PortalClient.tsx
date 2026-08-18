@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import type { Session } from '@prisma/client';
 import { SessionCard } from '@/components/portal/SessionCard';
+import { OnboardingWizard } from '@/components/onboarding/OnboardingWizard';
 
 interface PortalClientProps {
   user: { email?: string | null };
@@ -35,6 +36,8 @@ export function PortalClient({ user, sessions, upcoming, past, cancelled, totalH
             Manage your virtual tours and 3D experiences
           </p>
         </div>
+
+        <OnboardingWizard />
 
         <div className="viztr-stats-row">
           <div className="viztr-stat-card">
