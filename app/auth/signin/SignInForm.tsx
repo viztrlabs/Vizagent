@@ -93,6 +93,15 @@ function SignInFormInner() {
           />
         </div>
 
+        <div className="text-right">
+          <Link
+            href="/auth/password-reset"
+            className="text-xs text-gray-400 hover:text-cyan font-body"
+          >
+            Forgot password?
+          </Link>
+        </div>
+
         {error && (
           <p className="text-sm text-red-400 font-body">{error}</p>
         )}
