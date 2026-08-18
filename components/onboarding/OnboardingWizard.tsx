@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { X, Check, ArrowRight, Sparkles, Box, Globe, Users } from 'lucide-react';
+import { ArrowRight, Sparkles, Box, Globe, Users } from 'lucide-react';
 import { useAnalytics } from '@/lib/analytics/client';
 
 const STORAGE_KEY = 'viztr-onboarding-completed';
@@ -59,30 +59,31 @@ const steps: Step[] = [
   },
 ];
 
-export function OnboardingWizard() {
-  const [currentStep, setCurrentStep] = useState(0);
-  const [completed, setCompleted] = useState<string[]>([]);
-  const [dismissed, setDismissed] = useState(false);
-  const { track } = useAnalytics();
-
-  useEffect(() => {
+function getInitialState() {
+  if (typeof window !== 'undefined') {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (stored === 'true') {
-      setDismissed(true);
-      return;
+      return { dismissed: true, completed: [] as string[], currentStep: 0 };
     }
     const completedSteps = localStorage.getItem(`${STORAGE_KEY}-steps`);
     if (completedSteps) {
       try {
         const parsed = JSON.parse(completedSteps) as string[];
-        setCompleted(parsed);
         const nextIdx = steps.findIndex((s) => !parsed.includes(s.key));
-        setCurrentStep(nextIdx >= 0 ? nextIdx : 0);
+        return { dismissed: false, completed: parsed, currentStep: nextIdx >= 0 ? nextIdx : 0 };
       } catch {
         // ignore
       }
     }
-  }, []);
+  }
+  return { dismissed: false, completed: [] as string[], currentStep: 0 };
+}
+
+export function OnboardingWizard() {
+  const [state, setState] = useState(getInitialState);
+  const { track } = useAnalytics();
+
+  const { dismissed, completed, currentStep } = state;
 
   useEffect(() => {
     if (currentStep === 0 && completed.length === 0 && !dismissed) {
@@ -97,7 +98,13 @@ export function OnboardingWizard() {
 
   const markComplete = (stepKey: string) => {
     const updated = [...new Set([...completed, stepKey])];
-    setCompleted(updated);
+    const nextStep = currentStep < steps.length - 1 ? currentStep + 1 : currentStep;
+
+    setState({
+      completed: updated,
+      currentStep: nextStep,
+      dismissed: nextStep === currentStep,
+    });
     localStorage.setItem(`${STORAGE_KEY}-steps`, JSON.stringify(updated));
 
     track('onboarding_step_completed', {
@@ -105,21 +112,19 @@ export function OnboardingWizard() {
       step_name: stepKey as 'welcome' | 'project_setup' | 'first_asset' | 'publish' | 'team_invite',
     });
 
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
+    if (currentStep === steps.length - 1) {
       track('onboarding_completed', { duration_ms: 0, steps_completed: updated.length });
       localStorage.setItem(STORAGE_KEY, 'true');
-      setDismissed(true);
     }
   };
 
   const skip = () => {
     localStorage.setItem(STORAGE_KEY, 'true');
-    setDismissed(true);
+    setState({ dismissed: true, completed, currentStep });
   };
 
   const progress = Math.round((completed.length / steps.length) * 100);
+  const showProgress = progress > 0;
 
   return (
     <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 mb-6">
@@ -138,12 +143,14 @@ export function OnboardingWizard() {
         </button>
       </div>
 
-      <div className="w-full bg-gray-100 rounded-full h-1.5 mb-6">
-        <div
-          className="bg-indigo-600 h-1.5 rounded-full transition-all"
-          style={{ width: `${progress}%` }}
-        />
-      </div>
+      {showProgress && (
+        <div className="w-full bg-gray-100 rounded-full h-1.5 mb-6">
+          <div
+            className="bg-indigo-600 h-1.5 rounded-full transition-all"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      )}
 
       <div className="flex gap-3 items-start">
         <div className="flex-shrink-0 mt-1">{step.icon}</div>
@@ -174,7 +181,7 @@ export function OnboardingWizard() {
         {steps.map((s, i) => (
           <button
             key={s.key}
-            onClick={() => setCurrentStep(i)}
+            onClick={() => setState({ ...state, currentStep: i })}
             className={`w-2 h-2 rounded-full transition-colors ${
               i === currentStep
                 ? 'bg-indigo-600'

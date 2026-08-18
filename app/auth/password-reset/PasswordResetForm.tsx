@@ -1,13 +1,20 @@
 'use client';
 
 import { createBrowserClient } from '@supabase/ssr';
-import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
-import { Suspense, useEffect, useState } from 'react';
+import { Suspense, useState } from 'react';
+
+function getInitialMode(): 'request' | 'update' {
+  if (typeof window === 'undefined') return 'request';
+  const hash = window.location.hash;
+  if (hash.includes('access_token') || hash.includes('type=recovery')) {
+    return 'update';
+  }
+  return 'request';
+}
 
 function PasswordResetFormInner() {
-  const searchParams = useSearchParams();
-  const [mode, setMode] = useState<'request' | 'update'>('request');
+  const [mode] = useState<'request' | 'update'>(getInitialMode);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -19,13 +26,6 @@ function PasswordResetFormInner() {
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
   );
-
-  useEffect(() => {
-    const hash = window.location.hash;
-    if (hash.includes('access_token') || hash.includes('type=recovery')) {
-      setMode('update');
-    }
-  }, []);
 
   const handleRequestReset = async (e: React.FormEvent) => {
     e.preventDefault();
