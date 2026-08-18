@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { publishToProduction } from '@/lib/server/deployment/deployment';
+import { trackEvent } from '@/lib/analytics/server';
+import { getCurrentAuth } from '@/lib/auth/session';
 
 export async function POST(request: NextRequest) {
   try {
@@ -16,6 +18,22 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await publishToProduction({ projectId, mode, environment: 'production' }, approvalToken);
+
+    const { authUser, dbUser, tenantId } = await getCurrentAuth();
+    if (authUser) {
+      const sessionId = request.cookies.get('viztr-session-id')?.value ?? crypto.randomUUID();
+      await trackEvent({
+        event: 'deployment_published',
+        properties: {
+          deployment_id: projectId,
+          project_id: projectId,
+          xr_mode: mode as 'tour' | 'webxr' | 'web_ar' | 'vr' | 'pixel_streaming',
+        },
+        userId: dbUser?.id ?? authUser.id,
+        tenantId,
+        sessionId,
+      });
+    }
 
     return NextResponse.json(result, { status: 201 });
   } catch (error) {

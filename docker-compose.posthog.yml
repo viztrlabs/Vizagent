@@ -1,0 +1,39 @@
+services:
+  posthog:
+    image: posthog/posthog:latest
+    environment:
+      - POSTHOG_SECRET=${POSTHOG_SECRET}
+      - POSTHOG_HOST=${POSTHOG_HOST}
+      - POSTHOG_DISABLE_GEOIP=1
+      - POSTHOG_DISABLE_SESSION_RECORDING=1
+      - DATABASE_URL=postgresql://posthog:posthog@posthog-postgres:5432/posthog
+      - REDIS_URL=redis://posthog-redis:6379
+    ports:
+      - "8000:8000"
+    volumes:
+      - posthog_data:/var/lib/posthog
+    depends_on:
+      - posthog-postgres
+      - posthog-redis
+    restart: unless-stopped
+
+  posthog-postgres:
+    image: postgres:16
+    environment:
+      - POSTGRES_USER=posthog
+      - POSTGRES_PASSWORD=posthog
+      - POSTGRES_DB=posthog
+    volumes:
+      - posthog_postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+
+  posthog-redis:
+    image: redis:7-alpine
+    volumes:
+      - posthog_redis_data:/data
+    restart: unless-stopped
+
+volumes:
+  posthog_data:
+  posthog_postgres_data:
+  posthog_redis_data:

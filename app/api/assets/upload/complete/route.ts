@@ -4,6 +4,8 @@ import { getTenantId } from '@/lib/server/lib/tenant';
 import { withTenant } from '@/lib/server/middleware/tenant';
 import { completeMultipartUpload } from '@/lib/server/lib/r2';
 import { assetUploadCompleteSchema } from '@/lib/validations';
+import { trackEvent } from '@/lib/analytics/server';
+import { getCurrentAuth } from '@/lib/auth/session';
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,6 +40,22 @@ export async function POST(request: NextRequest) {
 
     if (!asset) {
       return NextResponse.json({ error: 'Asset not found' }, { status: 404 });
+    }
+
+    const { authUser, dbUser, tenantId: authTenantId } = await getCurrentAuth();
+    if (authUser) {
+      const sessionId = request.cookies.get('viztr-session-id')?.value ?? crypto.randomUUID();
+      await trackEvent({
+        event: 'asset_uploaded',
+        properties: {
+          asset_id: asset.id,
+          asset_type: (asset.fileType as 'model' | 'texture' | 'scene' | 'environment' | 'other') ?? 'other',
+          file_size_mb: Math.round((Number(asset.fileSize) || 0) / (1024 * 1024) * 10) / 10,
+        },
+        userId: dbUser?.id ?? authUser.id,
+        tenantId: authTenantId,
+        sessionId,
+      });
     }
 
     return NextResponse.json({ asset });
