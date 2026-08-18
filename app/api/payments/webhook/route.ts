@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { constructWebhookEvent } from '@/lib/stripe/server';
 import { SubscriptionRepository } from '@/lib/server/repositories/subscription.repository';
+import { trackEvent } from '@/lib/analytics/server';
+import { randomUUID } from 'crypto';
 
 export const dynamic = 'force-dynamic';
 
@@ -21,6 +23,19 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     stripePriceId: 'unknown',
     tier: 'unknown',
     status: 'active',
+  });
+
+  await trackEvent({
+    event: 'checkout_completed',
+    properties: {
+      plan_id: 'unknown',
+      amount: (session.amount_total ?? 0) / 100,
+      currency: session.currency ?? 'usd',
+      subscription_id: subscriptionId,
+    },
+    userId,
+    tenantId,
+    sessionId: randomUUID(),
   });
 }
 
@@ -55,10 +70,37 @@ async function handleSubscriptionUpdated(sub: Stripe.Subscription) {
       : undefined,
     currentPeriodEnd,
   });
+
+  await trackEvent({
+    event: 'subscription_changed',
+    properties: {
+      plan_id: priceId,
+      previous_plan_id: null,
+      subscription_id: s.id,
+      change_type: 'upgrade',
+    },
+    userId,
+    tenantId,
+    sessionId: randomUUID(),
+  });
 }
 
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   await subscriptionRepository.updateStatus(subscription.id, 'canceled');
+}
+
+async function handlePaymentFailed(invoice: Stripe.Invoice) {
+  const customerId = typeof invoice.customer === 'string' ? invoice.customer : invoice.customer?.id ?? 'unknown';
+  await trackEvent({
+    event: 'payment_failed',
+    properties: {
+      error_code: invoice.attempt_count?.toString() ?? 'unknown',
+      invoice_id: invoice.id,
+    },
+    userId: customerId,
+    tenantId: customerId,
+    sessionId: randomUUID(),
+  });
 }
 
 export async function POST(request: NextRequest) {
@@ -78,6 +120,9 @@ export async function POST(request: NextRequest) {
         break;
       case 'customer.subscription.deleted':
         await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
+        break;
+      case 'invoice.payment_failed':
+        await handlePaymentFailed(event.data.object as Stripe.Invoice);
         break;
     }
     return NextResponse.json({ received: true });

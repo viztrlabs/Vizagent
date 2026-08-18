@@ -4,6 +4,7 @@ import { createBrowserClient } from '@supabase/ssr';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Suspense, useState } from 'react';
+import { useAnalytics } from '@/lib/analytics/client';
 
 function SignUpFormInner() {
   const router = useRouter();
@@ -16,6 +17,7 @@ function SignUpFormInner() {
   const [error, setError] = useState<string | null>(null);
   const [checkEmail, setCheckEmail] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { track } = useAnalytics();
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -27,6 +29,8 @@ function SignUpFormInner() {
     setLoading(true);
     setError(null);
 
+    track('signup_started', { method: 'email', referrer: document.referrer });
+
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
@@ -36,17 +40,20 @@ function SignUpFormInner() {
     });
 
     if (error) {
+      track('signup_failed', { error_code: error.message, method: 'email' });
       setError(error.message);
       setLoading(false);
       return;
     }
 
     if (!data.session) {
+      track('signup_completed', { method: 'email' });
       setCheckEmail(true);
       setLoading(false);
       return;
     }
 
+    track('signup_completed', { method: 'email' });
     router.push(callbackUrl);
     router.refresh();
   }

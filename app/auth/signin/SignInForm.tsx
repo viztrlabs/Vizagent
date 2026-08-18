@@ -4,6 +4,7 @@ import { createBrowserClient } from '@supabase/ssr';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Suspense, useState } from 'react';
+import { useAnalytics } from '@/lib/analytics/client';
 
 function SignInFormInner() {
   const router = useRouter();
@@ -14,6 +15,7 @@ function SignInFormInner() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const { track } = useAnalytics();
 
   const supabase = createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -31,6 +33,7 @@ function SignInFormInner() {
     });
 
     if (error) {
+      track('login_failed', { reason: 'invalid_credentials' });
       setError(error.message);
       setLoading(false);
       return;

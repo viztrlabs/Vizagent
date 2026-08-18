@@ -4,6 +4,7 @@ import { createCheckoutSession } from '@/lib/stripe/server';
 import { getPriceId } from '@/lib/stripe/tiers';
 import { rateLimit, clientIp } from '@/lib/server/middleware/rate-limit';
 import { auditLog } from '@/lib/server/audit/audit-logger';
+import { trackEvent } from '@/lib/analytics/server';
 
 // M0.5: bound checkout attempts to mitigate automated abuse / Stripe spam.
 const CHECKOUT_LIMIT = { limit: 5, windowMs: 60_000, prefix: 'checkout' };
@@ -54,6 +55,15 @@ export async function POST(request: NextRequest) {
       changes: { tier, priceId },
       ip: clientIp(request),
       userAgent: request.headers.get('user-agent') ?? undefined,
+    });
+
+    const sessionId = request.cookies.get('viztr-session-id')?.value ?? crypto.randomUUID();
+    await trackEvent({
+      event: 'checkout_started',
+      properties: { plan_id: tier, amount: 0, currency: 'usd' },
+      userId,
+      tenantId,
+      sessionId,
     });
 
     return NextResponse.json({ url: checkoutSession.url });
