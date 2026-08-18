@@ -42,6 +42,7 @@
     "VizAgents(Opencode-Hermes-Gravity-)",
     "VizTR-OS",
     "components/configurator",
-    "lib/xr"
+    "lib/xr",
+    "lib/server/admin"
   ]
 }
