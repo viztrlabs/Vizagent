@@ -1,16 +1,16 @@
 import { NextResponse } from 'next/server';
-import { listAuditLogs, getAuditLogCount } from '../../../../lib/server/audit/audit-logger';
+import { listAuditLogs, getAuditLogCount, AuditLogFilter } from '../../../../lib/server/audit/audit-logger';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const filters: any = {};
+    const filters: AuditLogFilter = {};
 
     // Parse query parameters
-    if (searchParams.has('action')) filters.action = searchParams.get('action');
-    if (searchParams.has('resource')) filters.resource = searchParams.get('resource');
-    if (searchParams.has('resourceId')) filters.resourceId = searchParams.get('resourceId');
-    if (searchParams.has('userId')) filters.userId = searchParams.get('userId');
+    if (searchParams.has('action')) filters.action = searchParams.get('action') ?? undefined;
+    if (searchParams.has('resource')) filters.resource = searchParams.get('resource') ?? undefined;
+    if (searchParams.has('resourceId')) filters.resourceId = searchParams.get('resourceId') ?? undefined;
+    if (searchParams.has('userId')) filters.userId = searchParams.get('userId') ?? undefined;
     if (searchParams.has('createdAt')) {
       const dateStr = searchParams.get('createdAt');
       if (dateStr) {
@@ -30,13 +30,13 @@ export async function GET(request: Request) {
 export async function GET_COUNT(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const filters: any = {};
+    const filters: AuditLogFilter = {};
 
     // Parse query parameters
-    if (searchParams.has('action')) filters.action = searchParams.get('action');
-    if (searchParams.has('resource')) filters.resource = searchParams.get('resource');
-    if (searchParams.has('resourceId')) filters.resourceId = searchParams.get('resourceId');
-    if (searchParams.has('userId')) filters.userId = searchParams.get('userId');
+    if (searchParams.has('action')) filters.action = searchParams.get('action') ?? undefined;
+    if (searchParams.has('resource')) filters.resource = searchParams.get('resource') ?? undefined;
+    if (searchParams.has('resourceId')) filters.resourceId = searchParams.get('resourceId') ?? undefined;
+    if (searchParams.has('userId')) filters.userId = searchParams.get('userId') ?? undefined;
     if (searchParams.has('createdAt')) {
       const dateStr = searchParams.get('createdAt');
       if (dateStr) {

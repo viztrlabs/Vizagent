@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server';
-import { listTickets, createTicket, updateTicket, addMessage, closeTicket, getTicketById } from '../../../../lib/server/admin/tickets';
+import { listTickets, createTicket, updateTicket, addMessage, closeTicket, getTicketById, TicketFilter } from '../../../../lib/server/admin/tickets';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const filters: any = {};
+    const filters: TicketFilter = {};
 
     // Parse query parameters
-    if (searchParams.has('status')) filters.status = searchParams.get('status');
-    if (searchParams.has('priority')) filters.priority = searchParams.get('priority');
-    if (searchParams.has('userId')) filters.userId = searchParams.get('userId');
+    if (searchParams.has('status')) filters.status = searchParams.get('status') ?? undefined;
+    if (searchParams.has('priority')) filters.priority = searchParams.get('priority') ?? undefined;
+    if (searchParams.has('userId')) filters.userId = searchParams.get('userId') ?? undefined;
     if (searchParams.has('createdAt')) {
       const dateStr = searchParams.get('createdAt');
       if (dateStr) {

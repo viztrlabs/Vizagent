@@ -1,4 +1,4 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
+ 
 // M0.3: This Babylon.js single-scene tour hook is superseded by the Marzipano
 // multi-scene viewer (`components/marzipano/MarzipanoTourViewer.tsx`).
 //

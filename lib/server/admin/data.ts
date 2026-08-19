@@ -2,11 +2,34 @@ import { prisma } from '../../../lib/db/server';
 import { getCurrentAuth, NULL_TENANT } from '../../../lib/auth/session';
 import { auditLog } from '../audit/audit-logger';
 
+// Helper to convert Date objects in an object to ISO strings for JSON compatibility
+export function jsonSafe(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+  if (obj instanceof Date) {
+    return obj.toISOString();
+  }
+  if (typeof obj === 'object' && !Array.isArray(obj)) {
+    const result: any = {};
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        result[key] = jsonSafe(obj[key]);
+      }
+    }
+    return result;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(jsonSafe);
+  }
+  return obj; // primitive
+}
+
 export interface DataExportFilter {
   userId?: string;
   format?: string;
-  status?: 'pending' | 'processing' | 'completed' | 'failed';
-  requestedAt?: [gte: Date, lte: Date];
+  status?: string;
+  requestedAt?: [Date, Date];
 }
 
 export interface DataExportRequest {
@@ -71,12 +94,12 @@ export async function createDataExportRequest(
   });
 
   // Audit log
-  await auditLog({
-    action: 'data_export.create',
-    resource: 'DataExportRequest',
-    resourceId: exportReq.id,
-    changes: { userId, format, filePath, status: filePath ? 'completed' : 'pending' },
-  });
+    await auditLog({
+      action: 'data_export.create',
+      resource: 'DataExportRequest',
+      resourceId: exportReq.id,
+      changes: jsonSafe({ userId, format, filePath, status: filePath ? 'completed' : 'pending' }),
+    });
 
   return exportReq;
 }
@@ -98,12 +121,12 @@ export async function updateDataExportRequest(
   });
 
   // Audit log
-  await auditLog({
-    action: 'data_export.update',
-    resource: 'DataExportRequest',
-    resourceId: exportId,
-    changes: updates,
-  });
+    await auditLog({
+      action: 'data_export.update',
+      resource: 'DataExportRequest',
+      resourceId: exportId,
+      changes: jsonSafe(updates),
+    });
 
   return exportReq;
 }

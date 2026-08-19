@@ -755,3 +755,224 @@ model SupportMessage {
   @@index([senderId])
   @@map("support_messages")
 }
+
+// M17: Enterprise & Marketplace models
+
+enum MarketplaceItemType {
+  TEMPLATE
+  MATERIAL_PACK
+  LIGHTING_PRESET
+  FURNITURE_PACK
+  CAMERA_PRESET
+  SCRIPT
+}
+
+enum MarketplaceItemStatus {
+  DRAFT
+  PENDING_REVIEW
+  APPROVED
+  REJECTED
+  PUBLISHED
+  UNLISTED
+}
+
+enum ApiKeyStatus {
+  ACTIVE
+  REVOKED
+  EXPIRED
+}
+
+enum WebhookEvent {
+  PROJECT_CREATED
+  PROJECT_UPDATED
+  PROJECT_PUBLISHED
+  QA_COMPLETED
+  INVOICE_ISSUED
+  SUBSCRIPTION_CHANGED
+  PAYMENT_FAILED
+  MARKETPLACE_PURCHASE
+  MARKETPLACE_REVIEW
+}
+
+model BrandingConfig {
+  id           String   @id @default(uuid())
+  tenantId     String   @unique @map("tenant_id")
+  logoUrl      String?  @map("logo_url")
+  faviconUrl   String?  @map("favicon_url")
+  primaryColor String?  @map("primary_color")
+  secondaryColor String? @map("secondary_color")
+  fontFamily   String?  @map("font_family")
+  customCss    String?  @map("custom_css")
+  whiteLabel   Boolean  @default(false) @map("white_label")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@map("branding_configs")
+}
+
+model CustomDomain {
+  id           String   @id @default(uuid())
+  tenantId     String   @map("tenant_id")
+  domain       String   @unique
+  verified     Boolean  @default(false)
+  sslEnabled   Boolean  @default(false) @map("ssl_enabled")
+  sslExpiresAt DateTime? @map("ssl_expires_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@map("custom_domains")
+}
+
+model SsoConfig {
+  id              String   @id @default(uuid())
+  tenantId        String   @unique @map("tenant_id")
+  provider        String   // saml, oidc
+  entityId        String?  @map("entity_id")
+  ssoUrl          String?  @map("sso_url")
+  certificate     String?
+  attributeMapping Json    @default("{}") @map("attribute_mapping")
+  autoProvision   Boolean  @default(true) @map("auto_provision")
+  enabled         Boolean  @default(false)
+  createdAt       DateTime @default(now()) @map("created_at")
+  updatedAt       DateTime @updatedAt @map("updated_at")
+
+  @@map("sso_configs")
+}
+
+model ApiKey {
+  id          String       @id @default(uuid())
+  tenantId    String       @map("tenant_id")
+  name        String
+  keyHash     String       @map("key_hash")
+  keyPrefix   String       @map("key_prefix")
+  scopes      String[]
+  status      ApiKeyStatus @default(ACTIVE)
+  expiresAt   DateTime?    @map("expires_at")
+  lastUsedAt  DateTime?    @map("last_used_at")
+  createdAt   DateTime     @default(now()) @map("created_at")
+  updatedAt   DateTime     @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@index([keyPrefix])
+  @@map("api_keys")
+}
+
+model Webhook {
+  id          String        @id @default(uuid())
+  tenantId    String        @map("tenant_id")
+  url         String
+  events      WebhookEvent[]
+  secret      String
+  active      Boolean       @default(true)
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  @@index([tenantId])
+  @@map("webhooks")
+}
+
+model WebhookDelivery {
+  id          String   @id @default(uuid())
+  webhookId   String   @map("webhook_id")
+  event       WebhookEvent
+  payload     Json
+  response    Json?
+  status      String   @default("pending") // pending, success, failed
+  attempt     Int      @default(1)
+  error       String?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([webhookId])
+  @@index([status])
+  @@map("webhook_deliveries")
+}
+
+model MarketplaceItem {
+  id              String               @id @default(uuid())
+  tenantId        String               @map("tenant_id")
+  creatorId       String               @map("creator_id")
+  type            MarketplaceItemType
+  title           String
+  description     String
+  thumbnailUrl    String?              @map("thumbnail_url")
+  previewUrls     String[]             @map("preview_urls")
+  fileUrl         String?              @map("file_url")
+  fileSize        Int?                 @map("file_size")
+  version         String               @default("1.0.0")
+  tags            String[]
+  category        String
+  price           Int                  @default(0) // in cents
+  currency        String               @default("USD")
+  commissionRate  Float                @default(0.2) @map("commission_rate")
+  status          MarketplaceItemStatus @default(DRAFT)
+  reviewNotes     String?              @map("review_notes")
+  publishedAt     DateTime?            @map("published_at")
+  salesCount      Int                  @default(0) @map("sales_count")
+  revenue         Int                  @default(0)
+  createdAt       DateTime             @default(now()) @map("created_at")
+  updatedAt       DateTime             @updatedAt @map("updated_at")
+
+  purchases       MarketplacePurchase[]
+
+  @@index([tenantId])
+  @@index([creatorId])
+  @@index([type])
+  @@index([status])
+  @@index([category])
+  @@map("marketplace_items")
+}
+
+model MarketplacePurchase {
+  id              String   @id @default(uuid())
+  itemId          String   @map("item_id")
+  buyerId         String   @map("buyer_id")
+  sellerId        String   @map("seller_id")
+  price           Int      // in cents
+  currency        String   @default("USD")
+  commission      Int      // in cents
+  netAmount       Int      // in cents (seller receives)
+  status          String   @default("completed") // completed, refunded, disputed
+  purchasedAt     DateTime @default(now()) @map("purchased_at")
+
+  item            MarketplaceItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId])
+  @@index([buyerId])
+  @@index([sellerId])
+  @@map("marketplace_purchases")
+}
+
+model CreatorPayout {
+  id          String   @id @default(uuid())
+  sellerId    String   @map("seller_id")
+  amount      Int      // in cents
+  currency    String   @default("USD")
+  status      String   @default("pending") // pending, processing, paid, failed
+  periodStart DateTime @map("period_start")
+  periodEnd   DateTime @map("period_end")
+  paidAt      DateTime? @map("paid_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  @@index([sellerId])
+  @@index([status])
+  @@map("creator_payouts")
+}
+
+model EnterpriseServer {
+  id          String   @id @default(uuid())
+  tenantId    String   @unique @map("tenant_id")
+  name        String
+  region      String
+  instanceType String   @map("instance_type")
+  gpuEnabled  Boolean  @default(false) @map("gpu_enabled")
+  gpuType     String?  @map("gpu_type")
+  status      String   @default("provisioning") // provisioning, active, suspended, terminated
+  slaTier     String   @default("standard") @map("sla_tier") // standard, premium, enterprise
+  ipAddress   String?  @map("ip_address")
+  sshKey      String?  @map("ssh_key")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("enterprise_servers")
+}

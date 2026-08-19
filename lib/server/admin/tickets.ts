@@ -3,10 +3,10 @@ import { getCurrentAuth } from '../../../lib/auth/session';
 import { auditLog } from '../audit/audit-logger';
 
 export interface TicketFilter {
-  status?: 'open' | 'in_progress' | 'resolved' | 'closed';
-  priority?: 'low' | 'medium' | 'high' | 'urgent';
+  status?: string;
+  priority?: string;
   userId?: string;
-  createdAt?: [gte: Date, lte: Date];
+  createdAt?: [Date, Date];
 }
 
 export interface TicketSummary {
@@ -175,12 +175,12 @@ export async function addMessage(ticketId: string, senderId: string, content: st
   const { dbUser } = await getCurrentAuth();
   const tenantId = dbUser?.tenantId ?? '';
 
-  const message = await prisma.supportTicketMessage.create({
+  const message = await prisma.supportMessage.create({
     data: {
       ticketId,
       senderId,
+      senderType: 'agent',
       content,
-      tenantId,
     },
     select: {
       id: true,
@@ -190,7 +190,7 @@ export async function addMessage(ticketId: string, senderId: string, content: st
   // Audit log
   await auditLog({
     action: 'ticket.message',
-    resource: 'SupportTicketMessage',
+    resource: 'SupportMessage',
     resourceId: message.id,
     changes: { ticketId, content },
   });

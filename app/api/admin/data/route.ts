@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server';
-import { createDataExportRequest, getDataExportRequestById, updateDataExportRequest, listDataExportRequests } from '../../../../lib/server/admin/data';
+import { createDataExportRequest, getDataExportRequestById, updateDataExportRequest, listDataExportRequests, DataExportFilter } from '../../../../lib/server/admin/data';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const filters: any = {};
+    const filters: DataExportFilter = {};
 
     // Parse query parameters
-    if (searchParams.has('userId')) filters.userId = searchParams.get('userId');
-    if (searchParams.has('format')) filters.format = searchParams.get('format');
-    if (searchParams.has('status')) filters.status = searchParams.get('status');
+    if (searchParams.has('userId')) filters.userId = searchParams.get('userId') ?? undefined;
+    if (searchParams.has('format')) filters.format = searchParams.get('format') ?? undefined;
+    if (searchParams.has('status')) filters.status = searchParams.get('status') ?? undefined;
     if (searchParams.has('requestedAt')) {
       const dateStr = searchParams.get('requestedAt');
       if (dateStr) {
@@ -66,7 +66,7 @@ export async function GET_ONE(request: Request) {
     const id = searchParams.get('id');
 
     if (!id) {
-      return NextResponse.json({ error: 'Request ID is required' }, { status: 400 });
+      return NextResponse.json({ error: 'Request ID is required' }, { status: 404 });
     }
 
     const requestData = await getDataExportRequestById(id);

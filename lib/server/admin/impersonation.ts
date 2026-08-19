@@ -1,13 +1,17 @@
 import { prisma } from '../../../lib/db/server';
 import { getCurrentAuth } from '../../../lib/auth/session';
 import { auditLog } from '../audit/audit-logger';
+import { jsonSafe } from './data'; // Import jsonSafe helper
 
 export interface ImpersonationFilter {
-  status?: 'active' | 'revoked' | 'expired';
+  status?: string;
   adminUserId?: string;
   targetUserId?: string;
-  createdAt?: [gte: Date, lte: Date];
+  createdAt?: [Date, Date];
 }
+
+// Alias for backward compatibility
+export type ImpersonationLogFilter = ImpersonationFilter;
 
 export interface ImpersonationLog {
   id: string;
@@ -123,7 +127,7 @@ export async function createImpersonationLog(
     action: 'impersonation.create',
     resource: 'ImpersonationLog',
     resourceId: impersonation.id,
-    changes: { adminUserId, targetUserId, expiresAt, status: 'active' },
+    changes: jsonSafe({ adminUserId, targetUserId, expiresAt, status: 'active' }),
   });
 
   return {
@@ -168,12 +172,12 @@ export async function revokeImpersonationLog(
   });
 
   // Audit log
-  await auditLog({
-    action: 'impersonation.revoke',
-    resource: 'ImpersonationLog',
-    resourceId: impersonationId,
-    changes: { status: 'revoked', reason },
-  });
+    await auditLog({
+      action: 'impersonation.revoke',
+      resource: 'ImpersonationLog',
+      resourceId: impersonationId,
+      changes: jsonSafe({ status: 'revoked', reason }),
+    });
 
   return {
     id: impersonation.id,
@@ -208,7 +212,7 @@ export async function cleanupExpiredImpersonations(): Promise<number> {
       action: 'impersonation.cleanup',
       resource: 'ImpersonationLog',
       resourceId: 'batch',
-      changes: { count: result.count, status: 'expired' },
+      changes: jsonSafe({ count: result.count, status: 'expired' }),
     });
   }
 

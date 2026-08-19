@@ -1,11 +1,12 @@
 import { prisma } from '../../../lib/db/server';
 import { getCurrentAuth } from '../../../lib/auth/session';
+import type { Prisma } from '@prisma/client';
 
 export interface AuditLogInput {
   action: string;
   resource: string;
   resourceId?: string | null;
-  changes?: Record<string, unknown>;
+  changes?: Prisma.JsonValue;
   ip?: string;
   userAgent?: string;
 }
@@ -17,7 +18,7 @@ export interface AuditLogEntry {
   action: string;
   resource: string;
   resourceId: string | null;
-  changes: any;
+  changes: Prisma.JsonValue;
   ip?: string | undefined;
   userAgent?: string | undefined;
   createdAt: Date;
@@ -67,7 +68,7 @@ export async function listAuditLogs(
     createdAt: [gte: Date, lte: Date];
   }> = {}
 ): Promise<AuditLogEntry[]> {
-  const where: any = {};
+  const where: Record<string, unknown> = {};
 
   if (filter.actorId) {
     where.actorId = filter.actorId;

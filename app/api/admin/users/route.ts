@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server';
-import { listUsers, suspendUser, unsuspendUser, updateUserRole, getUserById } from '../../../../lib/server/admin/users';
+import { listUsers, suspendUser, unsuspendUser, updateUserRole, getUserById, UserFilter } from '../../../../lib/server/admin/users';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const filters: any = {};
+    const filters: UserFilter = {};
 
     // Parse query parameters
-    if (searchParams.has('role')) filters.role = searchParams.get('role');
+    if (searchParams.has('role')) filters.role = searchParams.get('role') ?? undefined;
     if (searchParams.has('isSuspended')) filters.isSuspended = searchParams.get('isSuspended') === 'true';
-    if (searchParams.has('search')) filters.search = searchParams.get('search');
+    if (searchParams.has('search')) filters.search = searchParams.get('search') ?? undefined;
     if (searchParams.has('createdAt')) {
       const dateStr = searchParams.get('createdAt');
       if (dateStr) {
@@ -50,7 +50,7 @@ export async function POST(request: Request) {
         if (!userId || !role) {
           return NextResponse.json({ error: 'User ID and role are required' }, { status: 400 });
         }
-        const updatedUser = await updateUserRole(userId, role as any);
+        const updatedUser = await updateUserRole(userId, role);
         return NextResponse.json(updatedUser);
 
       default:

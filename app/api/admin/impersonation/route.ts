@@ -1,15 +1,15 @@
 import { NextResponse } from 'next/server';
-import { listImpersonationLogs, createImpersonationLog, revokeImpersonationLog, getImpersonationLogById } from '../../../../lib/server/admin/impersonation';
+import { listImpersonationLogs, createImpersonationLog, revokeImpersonationLog, getImpersonationLogById, ImpersonationLogFilter } from '../../../../lib/server/admin/impersonation';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const filters: any = {};
+    const filters: ImpersonationLogFilter = {};
 
     // Parse query parameters
-    if (searchParams.has('adminUserId')) filters.adminUserId = searchParams.get('adminUserId');
-    if (searchParams.has('targetUserId')) filters.targetUserId = searchParams.get('targetUserId');
-    if (searchParams.has('status')) filters.status = searchParams.get('status');
+    if (searchParams.has('adminUserId')) filters.adminUserId = searchParams.get('adminUserId') ?? undefined;
+    if (searchParams.has('targetUserId')) filters.targetUserId = searchParams.get('targetUserId') ?? undefined;
+    if (searchParams.has('status')) filters.status = searchParams.get('status') ?? undefined;
     if (searchParams.has('createdAt')) {
       const dateStr = searchParams.get('createdAt');
       if (dateStr) {

@@ -2,10 +2,33 @@ import { prisma } from '../../../lib/db/server';
 import { getCurrentAuth } from '../../../lib/auth/session';
 import { auditLog } from '../audit/audit-logger';
 
+// Helper to convert Date objects in an object to ISO strings for JSON compatibility
+function jsonSafe(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+  if (obj instanceof Date) {
+    return obj.toISOString();
+  }
+  if (typeof obj === 'object' && !Array.isArray(obj)) {
+    const result: any = {};
+    for (const key in obj) {
+      if (Object.prototype.hasOwnProperty.call(obj, key)) {
+        result[key] = jsonSafe(obj[key]);
+      }
+    }
+    return result;
+  }
+  if (Array.isArray(obj)) {
+    return obj.map(jsonSafe);
+  }
+  return obj; // primitive
+}
+
 export interface JobFilter {
-  status?: 'pending' | 'running' | 'completed' | 'failed' | 'cancelled';
+  status?: string;
   jobId?: string;
-  createdAt?: [gte: Date, lte: Date];
+  createdAt?: [Date, Date];
 }
 
 export interface JobExecution {
@@ -64,12 +87,12 @@ export async function createJobExecution(jobId: string): Promise<JobExecution> {
   });
 
   // Audit log
-  await auditLog({
-    action: 'job_execution.create',
-    resource: 'JobExecution',
-    resourceId: job.id,
-    changes: { jobId, status: 'pending' },
-  });
+    await auditLog({
+      action: 'job_execution.create',
+      resource: 'JobExecution',
+      resourceId: job.id,
+      changes: jsonSafe({ jobId, status: 'pending' }),
+    });
 
   return job;
 }
@@ -91,12 +114,12 @@ export async function updateJobExecution(
   });
 
   // Audit log
-  await auditLog({
-    action: 'job_execution.update',
-    resource: 'JobExecution',
-    resourceId: jobId,
-    changes: updates,
-  });
+    await auditLog({
+      action: 'job_execution.update',
+      resource: 'JobExecution',
+      resourceId: jobId,
+      changes: jsonSafe(updates),
+    });
 
   return job;
 }

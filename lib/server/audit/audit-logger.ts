@@ -6,9 +6,19 @@ export interface AuditLogInput {
   action: string;
   resource: string;
   resourceId?: string | null;
-  changes?: any;
+  changes?: Prisma.JsonValue;
   ip?: string;
   userAgent?: string;
+}
+
+export interface AuditLogFilter {
+  actorId?: string;
+  actorRole?: string;
+  action?: string;
+  resource?: string;
+  resourceId?: string | null;
+  userId?: string;
+  createdAt?: [Date, Date];
 }
 
 /**
@@ -41,7 +51,7 @@ export async function auditLog(input: AuditLogInput): Promise<void> {
         action: input.action,
         resource: input.resource,
         resourceId: input.resourceId,
-        changes: processedChanges,
+        changes: processedChanges as Prisma.InputJsonValue,
         ip: input.ip,
         userAgent: input.userAgent,
       },
@@ -58,6 +68,7 @@ export async function listAuditLogs(
     action: string;
     resource: string;
     resourceId: string | null;
+    userId: string;
     createdAt: [gte: Date, lte: Date];
   }> = {}
 ): Promise<
@@ -74,10 +85,14 @@ export async function listAuditLogs(
     createdAt: Date;
   }>
 > {
-  const where: any = {};
+  const where: Record<string, unknown> = {};
 
   if (filter.actorId) {
     where.actorId = filter.actorId;
+  }
+
+  if (filter.userId) {
+    where.actorId = filter.userId;
   }
 
   if (filter.actorRole) {
@@ -124,6 +139,7 @@ export async function listAuditLogs(
 
 export async function getAuditLogCount(filter: Partial<{
   actorId: string;
+  userId: string;
   action: string;
   resource: string;
 }> = {}): Promise<number> {
@@ -131,6 +147,10 @@ export async function getAuditLogCount(filter: Partial<{
 
   if (filter.actorId) {
     where.actorId = filter.actorId;
+  }
+
+  if (filter.userId) {
+    where.actorId = filter.userId;
   }
 
   if (filter.action) {

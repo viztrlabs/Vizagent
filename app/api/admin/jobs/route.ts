@@ -1,14 +1,14 @@
 import { NextResponse } from 'next/server';
-import { listJobs, createJobExecution, updateJobExecution, failJobExecution, completeJobExecution, getJobById } from '../../../../lib/server/admin/jobs';
+import { listJobs, createJobExecution, updateJobExecution, failJobExecution, completeJobExecution, getJobById, JobFilter } from '../../../../lib/server/admin/jobs';
 
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url);
-    const filters: any = {};
+    const filters: JobFilter = {};
 
     // Parse query parameters
-    if (searchParams.has('status')) filters.status = searchParams.get('status');
-    if (searchParams.has('jobId')) filters.jobId = searchParams.get('jobId');
+    if (searchParams.has('status')) filters.status = searchParams.get('status') ?? undefined;
+    if (searchParams.has('jobId')) filters.jobId = searchParams.get('jobId') ?? undefined;
     if (searchParams.has('createdAt')) {
       const dateStr = searchParams.get('createdAt');
       if (dateStr) {
