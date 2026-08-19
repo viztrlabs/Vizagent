@@ -41,7 +41,7 @@ model User {
   impersonationLogsAsAdmin ImpersonationLog[] @relation("ImpersonationLogAdmin")
   impersonationLogsAsTarget ImpersonationLog[] @relation("ImpersonationLogTarget")
   supportTickets         SupportTicket[] @relation("SupportTicketUserIdToUserId")
-  sentSupportTicketMessages SupportTicketMessage[] @relation("SupportTicketMessageSenderIdToUserId")
+  supportMessages        SupportMessage[] @relation("SupportMessageSenderIdToUserId")
 }
 
 model Project {
@@ -604,25 +604,154 @@ model SupportTicket {
   message   String?  // The initial message or description
   status    String   @default("open") // open, in_progress, resolved, closed
   priority  String   @default("low") // low, medium, high, urgent
+  category  String   @default("general")
   tenantId  String   @default("")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   resolvedAt DateTime?
 
   // Relations
-  user      User     @relation("SupportTicketUserIdToUserId", fields: [userId], references: [id])
-  messages  SupportTicketMessage[] @relation("SupportTicketMessageTicketIdToSupportTicketId")
+  user      User            @relation("SupportTicketUserIdToUserId", fields: [userId], references: [id])
+  messages  SupportMessage[] @relation("SupportMessageTicketIdToSupportTicket")
 }
 
-model SupportTicketMessage {
-  id        String   @id @default(uuid())
-  ticketId  String
-  senderId  String   // Could be user or admin
-  content   String
-  createdAt DateTime @default(now())
-  tenantId  String   @default("")
 
-  // Relations
-  ticket    SupportTicket @relation("SupportTicketMessageTicketIdToSupportTicketId", fields: [ticketId], references: [id])
-  sender    User     @relation("SupportTicketMessageSenderIdToUserId", fields: [senderId], references: [id])
+// M16: Communications models
+
+model Conversation {
+  id             String   @id @default(uuid())
+  type           String   // direct, project, support, team
+  title          String?
+  projectId      String?  @map("project_id")
+  participantIds String[] @map("participant_ids")
+  lastMessageAt  DateTime @map("last_message_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  messages       Message[]
+
+  @@index([projectId])
+  @@index([lastMessageAt])
+  @@map("conversations")
+}
+
+model Message {
+  id             String   @id @default(uuid())
+  conversationId String   @map("conversation_id")
+  senderId       String   @map("sender_id")
+  senderType     String   @map("sender_type") // user, admin, system, agent
+  content        String
+  messageType    String   @default("text") @map("message_type")
+  metadata       Json?
+  readAt         DateTime? @map("read_at")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([createdAt])
+  @@map("messages")
+}
+
+model Notification {
+  id           String   @id @default(uuid())
+  userId       String   @map("user_id")
+  tenantId     String   @map("tenant_id")
+  category     String
+  title        String
+  body         String
+  priority     String   @default("normal")
+  channels     String[] @map("channels")
+  data         Json?
+  actionUrl    String?  @map("action_url")
+  actionText   String?  @map("action_text")
+  status       String   @default("pending") // pending, sent, failed
+  readAt       DateTime? @map("read_at")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  deliveries   NotificationDelivery[]
+
+  @@index([userId])
+  @@index([tenantId])
+  @@index([category])
+  @@index([status])
+  @@index([createdAt])
+  @@map("notifications")
+}
+
+model NotificationDelivery {
+  id             String   @id @default(uuid())
+  notificationId String   @map("notification_id")
+  channel        String
+  status         String   @default("pending") // pending, sent, failed
+  messageId      String?  @map("message_id")
+  error          String?
+  sentAt         DateTime? @map("sent_at")
+
+  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  @@index([notificationId])
+  @@index([channel])
+  @@index([status])
+  @@map("notification_deliveries")
+}
+
+model NotificationPreferences {
+  userId    String   @id @map("user_id")
+  email     Boolean  @default(true)
+  inApp     Boolean  @default(true)
+  telegram  Boolean  @default(false)
+  discord   Boolean  @default(false)
+  whatsapp  Boolean  @default(false)
+  push      Boolean  @default(false)
+  categories Json     @default("{}")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("notification_preferences")
+}
+
+model NotificationChannelConfig {
+  tenantId  String   @id @map("tenant_id")
+  channel   String
+  enabled   Boolean  @default(false)
+  config    Json     @default("{}")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  @@map("notification_channel_configs")
+}
+
+model FAQItem {
+  id           String   @id @default(uuid())
+  tenantId     String   @map("tenant_id")
+  question     String
+  answer       String
+  category     String
+  tags         String[]
+  viewCount    Int      @default(0) @map("view_count")
+  helpfulCount Int      @default(0) @map("helpful_count")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  @@unique([tenantId, question], name: "tenantId_question")
+  @@index([tenantId])
+  @@index([category])
+  @@map("faq_items")
+}
+
+model SupportMessage {
+  id          String   @id @default(uuid())
+  ticketId    String   @map("ticket_id")
+  senderId    String   @map("sender_id")
+  senderType  String   @map("sender_type") // user, agent, ai
+  content     String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  ticket      SupportTicket @relation("SupportMessageTicketIdToSupportTicket", fields: [ticketId], references: [id], onDelete: Cascade)
+  sender      User        @relation("SupportMessageSenderIdToUserId", fields: [senderId], references: [id])
+
+  @@index([ticketId])
+  @@index([senderId])
+  @@map("support_messages")
 }
