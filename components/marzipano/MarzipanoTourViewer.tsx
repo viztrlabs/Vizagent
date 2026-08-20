@@ -10,11 +10,15 @@ import {
   Play,
 } from 'lucide-react';
 import { useMarzipanoTour } from './useMarzipanoTour';
-import type { TourConfig } from '@/lib/tour/types';
+import type { TourConfig, TourHotspot } from '@/lib/tour/types';
 
 interface MarzipanoTourViewerProps {
   config: TourConfig;
   className?: string;
+  selectedFloor?: string | null;
+  onHeadingChange?: (heading: number | null) => void;
+  onHotspotClick?: (hotspot: TourHotspot) => void;
+  currentSceneId?: string | null;
 }
 
 export function MarzipanoTourViewer({ config, className = '' }: MarzipanoTourViewerProps) {

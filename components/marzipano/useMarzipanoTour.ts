@@ -19,7 +19,7 @@ export interface UseMarzipanoTourResult {
   isLoading: boolean;
   error: string | null;
   currentSceneIndex: number;
-  isPlaying: boolean;
+  isPlaying: boolean | undefined;
   goToScene: (sceneId: string) => void;
   goNext: () => void;
   goPrev: () => void;
@@ -51,7 +51,7 @@ export function useMarzipanoTour(config: TourConfig): UseMarzipanoTourResult {
     typeof window !== 'undefined' &&
     window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
-  const [isPlaying, setIsPlaying] = useState(
+  const [isPlaying, setIsPlaying] = useState<boolean | undefined>(
     () => config.settings.autoRotate && !prefersReducedMotion
   );
 
@@ -85,7 +85,7 @@ export function useMarzipanoTour(config: TourConfig): UseMarzipanoTourResult {
   }, [currentSceneIndex, config.scenes]);
 
   const toggleAutorotate = useCallback(() => {
-    setIsPlaying((prev) => {
+    setIsPlaying((prev: boolean | undefined) => {
       const next = !prev;
       const viewer = viewerRef.current;
       if (viewer) {
@@ -136,7 +136,7 @@ export function useMarzipanoTour(config: TourConfig): UseMarzipanoTourResult {
     const createHotspotElement = (hotspot: TourHotspot): HTMLElement => {
       const el = document.createElement('button');
       el.type = 'button';
-      el.setAttribute('aria-label', hotspot.label);
+      el.setAttribute('aria-label', hotspot.label ?? '');
       el.style.position = 'absolute';
       el.style.transform = 'translate(-50%, -50%)';
       el.style.borderRadius = '50%';

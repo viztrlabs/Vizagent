@@ -1,9 +1,13 @@
 'use client';
-
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
-import { Suspense } from 'react';
-import type { TourConfig } from '@/lib/tour/types';
+import { Suspense, useState, useEffect, useMemo } from 'react';
+import type { TourConfig, TourHotspot, TourScene } from '@/lib/tour/types';
+import { FloorSelector } from '@/components/tour/FloorSelector';
+import { FloorPlanOverlay } from '@/components/tour/FloorPlanOverlay';
+import { Compass } from '@/components/tour/Compass';
+import { PhotoGallery } from '@/components/tour/PhotoGallery';
+import { TimelinePlayer } from '@/components/tour/TimelinePlayer';
 
 const MarzipanoTourViewer = dynamic(
   () => import('@/components/marzipano/MarzipanoTourViewer').then((m) => m.MarzipanoTourViewer),
@@ -68,9 +72,155 @@ export function TourPageClient({ config }: TourPageClientProps) {
     );
   }
 
+  const [selectedFloor, setSelectedFloor] = useState<string | null>(null);
+  const [currentHeading, setCurrentHeading] = useState<number>(0);
+  const [currentSceneId, setCurrentSceneId] = useState<string | null>(null);
+  const [isPlaying, setIsPlaying] = useState<boolean>(false);
+  const [showPhotoGallery, setShowPhotoGallery] = useState<boolean>(false);
+  const [activeGalleryId, setActiveGalleryId] = useState<string | null>(null);
+  const [autoplayDelay, setAutoplayDelay] = useState<number>(5); // seconds
+
+  const floors = config?.settings?.floors ?? [];
+  const floorPlan = config?.settings?.floorPlan ?? '';
+
+  // Find initial scene (first scene or one with sortOrder 0)
+  useEffect(() => {
+    if (config?.scenes && config.scenes.length > 0) {
+      const initialScene = config.scenes.find(scene => scene.sortOrder === 0) || config.scenes[0];
+      setCurrentSceneId(initialScene.id);
+    }
+  }, [config]);
+
+  // Compute currentIndex from currentSceneId and scenes
+  const currentIndex = useMemo(() => {
+    if (config?.scenes && config.scenes.length > 0 && currentSceneId) {
+      const foundIndex = config.scenes.findIndex(scene => scene.id === currentSceneId);
+      return foundIndex !== -1 ? foundIndex : 0;
+    }
+    return 0;
+  }, [config?.scenes, currentSceneId]);
+
+  // Handle hotspot clicks from Marzipano viewer
+  const handleHotspotClick = (hotspot: TourHotspot) => {
+    if (hotspot.hotspotType === 'navigation' && hotspot.targetSceneId) {
+      setCurrentSceneId(hotspot.targetSceneId);
+    } else if (hotspot.hotspotType === 'gallery' && hotspot.galleryId) {
+      setActiveGalleryId(hotspot.galleryId);
+      setShowPhotoGallery(true);
+    } else if (hotspot.hotspotType === 'info' && hotspot.url) {
+      // Open external URL in new tab
+      window.open(hotspot.url, '_blank');
+    }
+    // floorplan hotspots handled by FloorPlanOverlay
+  };
+
+  // Find gallery items for active gallery
+  const getGalleryItems = (galleryId: string) => {
+    if (!config?.scenes) return [];
+    
+    const galleryItems: Array<{
+      id: string;
+      galleryId: string;
+      imageUrl: string;
+      caption?: string | undefined;
+      sortOrder: number;
+      is360: boolean;
+      sceneId?: string | undefined;
+    }> = [];
+    
+    config.scenes.forEach(scene => {
+      // Safely access galleryItems
+      const items = scene.galleryItems ?? [];
+      items.forEach(item => {
+        if (item.galleryId === galleryId) {
+          galleryItems.push({
+            id: item.id,
+            galleryId: item.galleryId,
+            imageUrl: item.imageUrl,
+            caption: item.caption ?? undefined, // Convert null to undefined
+            sortOrder: item.sortOrder,
+            is360: item.is360,
+            sceneId: scene.id
+          });
+        }
+      });
+    });
+    
+    // Sort by sortOrder
+    return galleryItems.sort((a, b) => a.sortOrder - b.sortOrder);
+  };
+
+  // Handle scene change from timeline or navigation
+  const handleSceneChange = (sceneId: string) => {
+    setCurrentSceneId(sceneId);
+    
+    // If playing, pause when user manually changes scene
+    if (isPlaying) {
+      setIsPlaying(false);
+    }
+  };
+
+  // Handle floor plan click (from FloorPlanOverlay)
+  const handleRoomClick = (sceneId: string) => {
+    setCurrentSceneId(sceneId);
+    if (isPlaying) {
+      setIsPlaying(false);
+    }
+  };
+
   return (
     <div className="viztr-tour-page">
-      <div className="viztr-tour-container">
+      <div className="viztr-tour-container relative">
+        {/* Floor Selector (Top Right) */}
+        <div className="absolute top-4 right-4 z-20">
+          <FloorSelector
+            floors={floors}
+            selectedFloor={selectedFloor}
+            onFloorChange={setSelectedFloor}
+          />
+        </div>
+
+        {/* Compass (Top Center) */}
+        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
+          <Compass heading={currentHeading} />
+        </div>
+
+        {/* Floor Plan Overlay (Bottom Left) */}
+        <div className="absolute bottom-4 left-4 z-20">
+          {floorPlan && (
+            <FloorPlanOverlay
+              floorPlan={floorPlan}
+              onRoomClick={handleRoomClick}
+            />
+          )}
+        </div>
+
+        {/* Timeline Player (Bottom Center) */}
+        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 z-20">
+          {config?.scenes && (
+            <TimelinePlayer
+              scenes={config.scenes}
+              currentSceneId={currentSceneId}
+              onSceneChange={handleSceneChange}
+              isPlaying={isPlaying}
+              onTogglePlay={() => setIsPlaying(!isPlaying)}
+              autoAdvanceDelay={autoplayDelay}
+            />
+          )}
+        </div>
+
+        {/* Autoplay Controls (Bottom Right) */}
+        <div className="absolute bottom-4 right-4 z-20 flex flex-col items-end gap-2">
+          <button
+            onClick={() => setAutoplayDelay(prev => prev === 5 ? 10 : 5)}
+            className="p-2 rounded hover:bg-gray-700"
+            title="Toggle autoplay speed: 5s/10s"
+          >
+            {autoplayDelay === 5 ? '⚡' : '🐢'}
+          </button>
+        </div>
+
+        {/* Main Tour Viewer */}
         <Suspense
           fallback={
             <div className="viztr-tour-fallback">
@@ -78,57 +228,80 @@ export function TourPageClient({ config }: TourPageClientProps) {
             </div>
           }
         >
-          <MarzipanoTourViewer config={config} />
+          <MarzipanoTourViewer
+            config={config}
+            selectedFloor={selectedFloor}
+            onHeadingChange={(heading) => { if (heading !== null) setCurrentHeading(heading); }}
+            onHotspotClick={handleHotspotClick}
+            currentSceneId={currentSceneId}
+          />
         </Suspense>
-      </div>
-      <style jsx>{`
-        .viztr-tour-page {
-          min-height: 100vh;
-          background: #080a0f;
-          padding: 0;
-        }
-        .viztr-tour-container {
-          width: 100%;
-          height: 100vh;
-          max-width: 100%;
-        }
-        .viztr-tour-fallback {
-          width: 100%;
-          height: 100vh;
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          background: #080a0f;
-        }
-        .viztr-spinner {
-          width: 40px;
-          height: 40px;
-          border-radius: 50%;
-          border: 3px solid rgba(13, 148, 136, 0.25);
-          border-top-color: #0d9488;
-          animation: viztr-spin 0.8s linear infinite;
-        }
-        @keyframes viztr-spin {
-          to {
-            transform: rotate(360deg);
-          }
-        }
-        @media (min-width: 1024px) {
-          .viztr-tour-container {
-            max-width: 896px;
-            margin: 0 auto;
-            height: 100vh;
-            border-radius: 16px;
+
+        {/* Photo Gallery Modal */}
+        {showPhotoGallery && activeGalleryId && (
+          <PhotoGallery
+            _galleryId={activeGalleryId}
+            galleryItems={getGalleryItems(activeGalleryId)}
+            isOpen={showPhotoGallery}
+            onClose={() => {
+              setShowPhotoGallery(false);
+              setActiveGalleryId(null);
+            }}
+            onNavigateToScene={handleSceneChange}
+          />
+        )}
+        
+        <style jsx>{`
+          .viztr-tour-page {
+            min-height: 100vh;
+            background: #080a0f;
+            padding: 0;
             overflow: hidden;
-            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
           }
-        }
-        @media (prefers-reduced-motion: reduce) {
+          .viztr-tour-container {
+            width: 100%;
+            height: 100vh;
+            max-width: 100%;
+            position: relative;
+          }
+          .viztr-tour-fallback {
+            width: 100%;
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #080a0f;
+          }
           .viztr-spinner {
-            animation: none;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 3px solid rgba(13, 148, 136, 0.25);
+            border-top-color: #0d9488;
+            animation: viztr-spin 0.8s linear infinite;
           }
-        }
-      `}</style>
+          @keyframes viztr-spin {
+            to {
+              transform: rotate(360deg);
+            }
+          }
+          @media (min-width: 1024px) {
+            .viztr-tour-container {
+              max-width: 896px;
+              margin: 0 auto;
+              height: 100vh;
+              border-radius: 16px;
+              overflow: hidden;
+              box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+            }
+          }
+          @media (prefers-reduced-motion: reduce) {
+            .viztr-spinner {
+              animation: none;
+            }
+          }
+        `}</style>
+      </div>
     </div>
   );
 }

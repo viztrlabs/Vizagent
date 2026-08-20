@@ -75,6 +75,8 @@ function normalizeHotspots(raw: unknown, sceneIds: Set<string>): TourHotspot[] {
     )
     .map((h) => ({
       id: h.id as string,
+      sceneId: '',
+      hotspotType: (typeof h.type === 'string' ? h.type : 'info') as TourHotspot['hotspotType'],
       label: h.label as string,
       description: typeof h.description === 'string' ? h.description : undefined,
       url: isSafeUrl(h.url) ? h.url : undefined,
@@ -84,6 +86,9 @@ function normalizeHotspots(raw: unknown, sceneIds: Set<string>): TourHotspot[] {
           : undefined,
       yaw: h.yaw as number,
       pitch: h.pitch as number,
+      galleryId: undefined,
+      floorId: undefined,
+      scene3dId: undefined,
     }));
 }
 
@@ -99,6 +104,7 @@ function normalizeSettings(
       typeof settings.startSceneId === 'string' && sceneIds.has(settings.startSceneId)
         ? settings.startSceneId
         : undefined,
+    floorPlan: typeof settings.floorPlan === 'string' ? settings.floorPlan : undefined,
   };
 }
 
@@ -136,17 +142,27 @@ export function mapTourConfig(input: MapTourConfigInput): TourConfig | null {
       };
     }
 
+    const hotspots = normalizeHotspots(meta.hotspots, sceneIds).map((h) => ({
+      ...h,
+      sceneId: asset.id,
+    }));
+
     return {
       id: asset.id,
+      projectId: input.project.id,
       title,
       equirectangularUrl: input.publicUrlFor(asset.storage_path),
+      sortOrder: index,
       ...(initialView ? { initialView } : {}),
-      hotspots: normalizeHotspots(meta.hotspots, sceneIds),
+      hotspots,
     };
   });
 
   if (scenes.every((scene) => scene.hotspots.length === 0)) {
-    const legacyHotspots = normalizeHotspots(settings.hotspots, sceneIds);
+    const legacyHotspots = normalizeHotspots(settings.hotspots, sceneIds).map((h) => ({
+      ...h,
+      sceneId: imageAssets[0].id,
+    }));
     if (legacyHotspots.length > 0) {
       scenes[0] = { ...scenes[0], hotspots: legacyHotspots };
     }
@@ -154,6 +170,7 @@ export function mapTourConfig(input: MapTourConfigInput): TourConfig | null {
 
   return {
     id: input.project.id,
+    projectId: input.project.id,
     title: input.project.name,
     scenes,
     settings: normalizeSettings(settings, sceneIds),
