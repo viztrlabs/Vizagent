@@ -1,4 +1,5 @@
 'use client';
+
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Suspense, useState, useEffect, useMemo } from 'react';
@@ -8,6 +9,8 @@ import { FloorPlanOverlay } from '@/components/tour/FloorPlanOverlay';
 import { Compass } from '@/components/tour/Compass';
 import { PhotoGallery } from '@/components/tour/PhotoGallery';
 import { TimelinePlayer } from '@/components/tour/TimelinePlayer';
+import { VisualEffectsControls } from '@/components/tour/VisualEffectsControls';
+import { AudioPlayer } from '@/components/tour/AudioPlayer';
 
 const MarzipanoTourViewer = dynamic(
   () => import('@/components/marzipano/MarzipanoTourViewer').then((m) => m.MarzipanoTourViewer),
@@ -79,9 +82,25 @@ export function TourPageClient({ config }: TourPageClientProps) {
   const [showPhotoGallery, setShowPhotoGallery] = useState<boolean>(false);
   const [activeGalleryId, setActiveGalleryId] = useState<string | null>(null);
   const [autoplayDelay, setAutoplayDelay] = useState<number>(5); // seconds
+  const [brightness, setBrightness] = useState<number>(config?.settings?.brightness ?? 0);
+  const [contrast, setContrast] = useState<number>(config?.settings?.contrast ?? 0);
+  const [saturation, setSaturation] = useState<number>(config?.settings?.saturation ?? 0);
 
   const floors = config?.settings?.floors ?? [];
   const floorPlan = config?.settings?.floorPlan ?? '';
+  const audioUrl = config?.settings?.audioUrl ?? '';
+
+  // Apply visual effects to viewer
+  useEffect(() => {
+    const viewerContainer = document.querySelector<HTMLElement>('.marzipano-viewer');
+    if (viewerContainer) {
+      viewerContainer.style.filter = `
+        brightness(${brightness + 100}%)
+        contrast(${contrast + 100}%)
+        saturate(${saturation + 100}%)
+      `;
+    }
+  }, [brightness, contrast, saturation]);
 
   // Find initial scene (first scene or one with sortOrder 0)
   useEffect(() => {
@@ -117,7 +136,7 @@ export function TourPageClient({ config }: TourPageClientProps) {
   // Find gallery items for active gallery
   const getGalleryItems = (galleryId: string) => {
     if (!config?.scenes) return [];
-    
+
     const galleryItems: Array<{
       id: string;
       galleryId: string;
@@ -127,7 +146,7 @@ export function TourPageClient({ config }: TourPageClientProps) {
       is360: boolean;
       sceneId?: string | undefined;
     }> = [];
-    
+
     config.scenes.forEach(scene => {
       // Safely access galleryItems
       const items = scene.galleryItems ?? [];
@@ -145,7 +164,7 @@ export function TourPageClient({ config }: TourPageClientProps) {
         }
       });
     });
-    
+
     // Sort by sortOrder
     return galleryItems.sort((a, b) => a.sortOrder - b.sortOrder);
   };
@@ -153,7 +172,7 @@ export function TourPageClient({ config }: TourPageClientProps) {
   // Handle scene change from timeline or navigation
   const handleSceneChange = (sceneId: string) => {
     setCurrentSceneId(sceneId);
-    
+
     // If playing, pause when user manually changes scene
     if (isPlaying) {
       setIsPlaying(false);
@@ -171,18 +190,48 @@ export function TourPageClient({ config }: TourPageClientProps) {
   return (
     <div className="viztr-tour-page">
       <div className="viztr-tour-container relative">
-        {/* Floor Selector (Top Right) */}
-        <div className="absolute top-4 right-4 z-20">
-          <FloorSelector
-            floors={floors}
-            selectedFloor={selectedFloor}
-            onFloorChange={setSelectedFloor}
-          />
-        </div>
-
-        {/* Compass (Top Center) */}
-        <div className="absolute top-4 left-1/2 -translate-x-1/2 z-20">
-          <Compass heading={currentHeading} />
+        {/* Top Toolbar */}
+        <div className="absolute top-4 left-4 right-4 flex justify-between items-center z-20 px-4">
+          <div className="flex items-center space-x-4">
+            {/* Visual Effects Controls */}
+            <VisualEffectsControls
+              initialBrightness={brightness}
+              initialContrast={contrast}
+              initialSaturation={saturation}
+              onChange={(b, c, s) => {
+                setBrightness(b);
+                setContrast(c);
+                setSaturation(s);
+              }}
+            />
+          </div>
+          
+          <div className="flex items-center space-x-4">
+            {/* Floor Selector (Top Left) */}
+            <div className="relative">
+              <FloorSelector
+                floors={floors}
+                selectedFloor={selectedFloor}
+                onFloorChange={setSelectedFloor}
+              />
+            </div>
+            
+            {/* Compass (Top Center) */}
+            <div className="absolute left-1/2 -translate-x-1/2">
+              <Compass heading={currentHeading} />
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-4">
+            {/* Audio Player (Top Right) */}
+            {audioUrl && (
+              <AudioPlayer
+                audioUrl={audioUrl}
+                autoplay={false} // Disabled for safety, user must interact
+                volume={0.5}
+              />
+            )}
+          </div>
         </div>
 
         {/* Floor Plan Overlay (Bottom Left) */}
