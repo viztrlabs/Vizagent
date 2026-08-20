@@ -73,10 +73,16 @@ export async function POST(
       },
     });
 
-    // Mark project as published
+    // Mark project as published with timestamp
     await prisma.project.update({
       where: { id: projectId },
-      data: { status: 'published' },
+      data: {
+        status: 'published',
+        settings: {
+          ...(typeof project.settings === 'object' ? project.settings : {}),
+          publishedAt: new Date().toISOString(),
+        },
+      },
     });
 
     return NextResponse.json({
