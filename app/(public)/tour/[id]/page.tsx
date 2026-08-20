@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { headers } from 'next/headers';
 import type { TourConfig } from '@/lib/tour/types';
 import { TourPageClient } from './TourPageClient';
 
@@ -18,22 +19,46 @@ export const metadata: Metadata = {
 
 export default async function TourPage({ params }: TourPageProps) {
   const { id } = await params;
-  const tourConfig = await fetchTourConfig(id);
+  const { config, error } = await fetchTourConfig(id);
 
-  return <TourPageClient config={tourConfig} />;
+  if (error) {
+    return (
+      <div className="viztr-tour-page">
+        <div className="viztr-tour-missing">
+          <h1>Tour Unavailable</h1>
+          <p>The requested virtual tour could not be loaded.</p>
+          <a className="viztr-tour-back-link" href="/">← Back home</a>
+        </div>
+      </div>
+    );
+  }
+
+  return <TourPageClient config={config} />;
 }
 
-async function fetchTourConfig(tourId: string): Promise<TourConfig | null> {
-  const base = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000';
+async function fetchTourConfig(
+  tourId: string
+): Promise<{ config: TourConfig | null; error: string | null }> {
   try {
-    const response = await fetch(`${base}/api/tours/${tourId}`, {
+    const headerStore = await headers();
+    const proto = headerStore.get('x-forwarded-proto') ?? 'http';
+    const host = headerStore.get('x-forwarded-host') ?? headerStore.get('host') ?? 'localhost:3000';
+    const response = await fetch(`${proto}://${host}/api/public/tour/${tourId}`, {
       next: { revalidate: 60 },
     });
-    if (!response.ok) return null;
+    if (!response.ok) {
+      return { config: null, error: `HTTP ${response.status}` };
+    }
     const body: { success: boolean; data?: TourConfig } = await response.json();
-    return body.success && body.data ? body.data : null;
+    return {
+      config: body.success && body.data ? body.data : null,
+      error: body.success ? null : 'API returned success=false',
+    };
   } catch (err) {
     console.error('Failed to fetch tour config:', err);
-    return null;
+    return {
+      config: null,
+      error: err instanceof Error ? err.message : String(err),
+    };
   }
 }

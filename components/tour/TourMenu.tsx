@@ -86,13 +86,15 @@ export function TourMenu({
               </div>
             )}
           </nav>
+        </div>
+      )}
 
-          <style jsx>{`
+      <style jsx>{`
             .viztr-tour-menu-trigger {
               position: absolute;
               top: 16px;
               right: 16px;
-              z-index: 20;
+              z-index: 30;
               display: flex;
               align-items: center;
               justify-content: center;
@@ -220,8 +222,6 @@ export function TourMenu({
               background: rgba(255, 255, 255, 0.05);
             }
           `}</style>
-        </div>
-      )}
     </>
   );
 }

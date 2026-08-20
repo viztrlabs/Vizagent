@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Prisma } from '@prisma/client';
 import { prisma } from '@/lib/db/server';
-import { withTenant } from '@/lib/server/middleware/tenant';
 import { presignGetObject } from '@/lib/server/lib/r2';
+import { mapRelationalTourConfig } from '@/lib/tour/map-relational-tour-config';
+import { createLogger } from '@/lib/server/logger';
+
+const log = createLogger({ module: 'api/public/tour/[id]' });
 
 export async function GET(
   request: NextRequest,
@@ -24,26 +28,32 @@ export async function GET(
       data: { viewCount: { increment: 1 } },
     });
 
-    const assets = await withTenant(prisma, project.tenantId, async () =>
-      prisma.asset.findMany({
-        where: { projectId: id, tenantId: project.tenantId, status: 'ready' },
-        orderBy: { createdAt: 'asc' },
-      })
-    );
+    const assets = await prisma.$queryRaw<Array<{
+      id: string;
+      file_name: string;
+      file_type: string;
+      file_size: bigint;
+      storage_path: string;
+    }>>`
+      SELECT id, file_name, file_type, file_size, storage_path
+      FROM assets
+      WHERE project_id = ${id} AND status = 'ready'
+      ORDER BY created_at ASC
+    `;
 
     const assetsWithUrls = await Promise.all(
       assets.map(async (asset) => ({
         id: asset.id,
-        fileName: asset.fileName,
-        fileType: asset.fileType,
-        size: Number(asset.fileSize),
-        url: await presignGetObject(asset.storagePath),
+        fileName: asset.file_name,
+        fileType: asset.file_type,
+        size: Number(asset.file_size),
+        url: await presignGetObject(asset.storage_path),
       }))
     );
 
     // Fetch relational tour data (raw queries due to Prisma WASM limitation)
     const [tourScenesRaw, tourFloorsRaw, tourWalkthroughsRaw] = await Promise.all([
-      prisma.$queryRaw<[{id: string, project_id: string, title: string, equirectangular_url: string, sort_order: number, initial_view: unknown, floor_plan_position: unknown, effects: unknown}]>`
+      prisma.$queryRaw<[{id: string, project_id: string, floor_id: string | null, title: string, equirectangular_url: string, sort_order: number, initial_view: unknown, floor_plan_position: unknown, effects: unknown}]>`
         SELECT * FROM tour_scenes WHERE project_id = ${id} ORDER BY sort_order ASC
       `,
       prisma.$queryRaw<[{id: string, project_id: string, name: string, level: number, sort_order: number, svg_path: string | null}]>`
@@ -72,7 +82,7 @@ export async function GET(
 
     if (sceneIds.length > 0) {
       hotspotsRaw = await prisma.$queryRaw<HotspotRow[]>`
-        SELECT * FROM tour_hotspots WHERE scene_id IN (${sceneIds.join(',')})
+        SELECT * FROM tour_hotspots WHERE scene_id IN (${Prisma.join(sceneIds)})
       `;
     }
 
@@ -89,7 +99,22 @@ export async function GET(
       hotspots: hotspotsByScene.get(s.id) ?? [],
     }));
 
+    const config = mapRelationalTourConfig({
+      project: {
+        id: project.id,
+        name: project.name,
+        description: project.description,
+        settings: project.settings,
+        viewCount: project.viewCount,
+      },
+      scenes: tourScenes,
+      floors: tourFloorsRaw,
+      walkthroughs: tourWalkthroughsRaw,
+    });
+
     return NextResponse.json({
+      success: true,
+      data: config,
       project: {
         id: project.id,
         name: project.name,
@@ -102,7 +127,8 @@ export async function GET(
       tourFloors: tourFloorsRaw,
       tourWalkthroughs: tourWalkthroughsRaw,
     });
-  } catch {
+  } catch (error) {
+    log.error({ error }, 'Failed to load tour');
     return NextResponse.json({ error: 'Failed to load tour' }, { status: 500 });
   }
 }

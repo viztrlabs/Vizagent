@@ -22,6 +22,10 @@ next-env.d.ts
 typecheck_output.txt
 *.log
 
+# playwright
+playwright-report/
+test-results/
+
 # editors / os
 .vscode/
 .idea/
