@@ -5,6 +5,14 @@ export type TourSettings = {
   autoRotateSpeed?: number;
   hotspotStyle?: 'minimal' | 'pin';
   startSceneId?: string;
+  // Audio settings
+  audioUrl?: string;
+  // Visual effects
+  brightness?: number; // -100 to 100
+  contrast?: number;   // -100 to 100
+  saturation?: number; // -100 to 100
+  // Transition settings
+  transitionDuration?: number; // in seconds, default 0.5
   [key: string]: unknown;
 };
 
@@ -12,6 +20,8 @@ export type TourConfig = {
   id: string;
   projectId: string;
   title: string;
+  description?: string;
+  viewCount?: number;
   settings: TourSettings;
   scenes: TourScene[];
 };

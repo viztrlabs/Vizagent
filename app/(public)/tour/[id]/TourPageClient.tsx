@@ -1,6 +1,5 @@
 'use client';
 
-import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { Suspense, useState, useEffect, useMemo } from 'react';
 import type { TourConfig, TourHotspot, TourScene } from '@/lib/tour/types';
@@ -11,11 +10,9 @@ import { PhotoGallery } from '@/components/tour/PhotoGallery';
 import { TimelinePlayer } from '@/components/tour/TimelinePlayer';
 import { VisualEffectsControls } from '@/components/tour/VisualEffectsControls';
 import { AudioPlayer } from '@/components/tour/AudioPlayer';
-
-const MarzipanoTourViewer = dynamic(
-  () => import('@/components/marzipano/MarzipanoTourViewer').then((m) => m.MarzipanoTourViewer),
-  { ssr: false }
-);
+import { TourMenu } from '@/components/tour/TourMenu';
+import { ModeManager } from '@/components/tour/ModeManager';
+import { TourFeatureProvider } from '@/components/tour/TourFeatureContext';
 
 interface TourPageClientProps {
   config: TourConfig | null;
@@ -234,6 +231,13 @@ export function TourPageClient({ config }: TourPageClientProps) {
           </div>
         </div>
 
+        {/* Tour Menu (Top Right) */}
+        <TourMenu
+          title={config.title}
+          description={config.description}
+          viewCount={config.viewCount}
+        />
+
         {/* Floor Plan Overlay (Bottom Left) */}
         <div className="absolute bottom-4 left-4 z-20">
           {floorPlan && (
@@ -270,21 +274,24 @@ export function TourPageClient({ config }: TourPageClientProps) {
         </div>
 
         {/* Main Tour Viewer */}
-        <Suspense
-          fallback={
-            <div className="viztr-tour-fallback">
-              <div className="viztr-spinner" role="status" aria-label="Loading tour" />
-            </div>
-          }
-        >
-          <MarzipanoTourViewer
-            config={config}
-            selectedFloor={selectedFloor}
-            onHeadingChange={(heading) => { if (heading !== null) setCurrentHeading(heading); }}
-            onHotspotClick={handleHotspotClick}
-            currentSceneId={currentSceneId}
-          />
-        </Suspense>
+        {/* Main Tour Viewer */}
+        <TourFeatureProvider config={config}>
+          <Suspense
+            fallback={
+              <div className="viztr-tour-fallback">
+                <div className="viztr-spinner" role="status" aria-label="Loading tour" />
+              </div>
+            }
+          >
+            <ModeManager
+              config={config}
+              selectedFloor={selectedFloor}
+              onHeadingChange={(heading) => { if (heading !== null) setCurrentHeading(heading); }}
+              onHotspotClick={handleHotspotClick}
+              currentSceneId={currentSceneId}
+            />
+          </Suspense>
+        </TourFeatureProvider>
 
         {/* Photo Gallery Modal */}
         {showPhotoGallery && activeGalleryId && (
