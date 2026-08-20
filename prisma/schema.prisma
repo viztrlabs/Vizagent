@@ -31,17 +31,8 @@ model User {
   deployments   Deployment[]
   subscriptions Subscription[]
 
-  isSuspended          Boolean     @default(false)
-  suspensionReason     String?
-  suspendedAt          DateTime?
-
   @@map("users")
   @@index([tenantId])
-  dataExportRequests   DataExportRequest[] @relation("DataExportRequestUserIdToUserId")
-  impersonationLogsAsAdmin ImpersonationLog[] @relation("ImpersonationLogAdmin")
-  impersonationLogsAsTarget ImpersonationLog[] @relation("ImpersonationLogTarget")
-  supportTickets         SupportTicket[] @relation("SupportTicketUserIdToUserId")
-  supportMessages        SupportMessage[] @relation("SupportMessageSenderIdToUserId")
 }
 
 model Project {
@@ -55,6 +46,7 @@ model Project {
   budget       Decimal?  @db.Decimal(10, 2)
   deadline     DateTime?
   publishedUrl String?   @map("published_url")
+  viewCount    Int      @default(0) @map("view_count")
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
   tenantId     String    @map("tenant_id")
@@ -64,6 +56,10 @@ model Project {
   qaReports   QaReport[]
   deployments Deployment[]
   xrAssets    XrAsset[]
+  tourScenes  TourScene[]
+  tourFloors  TourFloor[]
+  tourWalks   TourWalkthrough[]
+  tourVersions TourVersion[]
 
   @@index([clientId])
   @@index([status])
@@ -390,589 +386,195 @@ model ProjectVersion {
   @@map("project_versions")
 }
 
-// M13: CRM models — leads, contacts, deals, tasks
+model Page {
+  id             String    @id @default(uuid())
+  slug           String
+  title          String
+  description    String?
+  status         String    @default("draft")
+  seo            Json?
+  openGraph      Json?
+  twitterCard    Json?
+  schemaOrg      Json?
+  isPlaceholder  Boolean   @default(false) @map("is_placeholder")
+  placeholderKey String?   @map("placeholder_key")
+  publishedAt    DateTime? @map("published_at")
+  createdBy      String    @map("created_by")
+  updatedBy      String    @map("updated_by")
+  createdAt      DateTime  @default(now()) @map("created_at")
+  updatedAt      DateTime  @updatedAt @map("updated_at")
+  version        Int       @default(1)
+  tenantId       String    @map("tenant_id")
 
-enum LeadStatus {
-  NEW
-  CONTACTED
-  QUALIFIED
-  UNQUALIFIED
-  CONVERTED
-}
+  sections Section[]
+  versions PageVersion[]
 
-enum DealStage {
-  PROSPECT
-  QUOTE
-  NEGOTIATION
-  CLOSED_WON
-  CLOSED_LOST
-}
-
-model Lead {
-  id        String     @id @default(uuid())
-  email     String     @unique
-  name      String?
-  company   String?
-  phone     String?
-  status    LeadStatus @default(NEW)
-  source    String?
-  tenantId  String     @map("tenant_id")
-  createdAt DateTime   @default(now()) @map("created_at")
-  updatedAt DateTime   @updatedAt @map("updated_at")
-
-  contacts Contact[]
-  deals    Deal[]
-  tasks    Task[]
-
+  @@unique([slug, tenantId])
   @@index([tenantId])
   @@index([status])
-  @@map("leads")
+  @@map("pages")
 }
 
-model Contact {
+model Section {
+  id             String   @id @default(uuid())
+  pageId         String   @map("page_id")
+  name           String
+  layout         String
+  background     Json?
+  padding        Json?
+  container      String?
+  order          Int      @default(0)
+  isPlaceholder  Boolean  @default(false) @map("is_placeholder")
+  placeholderKey String?  @map("placeholder_key")
+  tenantId       String   @map("tenant_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  page   Page    @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  blocks Block[]
+
+  @@index([pageId])
+  @@index([tenantId])
+  @@map("sections")
+}
+
+model Block {
+  id             String   @id @default(uuid())
+  sectionId      String   @map("section_id")
+  type           String
+  props          Json?
+  order          Int      @default(0)
+  isPlaceholder  Boolean  @default(false) @map("is_placeholder")
+  placeholderKey String?  @map("placeholder_key")
+  tenantId       String   @map("tenant_id")
+  createdAt      DateTime @default(now()) @map("created_at")
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  section Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@index([sectionId])
+  @@index([tenantId])
+  @@map("blocks")
+}
+
+model PageVersion {
+  id                String   @id @default(uuid())
+  pageId            String   @map("page_id")
+  snapshot          Json
+  changeDescription String?  @map("change_description")
+  createdBy         String   @map("created_by")
+  createdAt         DateTime @default(now()) @map("created_at")
+
+  page Page @relation(fields: [pageId], references: [id], onDelete: Cascade)
+
+  @@index([pageId])
+  @@map("page_versions")
+}
+
+model TourScene {
+  id                 String   @id @default(uuid())
+  projectId          String   @map("project_id")
+  floorId            String?  @map("floor_id")
+  title              String
+  equirectangularUrl String
+  initialView        Json?
+  floorPlanPosition  Json?
+  sortOrder          Int      @default(0) @map("sort_order")
+  createdAt          DateTime @default(now()) @map("created_at")
+  updatedAt          DateTime @updatedAt @map("updated_at")
+  effects            Json?
+
+  project Project       @relation(fields: [projectId], references: [id])
+  floor   TourFloor?    @relation(fields: [floorId], references: [id])
+  hotspots TourHotspot[]
+
+  @@index([projectId])
+  @@index([floorId])
+  @@map("tour_scenes")
+}
+
+model TourHotspot {
+  id            String  @id @default(uuid())
+  sceneId       String  @map("scene_id")
+  hotspotType   String  @map("type")
+  label         String?
+  yaw           Float
+  pitch         Float
+  targetSceneId String? @map("target_scene_id")
+  url           String?
+  galleryId     String? @map("gallery_id")
+
+  scene TourScene @relation(fields: [sceneId], references: [id])
+
+  @@index([sceneId])
+  @@map("tour_hotspots")
+}
+
+model TourFloor {
   id        String   @id @default(uuid())
-  leadId    String   @map("lead_id")
+  projectId String   @map("project_id")
   name      String
-  email     String?
-  phone     String?
-  role      String?
-  tenantId  String   @map("tenant_id")
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
+  level     Int
+  sortOrder Int      @default(0) @map("sort_order")
+  svgPath   String?  @map("svg_path")
 
-  lead   Lead     @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  deals  Deal[]
-
-  @@index([leadId])
-  @@index([tenantId])
-  @@map("contacts")
-}
-
-model Deal {
-  id        String    @id @default(uuid())
-  leadId    String    @map("lead_id")
-  contactId String?   @map("contact_id")
-  title     String
-  stage     DealStage @default(PROSPECT)
-  value     Decimal?  @db.Decimal(12, 2)
-  currency  String    @default("USD")
-  closeDate DateTime? @map("close_date")
-  tenantId  String    @map("tenant_id")
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-
-  lead    Lead      @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  contact Contact?  @relation(fields: [contactId], references: [id])
-  tasks   Task[]
-
-  @@index([leadId])
-  @@index([stage])
-  @@index([tenantId])
-  @@map("deals")
-}
-
-model Task {
-  id          String    @id @default(uuid())
-  title       String
-  description String?
-  completed   Boolean   @default(false)
-  dueDate     DateTime? @map("due_date")
-  leadId      String?   @map("lead_id")
-  dealId      String?   @map("deal_id")
-  tenantId    String    @map("tenant_id")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-
-  lead Lead? @relation(fields: [leadId], references: [id], onDelete: Cascade)
-  deal Deal? @relation(fields: [dealId], references: [id], onDelete: Cascade)
-
-  @@index([leadId])
-  @@index([dealId])
-  @@index([tenantId])
-  @@map("tasks")
-}
-
-// M13: Analytics tracking for page views and events
-model PageView {
-  id            String   @id @default(uuid())
-  path          String
-  projectId     String?  @map("project_id")
-  visitorId     String?  @map("visitor_id")
-  sessionId     String?  @map("session_id")
-  referrer      String?
-  userAgent     String?  @map("user_agent")
-  country       String?
-  device        String?
-  browser       String?
-  durationMs    Int?     @map("duration_ms")
-  createdAt     DateTime @default(now()) @map("created_at")
-  tenantId      String   @map("tenant_id")
-
-  @@index([path])
-  @@index([projectId])
-  @@index([createdAt])
-  @@index([tenantId])
-  @@map("page_views")
-}
-
-model AiPrompt {
-  id          String   @id @default(uuid())
-  slug        String   @unique
-  name        String
-  description String?
-  template    String
-  category    String?  // e.g. "xr", "content", "support"
-  isActive    Boolean  @default(true) @map("is_active")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  tenantId    String   @map("tenant_id")
-
-  @@index([category])
-  @@index([tenantId])
-  @@map("ai_prompts")
-}
-
-model AiUsageLog {
-  id          String   @id @default(uuid())
-  promptSlug  String   @map("prompt_slug")
-  userId      String?  @map("user_id")
-  inputTokens Int?     @map("input_tokens")
-  outputTokens Int?    @map("output_tokens")
-  latencyMs   Int?     @map("latency_ms")
-  success     Boolean  @default(true)
-  error       String?
-  createdAt   DateTime @default(now()) @map("created_at")
-  tenantId    String   @map("tenant_id")
-
-  @@index([promptSlug])
-  @@index([userId])
-  @@index([createdAt])
-  @@index([tenantId])
-  @@map("ai_usage_logs")
-}
-
-
-// M14: Admin/Support/Ops layer models
-model DataExportRequest {
-  id        String   @id @default(uuid())
-  userId    String
-  format    String   // e.g., "csv", "json", "pdf"
-  status    String   @default("pending") // pending, processing, completed, failed
-  filePath  String?
-  requestedAt DateTime @default(now())
-  completedAt DateTime?
-  error     String?
-  tenantId  String   @default("")
-
-  // Relations
-  user      User     @relation("DataExportRequestUserIdToUserId", fields: [userId], references: [id])
-}
-
-model ImpersonationLog {
-  id        String   @id @default(uuid())
-  adminUserId String   // The admin who initiated impersonation
-  targetUserId String   // The user being impersonated
-  status    String   @default("active") // active, revoked, expired
-  expiresAt DateTime  // When the impersonation expires
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  tenantId  String   @default("")
-
-  // Relations
-  adminUser User     @relation("ImpersonationLogAdmin", fields: [adminUserId], references: [id])
-  targetUser User     @relation("ImpersonationLogTarget", fields: [targetUserId], references: [id])
-}
-
-model JobExecution {
-  id        String   @id @default(uuid())
-  jobId     String   // Identifier for the job type (e.g., "rendering", "backup")
-  status    String   @default("pending") // pending, running, completed, failed, cancelled
-  progress  Int?     @default(0) // 0-100
-  error     String?  // Error message if failed
-  attempts  Int      @default(0)
-  finishedAt DateTime?
-  failedAt  DateTime?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  tenantId  String   @default("")
-}
-
-model SupportTicket {
-  id        String   @id @default(uuid())
-  userId    String
-  subject   String
-  message   String?  // The initial message or description
-  status    String   @default("open") // open, in_progress, resolved, closed
-  priority  String   @default("low") // low, medium, high, urgent
-  category  String   @default("general")
-  tenantId  String   @default("")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  resolvedAt DateTime?
-
-  // Relations
-  user      User            @relation("SupportTicketUserIdToUserId", fields: [userId], references: [id])
-  messages  SupportMessage[] @relation("SupportMessageTicketIdToSupportTicket")
-}
-
-
-// M16: Communications models
-
-model Conversation {
-  id             String   @id @default(uuid())
-  type           String   // direct, project, support, team
-  title          String?
-  projectId      String?  @map("project_id")
-  participantIds String[] @map("participant_ids")
-  lastMessageAt  DateTime @map("last_message_at")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
-
-  messages       Message[]
+  project Project     @relation(fields: [projectId], references: [id])
+  scenes  TourScene[]
 
   @@index([projectId])
-  @@index([lastMessageAt])
-  @@map("conversations")
+  @@map("tour_floors")
 }
 
-model Message {
-  id             String   @id @default(uuid())
-  conversationId String   @map("conversation_id")
-  senderId       String   @map("sender_id")
-  senderType     String   @map("sender_type") // user, admin, system, agent
-  content        String
-  messageType    String   @default("text") @map("message_type")
-  metadata       Json?
-  readAt         DateTime? @map("read_at")
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
-
-  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
-
-  @@index([conversationId])
-  @@index([senderId])
-  @@index([createdAt])
-  @@map("messages")
-}
-
-model Notification {
-  id           String   @id @default(uuid())
-  userId       String   @map("user_id")
-  tenantId     String   @map("tenant_id")
-  category     String
+model TourGallery {
+  id           String  @id @default(uuid())
+  sceneId      String  @map("scene_id")
   title        String
-  body         String
-  priority     String   @default("normal")
-  channels     String[] @map("channels")
-  data         Json?
-  actionUrl    String?  @map("action_url")
-  actionText   String?  @map("action_text")
-  status       String   @default("pending") // pending, sent, failed
-  readAt       DateTime? @map("read_at")
-  createdAt    DateTime @default(now()) @map("created_at")
+  thumbnailUrl String? @map("thumbnail_url")
 
-  deliveries   NotificationDelivery[]
+  items TourGalleryItem[]
 
-  @@index([userId])
-  @@index([tenantId])
-  @@index([category])
-  @@index([status])
-  @@index([createdAt])
-  @@map("notifications")
+  @@index([sceneId])
+  @@map("tour_galleries")
 }
 
-model NotificationDelivery {
+model TourGalleryItem {
+  id        String  @id @default(uuid())
+  galleryId String  @map("gallery_id")
+  imageUrl  String  @map("image_url")
+  caption   String?
+  sortOrder Int     @default(0) @map("sort_order")
+  is360     Boolean @default(false) @map("is_360")
+
+  gallery TourGallery @relation(fields: [galleryId], references: [id])
+
+  @@index([galleryId])
+  @@map("tour_gallery_items")
+}
+
+model TourWalkthrough {
+  id        String   @id @default(uuid())
+  projectId String   @map("project_id")
+  title     String
+  path      Json
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now()) @map("created_at")
+
+  project Project @relation(fields: [projectId], references: [id])
+
+  @@index([projectId])
+  @@map("tour_walkthroughs")
+}
+
+model TourVersion {
   id             String   @id @default(uuid())
-  notificationId String   @map("notification_id")
-  channel        String
-  status         String   @default("pending") // pending, sent, failed
-  messageId      String?  @map("message_id")
-  error          String?
-  sentAt         DateTime? @map("sent_at")
+  projectId      String   @map("project_id")
+  version        String
+  configSnapshot Json     @map("config_snapshot")
+  createdAt      DateTime @default(now()) @map("created_at")
+  createdBy      String   @map("created_by")
 
-  notification   Notification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id])
 
-  @@index([notificationId])
-  @@index([channel])
-  @@index([status])
-  @@map("notification_deliveries")
-}
-
-model NotificationPreferences {
-  userId    String   @id @map("user_id")
-  email     Boolean  @default(true)
-  inApp     Boolean  @default(true)
-  telegram  Boolean  @default(false)
-  discord   Boolean  @default(false)
-  whatsapp  Boolean  @default(false)
-  push      Boolean  @default(false)
-  categories Json     @default("{}")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("notification_preferences")
-}
-
-model NotificationChannelConfig {
-  tenantId  String   @id @map("tenant_id")
-  channel   String
-  enabled   Boolean  @default(false)
-  config    Json     @default("{}")
-  updatedAt DateTime @updatedAt @map("updated_at")
-
-  @@map("notification_channel_configs")
-}
-
-model FAQItem {
-  id           String   @id @default(uuid())
-  tenantId     String   @map("tenant_id")
-  question     String
-  answer       String
-  category     String
-  tags         String[]
-  viewCount    Int      @default(0) @map("view_count")
-  helpfulCount Int      @default(0) @map("helpful_count")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-
-  @@unique([tenantId, question], name: "tenantId_question")
-  @@index([tenantId])
-  @@index([category])
-  @@map("faq_items")
-}
-
-model SupportMessage {
-  id          String   @id @default(uuid())
-  ticketId    String   @map("ticket_id")
-  senderId    String   @map("sender_id")
-  senderType  String   @map("sender_type") // user, agent, ai
-  content     String
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  ticket      SupportTicket @relation("SupportMessageTicketIdToSupportTicket", fields: [ticketId], references: [id], onDelete: Cascade)
-  sender      User        @relation("SupportMessageSenderIdToUserId", fields: [senderId], references: [id])
-
-  @@index([ticketId])
-  @@index([senderId])
-  @@map("support_messages")
-}
-
-// M17: Enterprise & Marketplace models
-
-enum MarketplaceItemType {
-  TEMPLATE
-  MATERIAL_PACK
-  LIGHTING_PRESET
-  FURNITURE_PACK
-  CAMERA_PRESET
-  SCRIPT
-}
-
-enum MarketplaceItemStatus {
-  DRAFT
-  PENDING_REVIEW
-  APPROVED
-  REJECTED
-  PUBLISHED
-  UNLISTED
-}
-
-enum ApiKeyStatus {
-  ACTIVE
-  REVOKED
-  EXPIRED
-}
-
-enum WebhookEvent {
-  PROJECT_CREATED
-  PROJECT_UPDATED
-  PROJECT_PUBLISHED
-  QA_COMPLETED
-  INVOICE_ISSUED
-  SUBSCRIPTION_CHANGED
-  PAYMENT_FAILED
-  MARKETPLACE_PURCHASE
-  MARKETPLACE_REVIEW
-}
-
-model BrandingConfig {
-  id           String   @id @default(uuid())
-  tenantId     String   @unique @map("tenant_id")
-  logoUrl      String?  @map("logo_url")
-  faviconUrl   String?  @map("favicon_url")
-  primaryColor String?  @map("primary_color")
-  secondaryColor String? @map("secondary_color")
-  fontFamily   String?  @map("font_family")
-  customCss    String?  @map("custom_css")
-  whiteLabel   Boolean  @default(false) @map("white_label")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-
-  @@map("branding_configs")
-}
-
-model CustomDomain {
-  id           String   @id @default(uuid())
-  tenantId     String   @map("tenant_id")
-  domain       String   @unique
-  verified     Boolean  @default(false)
-  sslEnabled   Boolean  @default(false) @map("ssl_enabled")
-  sslExpiresAt DateTime? @map("ssl_expires_at")
-  createdAt    DateTime @default(now()) @map("created_at")
-  updatedAt    DateTime @updatedAt @map("updated_at")
-
-  @@index([tenantId])
-  @@map("custom_domains")
-}
-
-model SsoConfig {
-  id              String   @id @default(uuid())
-  tenantId        String   @unique @map("tenant_id")
-  provider        String   // saml, oidc
-  entityId        String?  @map("entity_id")
-  ssoUrl          String?  @map("sso_url")
-  certificate     String?
-  attributeMapping Json    @default("{}") @map("attribute_mapping")
-  autoProvision   Boolean  @default(true) @map("auto_provision")
-  enabled         Boolean  @default(false)
-  createdAt       DateTime @default(now()) @map("created_at")
-  updatedAt       DateTime @updatedAt @map("updated_at")
-
-  @@map("sso_configs")
-}
-
-model ApiKey {
-  id          String       @id @default(uuid())
-  tenantId    String       @map("tenant_id")
-  name        String
-  keyHash     String       @map("key_hash")
-  keyPrefix   String       @map("key_prefix")
-  scopes      String[]
-  status      ApiKeyStatus @default(ACTIVE)
-  expiresAt   DateTime?    @map("expires_at")
-  lastUsedAt  DateTime?    @map("last_used_at")
-  createdAt   DateTime     @default(now()) @map("created_at")
-  updatedAt   DateTime     @updatedAt @map("updated_at")
-
-  @@index([tenantId])
-  @@index([keyPrefix])
-  @@map("api_keys")
-}
-
-model Webhook {
-  id          String        @id @default(uuid())
-  tenantId    String        @map("tenant_id")
-  url         String
-  events      WebhookEvent[]
-  secret      String
-  active      Boolean       @default(true)
-  createdAt   DateTime      @default(now()) @map("created_at")
-  updatedAt   DateTime      @updatedAt @map("updated_at")
-
-  @@index([tenantId])
-  @@map("webhooks")
-}
-
-model WebhookDelivery {
-  id          String   @id @default(uuid())
-  webhookId   String   @map("webhook_id")
-  event       WebhookEvent
-  payload     Json
-  response    Json?
-  status      String   @default("pending") // pending, success, failed
-  attempt     Int      @default(1)
-  error       String?
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  @@index([webhookId])
-  @@index([status])
-  @@map("webhook_deliveries")
-}
-
-model MarketplaceItem {
-  id              String               @id @default(uuid())
-  tenantId        String               @map("tenant_id")
-  creatorId       String               @map("creator_id")
-  type            MarketplaceItemType
-  title           String
-  description     String
-  thumbnailUrl    String?              @map("thumbnail_url")
-  previewUrls     String[]             @map("preview_urls")
-  fileUrl         String?              @map("file_url")
-  fileSize        Int?                 @map("file_size")
-  version         String               @default("1.0.0")
-  tags            String[]
-  category        String
-  price           Int                  @default(0) // in cents
-  currency        String               @default("USD")
-  commissionRate  Float                @default(0.2) @map("commission_rate")
-  status          MarketplaceItemStatus @default(DRAFT)
-  reviewNotes     String?              @map("review_notes")
-  publishedAt     DateTime?            @map("published_at")
-  salesCount      Int                  @default(0) @map("sales_count")
-  revenue         Int                  @default(0)
-  createdAt       DateTime             @default(now()) @map("created_at")
-  updatedAt       DateTime             @updatedAt @map("updated_at")
-
-  purchases       MarketplacePurchase[]
-
-  @@index([tenantId])
-  @@index([creatorId])
-  @@index([type])
-  @@index([status])
-  @@index([category])
-  @@map("marketplace_items")
-}
-
-model MarketplacePurchase {
-  id              String   @id @default(uuid())
-  itemId          String   @map("item_id")
-  buyerId         String   @map("buyer_id")
-  sellerId        String   @map("seller_id")
-  price           Int      // in cents
-  currency        String   @default("USD")
-  commission      Int      // in cents
-  netAmount       Int      // in cents (seller receives)
-  status          String   @default("completed") // completed, refunded, disputed
-  purchasedAt     DateTime @default(now()) @map("purchased_at")
-
-  item            MarketplaceItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
-
-  @@index([itemId])
-  @@index([buyerId])
-  @@index([sellerId])
-  @@map("marketplace_purchases")
-}
-
-model CreatorPayout {
-  id          String   @id @default(uuid())
-  sellerId    String   @map("seller_id")
-  amount      Int      // in cents
-  currency    String   @default("USD")
-  status      String   @default("pending") // pending, processing, paid, failed
-  periodStart DateTime @map("period_start")
-  periodEnd   DateTime @map("period_end")
-  paidAt      DateTime? @map("paid_at")
-  createdAt   DateTime @default(now()) @map("created_at")
-
-  @@index([sellerId])
-  @@index([status])
-  @@map("creator_payouts")
-}
-
-model EnterpriseServer {
-  id          String   @id @default(uuid())
-  tenantId    String   @unique @map("tenant_id")
-  name        String
-  region      String
-  instanceType String   @map("instance_type")
-  gpuEnabled  Boolean  @default(false) @map("gpu_enabled")
-  gpuType     String?  @map("gpu_type")
-  status      String   @default("provisioning") // provisioning, active, suspended, terminated
-  slaTier     String   @default("standard") @map("sla_tier") // standard, premium, enterprise
-  ipAddress   String?  @map("ip_address")
-  sshKey      String?  @map("ssh_key")
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-
-  @@map("enterprise_servers")
+  @@index([projectId])
+  @@map("tour_versions")
 }

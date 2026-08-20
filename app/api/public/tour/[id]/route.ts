@@ -41,21 +41,39 @@ export async function GET(
       }))
     );
 
-    // Fetch relational tour data
-    const [tourScenes, tourFloors, tourWalkthroughs] = await Promise.all([
-      prisma.tourScene.findMany({
-        where: { projectId: id },
-        include: { hotspots: true },
-        orderBy: { sortOrder: 'asc' },
-      }),
-      prisma.tourFloor.findMany({
-        where: { projectId: id },
-        orderBy: { level: 'asc' },
-      }),
-      prisma.tourWalkthrough.findMany({
-        where: { projectId: id, active: true },
-      }),
+    // Fetch relational tour data (raw queries due to Prisma WASM limitation)
+    const [tourScenesRaw, tourFloorsRaw, tourWalkthroughsRaw] = await Promise.all([
+      prisma.$queryRaw<[{id: string, project_id: string, title: string, equirectangular_url: string, sort_order: number, initial_view: unknown, floor_plan_position: unknown, effects: unknown}]>`
+        SELECT * FROM tour_scenes WHERE project_id = ${id} ORDER BY sort_order ASC
+      `,
+      prisma.$queryRaw<[{id: string, project_id: string, name: string, level: number, sort_order: number, svg_path: string | null}]>`
+        SELECT * FROM tour_floors WHERE project_id = ${id} ORDER BY level ASC
+      `,
+      prisma.$queryRaw<[{id: string, project_id: string, title: string, path: unknown, active: boolean}]>`
+        SELECT * FROM tour_walkthroughs WHERE project_id = ${id} AND active = true
+      `,
     ]);
+
+    // Fetch hotspots for all scenes
+    const sceneIds = tourScenesRaw.map(s => s.id);
+    const hotspotsRaw = sceneIds.length > 0
+      ? await prisma.$queryRaw<[{id: string, scene_id: string, type: string, label: string | null, yaw: number, pitch: number, target_scene_id: string | null, url: string | null, gallery_id: string | null}]>`
+          SELECT * FROM tour_hotspots WHERE scene_id IN (${sceneIds.join(',')})
+        `
+      : [];
+
+    // Group hotspots by scene
+    const hotspotsByScene = new Map<string, typeof hotspotsRaw>();
+    for (const h of hotspotsRaw) {
+      const list = hotspotsByScene.get(h.scene_id) ?? [];
+      list.push(h);
+      hotspotsByScene.set(h.scene_id, list);
+    }
+
+    const tourScenes = tourScenesRaw.map(s => ({
+      ...s,
+      hotspots: hotspotsByScene.get(s.id) ?? [],
+    }));
 
     return NextResponse.json({
       project: {
@@ -67,8 +85,8 @@ export async function GET(
       },
       assets: assetsWithUrls,
       tourScenes,
-      tourFloors,
-      tourWalkthroughs,
+      tourFloors: tourFloorsRaw,
+      tourWalkthroughs: tourWalkthroughsRaw,
     });
   } catch {
     return NextResponse.json({ error: 'Failed to load tour' }, { status: 500 });
