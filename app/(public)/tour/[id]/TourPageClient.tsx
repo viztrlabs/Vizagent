@@ -12,6 +12,7 @@ import { VisualEffectsControls } from '@/components/tour/VisualEffectsControls';
 import { AudioPlayer } from '@/components/tour/AudioPlayer';
 import { TourMenu } from '@/components/tour/TourMenu';
 import { ModeManager } from '@/components/tour/ModeManager';
+import { MeasurementTool } from '@/components/tour/MeasurementTool';
 import { TourFeatureProvider } from '@/components/tour/TourFeatureContext';
 
 interface TourPageClientProps {
@@ -276,6 +277,7 @@ export function TourPageClient({ config }: TourPageClientProps) {
         {/* Main Tour Viewer */}
         {/* Main Tour Viewer */}
         <TourFeatureProvider config={config}>
+          <MeasurementTool />
           <Suspense
             fallback={
               <div className="viztr-tour-fallback">
