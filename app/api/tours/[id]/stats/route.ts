@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/server';
 import { getCurrentAuth } from '@/lib/auth/session';
+import { getTourAnalytics } from '@/lib/server/tour/analytics';
 import { createLogger } from '@/lib/server/logger';
 
 const log = createLogger({ module: 'api/tours/stats' });
 
 export async function GET(
-  _req: NextRequest,
+  req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -30,6 +31,27 @@ export async function GET(
       prisma.tourFloor.count({ where: { projectId } }),
       prisma.tourWalkthrough.count({ where: { projectId, active: true } }),
     ]);
+
+    const { searchParams } = new URL(req.url);
+    const detailed = searchParams.get('detailed') === 'true';
+
+    if (detailed) {
+      const fromParam = searchParams.get('from');
+      const toParam = searchParams.get('to');
+      const analytics = await getTourAnalytics(projectId, {
+        from: fromParam ? new Date(fromParam) : undefined,
+        to: toParam ? new Date(toParam) : undefined,
+      });
+
+      return NextResponse.json({
+        totalViews: project.viewCount,
+        sceneCount,
+        hotspotCount,
+        floorCount,
+        walkthroughCount,
+        analytics,
+      });
+    }
 
     return NextResponse.json({
       totalViews: project.viewCount,
