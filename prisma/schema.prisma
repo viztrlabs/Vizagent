@@ -92,6 +92,7 @@ model Asset {
   optimizedWidth    Int?     @map("optimized_width")
   optimizedHeight   Int?     @map("optimized_height")
   compressionRatio  Float?   @map("compression_ratio")
+  tags              String[] @default([]) @map("tags")
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
