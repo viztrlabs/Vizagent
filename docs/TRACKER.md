@@ -77,6 +77,22 @@
 
 ---
 
+## 2b. Track 2 — XR World Console (OpenCode)
+
+Workflow: lead assigns task from `subagents/opencode/TODO.md` → agent claims (`claim: T-XXX` commit) → executes in `subagents/opencode/implementation/` → updates TODO (`done: T-XXX`) → OpenWork aggregates here.
+
+| Task ID | Task | Status | Notes |
+|---|---|---|---|
+| T2.1 | Unified XR Console (`/app/xr`) | ⬜ | Depends on Phase 0 |
+| T2.2 | Virtual Tour Console (Marzipano) | ⬜ | Depends on T2.1 |
+| T2.3 | WebXR Console | ⬜ | Depends on T2.1 |
+| T2.4 | WebAR Console (MindAR) | ⬜ | Depends on T2.1 |
+| T2.5 | VR Console | ⬜ | Depends on T2.1 |
+| T2.6 | Pixel Streaming Console | ⬜ | Depends on T2.1 |
+| T2.7 | XR Session Analytics | ⬜ | Depends on all consoles |
+
+---
+
 ## 3. Module Status (M1–M18)
 
 | Module | Scope | Status | Notes |
