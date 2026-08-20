@@ -25,6 +25,12 @@ export type TourConfig = {
   settings: TourSettings;
   scenes: TourScene[];
   model3d?: TourScene3DConfig[];
+  floors?: TourFloorConfig[];
+  galleries?: TourGalleryConfig[];
+  walkthroughs?: WalkthroughConfig[];
+  accessControl?: AccessControlConfig;
+  branding?: BrandingConfig;
+  visualEffects?: VisualEffectsConfig;
 };
 
 export type TourScene = {
@@ -72,9 +78,63 @@ export type TourView = {
   fov?: number;
 };
 
+export type TourFloorConfig = {
+  id: string;
+  name: string;
+  level: number;
+  sortOrder: number;
+  svgPath?: string;
+  sceneIds: string[];
+};
+
+export type TourGalleryImage = {
+  id: string;
+  imageUrl: string;
+  caption?: string;
+  is360: boolean;
+};
+
+export type TourGalleryConfig = {
+  id: string;
+  title: string;
+  images: TourGalleryImage[];
+};
+
+export type WalkthroughWaypoint = {
+  sceneId: string;
+  targetView: { yaw: number; pitch: number; fov?: number };
+  durationMs: number;
+  transition?: 'auto' | 'manual' | 'fade' | 'slide';
+};
+
+export type WalkthroughConfig = {
+  id: string;
+  title: string;
+  path: WalkthroughWaypoint[];
+  active: boolean;
+};
+
 export type TourScene3DConfig = {
   sceneId: string;
   modelUrl?: string;
   pointCloudUrl?: string;
   floorPlanPosition?: { x: number; y: number };
+};
+
+export type BrandingConfig = {
+  primaryColor?: string;
+  logoUrl?: string;
+  coverImage?: string;
+};
+
+export type AccessControlConfig = {
+  type: 'public' | 'password' | 'token';
+  passwordHash?: string;
+  allowedTokens?: string[];
+};
+
+export type VisualEffectsConfig = {
+  brightness: number;
+  contrast: number;
+  saturation: number;
 };

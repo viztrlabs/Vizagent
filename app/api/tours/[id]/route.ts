@@ -81,6 +81,55 @@ export async function PUT(
   }
 }
 
+export async function PATCH(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { dbUser } = await getCurrentAuth();
+    if (!dbUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { id } = await params;
+
+    const project = await prisma.project.findFirst({
+      where: { id, tenantId: dbUser.tenantId },
+      select: { id: true, settings: true },
+    });
+
+    if (!project) {
+      return NextResponse.json({ error: 'Tour not found' }, { status: 404 });
+    }
+
+    const body = await req.json();
+
+    let settings: Record<string, unknown> = {};
+    if (typeof project.settings === 'string') {
+      try {
+        settings = JSON.parse(project.settings);
+      } catch {
+        settings = {};
+      }
+    } else if (project.settings && typeof project.settings === 'object') {
+      settings = project.settings as Record<string, unknown>;
+    }
+
+    const updatedSettings = {
+      ...settings,
+      ...body.settings,
+    };
+
+    await prisma.project.update({
+      where: { id },
+      data: { settings: updatedSettings as never },
+    });
+
+    return NextResponse.json({ success: true, settings: updatedSettings });
+  } catch (error) {
+    log.error({ error }, 'Failed to patch tour settings');
+    return NextResponse.json({ error: 'Failed to update tour settings' }, { status: 500 });
+  }
+}
+
 export async function DELETE(
   _req: NextRequest,
   { params }: { params: Promise<{ id: string }> }
