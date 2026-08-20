@@ -86,3 +86,86 @@ export const streamCreateSchema = z.object({
   room_id: z.string().uuid(),
   user_id: z.string(),
 });
+
+// Booking schemas
+export const bookingCreateSchema = z.object({
+  firstName: z.string().min(1).max(100),
+  lastName: z.string().min(1).max(100),
+  email: z.string().email(),
+  company: z.string().max(200).optional(),
+  serviceId: z.string().min(1),
+  projectType: z.string().optional(),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date must be YYYY-MM-DD format'),
+  time: z.string().regex(/^\d{2}:\d{2}$/, 'Time must be HH:MM format'),
+  notes: z.string().max(1000).optional(),
+});
+
+// Communication schemas
+export const messageSchema = z.object({
+  content: z.string().min(1).max(5000),
+  conversationId: z.string().uuid(),
+});
+
+export const channelSchema = z.object({
+  name: z.string().min(1).max(100),
+  type: z.enum(['direct', 'group', 'project']).default('group'),
+});
+
+// CRM schemas
+export const leadSchema = z.object({
+  name: z.string().min(1).max(200),
+  email: z.string().email(),
+  phone: z.string().max(20).optional(),
+  company: z.string().max(200).optional(),
+  source: z.string().max(100).optional(),
+  notes: z.string().max(2000).optional(),
+});
+
+export const dealSchema = z.object({
+  leadId: z.string().uuid(),
+  contactId: z.string().uuid().optional(),
+  title: z.string().min(1).max(200),
+  value: z.number().positive().optional(),
+  stage: z.enum(['lead', 'qualified', 'proposal', 'negotiation', 'closed_won', 'closed_lost']).default('lead'),
+  notes: z.string().max(2000).optional(),
+});
+
+export const crmTaskSchema = z.object({
+  title: z.string().min(1).max(200),
+  description: z.string().max(2000).optional(),
+  leadId: z.string().uuid().optional(),
+  dealId: z.string().uuid().optional(),
+  dueDate: z.string().datetime().optional(),
+  completed: z.boolean().default(false),
+});
+
+// Agent schemas
+export const agentSchema = z.object({
+  type: z.string().min(1),
+  projectId: z.string().uuid().optional(),
+  config: z.record(z.unknown()).optional(),
+});
+
+// Page schemas
+export const pageSchema = z.object({
+  title: z.string().min(1).max(200),
+  slug: z.string().min(1).max(200).regex(/^[a-z0-9-]+$/, 'Slug must be lowercase alphanumeric with hyphens'),
+  published: z.boolean().default(false),
+});
+
+// Support ticket schema
+export const supportTicketSchema = z.object({
+  subject: z.string().min(1).max(200),
+  message: z.string().min(1).max(5000),
+  priority: z.enum(['low', 'medium', 'high', 'urgent']).default('medium'),
+  category: z.string().max(100).optional(),
+});
+
+// Pagination query schema
+export const paginationQuerySchema = z.object({
+  page: z.coerce.number().int().positive().default(1),
+  limit: z.coerce.number().int().min(1).max(100).default(20),
+  search: z.string().max(200).optional(),
+  sortBy: z.string().max(50).optional(),
+  sortOrder: z.enum(['asc', 'desc']).default('asc'),
+});

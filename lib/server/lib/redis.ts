@@ -1,4 +1,7 @@
 import Redis from 'ioredis';
+import { createLogger } from '../logger';
+
+const log = createLogger({ module: 'redis' });
 
 export const redis = new Redis(process.env.REDIS_URL ?? 'redis://localhost:6379', {
   maxRetriesPerRequest: 3,
@@ -7,5 +10,5 @@ export const redis = new Redis(process.env.REDIS_URL ?? 'redis://localhost:6379'
   lazyConnect: true,
 });
 
-redis.on('error', (err) => console.error('Redis error:', err));
-redis.on('connect', () => console.log('Redis connected'));
+redis.on('error', (err) => log.error({ err }, 'Redis connection error'));
+redis.on('connect', () => log.info('Redis connected'));

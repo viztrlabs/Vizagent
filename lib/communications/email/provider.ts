@@ -1,5 +1,8 @@
 // M16: Email Provider - Resend/NodeMailer abstraction
+import { createLogger } from '../../server/logger';
 import { EmailProvider, EmailParams, SendEmailResult } from './types';
+
+const log = createLogger({ module: 'email' });
 
 class ResendProvider implements EmailProvider {
   private apiKey: string;
@@ -12,7 +15,7 @@ class ResendProvider implements EmailProvider {
   async send(params: EmailParams): Promise<SendEmailResult> {
     if (!this.apiKey) {
       // Mock mode for development
-      console.log('[EMAIL MOCK] Would send:', { to: params.to, subject: params.subject });
+      log.info({ to: params.to, subject: params.subject }, 'Email mock (no API key)');
       return { success: true, messageId: `mock_${Date.now()}` };
     }
 
@@ -49,11 +52,7 @@ class ResendProvider implements EmailProvider {
 
 class ConsoleProvider implements EmailProvider {
   async send(params: EmailParams): Promise<SendEmailResult> {
-    console.log('=== EMAIL ===');
-    console.log('To:', params.to);
-    console.log('Subject:', params.subject);
-    console.log('Text:', params.text);
-    console.log('=============');
+    log.info({ to: params.to, subject: params.subject }, 'Email (console provider)');
     return { success: true, messageId: `console_${Date.now()}` };
   }
 }

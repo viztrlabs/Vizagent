@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { Resend } from 'resend';
 import { confirmationEmailHTML } from '@/lib/emails/reminder';
+import { bookingCreateSchema } from '@/lib/validations';
+import { validateBody } from '@/lib/validations/api';
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -21,17 +23,15 @@ const SERVICE_DURATIONS: Record<string, number> = {
 
 export async function POST(req: NextRequest) {
   try {
-    const body: {
-      firstName?: string;
-      lastName?: string;
-      email?: string;
-      company?: string;
-      serviceId?: string;
-      projectType?: string;
-      date?: string;
-      time?: string;
-      notes?: string;
-    } = await req.json();
+    const body = await req.json();
+    const validation = validateBody(bookingCreateSchema, body);
+    if (!validation.success) {
+      return NextResponse.json(
+        { error: 'Validation failed', details: validation.errors },
+        { status: 400 }
+      );
+    }
+
     const {
       firstName,
       lastName,
@@ -42,14 +42,7 @@ export async function POST(req: NextRequest) {
       date,
       time,
       notes,
-    } = body;
-
-    if (!firstName || !lastName || !email || !serviceId || !date || !time) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
-    }
+    } = validation.data;
 
     const durationMinutes = SERVICE_DURATIONS[serviceId] || 60;
     const startAt = new Date(`${date}T${time}:00+05:30`);
@@ -87,7 +80,7 @@ export async function POST(req: NextRequest) {
 
     await resend.emails.send({
       from: 'VizTR <bookings@viztr.io>',
-      to: 'admin@viztr.io',
+      to: process.env.ADMIN_EMAIL ?? 'admin@viztr.io',
       subject: `New booking: ${SERVICE_NAMES[serviceId]} — ${firstName} ${lastName}`,
       html: `<p>New session booked:</p>
              <ul>

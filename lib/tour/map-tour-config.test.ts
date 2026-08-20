@@ -140,13 +140,17 @@ describe('mapTourConfig', () => {
       publicUrlFor: urlFor,
     });
     expect(config!.scenes[0].hotspots).toHaveLength(3);
-    expect(config!.scenes[0].hotspots[0]).toEqual({
+    expect(config!.scenes[0].hotspots[0]).toMatchObject({
       id: 'h1',
       label: 'Kitchen',
       yaw: 0,
       pitch: 0,
       description: 'Remodel',
     });
+    expect(config!.scenes[0].hotspots[0].sceneId).toBe('a');
+    expect(config!.scenes[0].hotspots[0].hotspotType).toBe('info');
+    expect(config!.scenes[0].hotspots[0].url).toBeUndefined();
+    expect(config!.scenes[0].hotspots[0].targetSceneId).toBeUndefined();
     expect(config!.scenes[0].hotspots[1].url).toBeUndefined();
     expect(config!.scenes[0].hotspots[1].targetSceneId).toBe('b');
     expect(config!.scenes[0].hotspots[2].url).toBe('https://ok.example');

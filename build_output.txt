@@ -1,0 +1,8 @@
+▲ Next.js 16.3.0 (Turbopack)
+- Environments: .env.local, .env
+✓ Running next.config.ts took 77ms
+- Experiments (use with caution):
+  · optimizePackageImports
+
+  Creating an optimized production build ...
+[ELIFECYCLE] Command failed with exit code 1.

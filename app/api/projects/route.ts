@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db/server';
 import { ProjectRepository } from '@/lib/server/repositories/project.repository';
-import { getTenantId } from '@/lib/server/lib/tenant';
+import { getCurrentAuth } from '@/lib/auth/session';
 import { withTenant } from '@/lib/server/middleware/tenant';
 import { projectSchema } from '@/lib/validations';
 
@@ -9,16 +9,11 @@ const projectRepository = new ProjectRepository();
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const clientId = searchParams.get('client_id');
+    const { authUser, dbUser } = await getCurrentAuth();
+    const tenantId = dbUser?.tenantId ?? '00000000-0000-0000-0000-000000000000';
 
-    if (!clientId) {
-      return NextResponse.json({ error: 'client_id required' }, { status: 400 });
-    }
-
-    const tenantId = await getTenantId();
     const projects = await withTenant(prisma, tenantId, async () =>
-      projectRepository.findByClient(clientId, tenantId)
+      projectRepository.findByClient(dbUser?.id ?? authUser?.id ?? 'demo-user', tenantId)
     );
 
     return NextResponse.json({ projects });
@@ -36,13 +31,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: validation.error.issues }, { status: 400 });
     }
 
-    const tenantId = await getTenantId();
+    const { authUser, dbUser } = await getCurrentAuth();
+    const tenantId = dbUser?.tenantId ?? '00000000-0000-0000-0000-000000000000';
+    const clientId = dbUser?.id ?? authUser?.id ?? 'demo-user';
+
     const project = await withTenant(prisma, tenantId, async () =>
       projectRepository.create(
         {
           name: validation.data.name,
           description: validation.data.description,
-          clientId: body.client_id || 'demo-user',
+          clientId,
           serviceType: body.service_type || 'tour',
           status: 'draft',
           settings: JSON.stringify({
@@ -59,6 +57,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ project }, { status: 201 });
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to create project' }, { status: 500 });
+    console.error('Create project error:', error);
+    return NextResponse.json({ error: error instanceof Error ? error.message : 'Failed to create project' }, { status: 500 });
   }
 }

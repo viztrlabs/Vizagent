@@ -3,6 +3,9 @@ import { Space_Grotesk, Inter, JetBrains_Mono } from 'next/font/google';
 import './globals.css';
 import { Header } from '@/components/Header';
 import { ThemeProvider } from '@/components/theme-provider';
+import { CookieConsentProvider, CookieConsentBanner } from '@/components/CookieConsent';
+import { ToastProvider } from '@/components/toast-context';
+import { ToastContainer } from '@/components/toast-container';
 
 const spaceGrotesk = Space_Grotesk({
   subsets: ['latin'],
@@ -46,8 +49,14 @@ export default function RootLayout({
     >
       <body className="min-h-screen bg-bg text-foreground antialiased">
         <ThemeProvider>
-          <Header />
-          <main className="pt-16">{children}</main>
+          <ToastProvider>
+            <CookieConsentProvider>
+              <Header />
+              <main className="pt-16">{children}</main>
+              <CookieConsentBanner />
+              <ToastContainer />
+            </CookieConsentProvider>
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>

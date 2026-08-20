@@ -1,5 +1,7 @@
 import { Resend } from 'resend';
+import { createLogger } from '../logger';
 
+const log = createLogger({ module: 'email-service' });
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendReminderEmail(
@@ -16,13 +18,13 @@ export async function sendReminderEmail(
     });
 
     if (error) {
-      console.error('Failed to send reminder email:', error);
+      log.error({ err: error, to }, 'Failed to send reminder email');
       throw error;
     }
 
-    console.log(`Reminder email sent: ${data?.id}`);
+    log.info({ to, messageId: data?.id }, 'Reminder email sent');
   } catch (error) {
-    console.error('Error sending reminder email:', error);
+    log.error({ err: error, to }, 'Error sending reminder email');
     throw error;
   }
 }

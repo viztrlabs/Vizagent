@@ -1,5 +1,8 @@
 import { PostHog } from 'posthog-node';
+import { createLogger } from '../server/logger';
 import type { EventName, EventPropertiesMap } from './events';
+
+const log = createLogger({ module: 'analytics' });
 
 let posthogClient: PostHog | null = null;
 
@@ -8,7 +11,7 @@ function getPostHogClient(): PostHog | null {
   const apiKey = process.env.POSTHOG_API_KEY;
   const host = process.env.POSTHOG_HOST;
   if (!apiKey || !host) {
-    console.warn('[Analytics] POSTHOG_API_KEY or POSTHOG_HOST not set');
+    log.warn('POSTHOG_API_KEY or POSTHOG_HOST not set');
     return null;
   }
   posthogClient = new PostHog(apiKey, { host, flushAt: 20, flushInterval: 10000 });
@@ -35,7 +38,7 @@ export async function trackEvent(options: TrackEventOptions): Promise<void> {
       groups: { tenant: tenantId },
     });
   } catch (error) {
-    console.error('[Analytics] Track failed:', event, error);
+    log.error({ err: error, event }, 'Track failed');
   }
 }
 

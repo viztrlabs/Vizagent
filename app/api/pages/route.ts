@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { listPages, createPageService } from '@/lib/server/content/content-service';
 import type { PageStatus } from '@/lib/server/content/content-model';
+import { pageSchema } from '@/lib/validations';
+import { validateBody } from '@/lib/validations/api';
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,7 +10,7 @@ export async function GET(request: NextRequest) {
     const status = searchParams.get('status');
     const search = searchParams.get('search');
     const page = parseInt(searchParams.get('page') ?? '1', 10);
-    const limit = parseInt(searchParams.get('limit') ?? '20', 10);
+    const limit = Math.min(parseInt(searchParams.get('limit') ?? '20', 10), 100);
 
     const { pages, total } = await listPages({
       status: (status as PageStatus | null) ?? undefined,
@@ -27,13 +29,13 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { title, description, slug, sections, seo, status } = body;
-
-    if (!title) {
-      return NextResponse.json({ error: 'Title is required' }, { status: 400 });
+    const validation = validateBody(pageSchema, body);
+    if (!validation.success) {
+      return NextResponse.json({ error: 'Validation failed', details: validation.errors }, { status: 400 });
     }
 
-    const page = await createPageService({ title, description, slug, sections, seo, status });
+    const { title, slug, published } = validation.data;
+    const page = await createPageService({ title, slug, status: published ? 'published' : 'draft' });
 
     return NextResponse.json(page, { status: 201 });
   } catch (error) {

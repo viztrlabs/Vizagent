@@ -1,10 +1,13 @@
 import { test, expect } from '@playwright/test';
 
+const TEST_EMAIL = process.env.TEST_USER_EMAIL ?? 'admin@viztr.io';
+const TEST_PASSWORD = process.env.TEST_USER_PASSWORD ?? 'admin';
+
 test.describe('Portal Booking & Sessions', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/auth/signin');
-    await page.fill('input[type="email"]', 'admin@viztr.io');
-    await page.fill('input[type="password"]', 'admin');
+    await page.fill('input[type="email"]', TEST_EMAIL);
+    await page.fill('input[type="password"]', TEST_PASSWORD);
     await page.click('button[type="submit"]:has-text("Sign In")');
     await page.waitForURL('**/portal', { timeout: 10000 }).catch(() => {});
   });

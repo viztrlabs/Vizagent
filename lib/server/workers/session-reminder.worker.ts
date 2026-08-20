@@ -1,7 +1,10 @@
 import { Worker } from 'bullmq';
 import { Redis } from '@upstash/redis';
 import { prisma } from '@/lib/db/server';
+import { createLogger } from '../logger';
 import { sendReminderEmail } from '@/lib/server/services/email.service';
+
+const log = createLogger({ module: 'session-reminder-worker' });
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_URL!,
@@ -13,7 +16,7 @@ const worker = new Worker(
   async (job) => {
     const { aggregateId } = job.data;
 
-    console.log(`Sending reminder for session ${aggregateId}`);
+    log.info({ sessionId: aggregateId }, 'Sending reminder');
 
     const session = await prisma.configuratorSession.findUnique({
       where: { id: aggregateId },
@@ -21,7 +24,7 @@ const worker = new Worker(
     });
 
     if (!session) {
-      console.warn(`Session ${aggregateId} not found`);
+      log.warn({ sessionId: aggregateId }, 'Session not found');
       return;
     }
 
@@ -69,7 +72,7 @@ const worker = new Worker(
               html
             );
           } catch (error) {
-            console.error(`Failed to send reminder to ${user.email}:`, error);
+            log.error({ err: error, email: user.email }, 'Failed to send reminder');
           }
         }
       }
@@ -82,11 +85,11 @@ const worker = new Worker(
 );
 
 worker.on('completed', (job) => {
-  console.log(`Reminder job ${job.id} completed successfully`);
+  log.info({ jobId: job.id }, 'Reminder job completed');
 });
 
 worker.on('failed', (job, err) => {
-  console.error(`Reminder job ${job?.id} failed with error:`, err);
+  log.error({ err, jobId: job?.id }, 'Reminder job failed');
 });
 
 export default worker;

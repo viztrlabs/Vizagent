@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCurrentAuth } from '@/lib/auth/session';
 import { createDeal, getDeals, getPipelineSummary } from '@/lib/server/crm/deal-service';
+import { dealSchema } from '@/lib/validations';
+import { validateBody } from '@/lib/validations/api';
 
 export async function GET(request: NextRequest) {
   const auth = await getCurrentAuth();
@@ -24,14 +26,19 @@ export async function POST(request: NextRequest) {
   if (!auth) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const body = await request.json();
+  const validation = validateBody(dealSchema, body);
+  if (!validation.success) {
+    return NextResponse.json({ error: 'Validation failed', details: validation.errors }, { status: 400 });
+  }
+
   const deal = await createDeal({
-    leadId: body.leadId,
-    contactId: body.contactId,
-    title: body.title,
-    value: body.value,
-    currency: body.currency,
-    closeDate: body.closeDate ? new Date(body.closeDate) : undefined,
-    tenantId: '',
+    leadId: validation.data.leadId,
+    contactId: validation.data.contactId,
+    title: validation.data.title,
+    value: validation.data.value,
+    currency: undefined,
+    closeDate: undefined,
+    tenantId: auth.tenantId ?? '',
   });
   return NextResponse.json({ deal }, { status: 201 });
 }

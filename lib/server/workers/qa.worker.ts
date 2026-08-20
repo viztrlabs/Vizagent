@@ -1,6 +1,7 @@
 import { Worker } from 'bullmq';
 import { Redis } from '@upstash/redis';
 import { prisma } from '@/lib/db/server';
+import { createLogger } from '../logger';
 import { withTenant } from '@/lib/server/middleware/tenant';
 import { presignGetObject } from '@/lib/server/lib/r2';
 import { QARepository } from '@/lib/server/repositories/qa.repository';
@@ -13,6 +14,8 @@ import {
   GLB_LOADABLE,
 } from '@/lib/server/qa/qa-engine';
 import { parseGlb } from '@/lib/server/qa/glb-loader.server';
+
+const log = createLogger({ module: 'qa-worker' });
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_URL || '',
@@ -97,11 +100,11 @@ const worker = new Worker(
 );
 
 worker.on('completed', (job) => {
-  console.log(`QA job ${job.id} completed`);
+  log.info({ jobId: job.id }, 'QA job completed');
 });
 
 worker.on('failed', (job, err) => {
-  console.error(`QA job ${job?.id} failed:`, err.message);
+  log.error({ err, jobId: job?.id }, 'QA job failed');
 });
 
 export default worker;

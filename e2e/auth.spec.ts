@@ -1,5 +1,8 @@
 import { test, expect } from '@playwright/test';
 
+const TEST_EMAIL = process.env.TEST_USER_EMAIL ?? 'admin@viztr.io';
+const TEST_PASSWORD = process.env.TEST_USER_PASSWORD ?? 'admin';
+
 test.describe('Authentication Flow', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/auth/signin');
@@ -19,19 +22,17 @@ test.describe('Authentication Flow', () => {
     await page.fill('input[type="password"]', 'wrongpassword');
     await page.click('button[type="submit"]:has-text("Sign In")');
     
-    // Wait for error message or stay on signin page
     await page.waitForTimeout(1000);
     const errorVisible = await page.locator('text=Invalid email or password').isVisible().catch(() => false);
     const stillOnSignin = page.url().includes('/auth/signin');
     expect(errorVisible || stillOnSignin).toBeTruthy();
   });
 
-  test('should login with valid credentials (admin@viztr.io / admin)', async ({ page }) => {
-    await page.fill('input[type="email"]', 'admin@viztr.io');
-    await page.fill('input[type="password"]', 'admin');
+  test('should login with valid credentials', async ({ page }) => {
+    await page.fill('input[type="email"]', TEST_EMAIL);
+    await page.fill('input[type="password"]', TEST_PASSWORD);
     await page.click('button[type="submit"]:has-text("Sign In")');
     
-    // Wait for redirect to portal
     await page.waitForURL('**/portal', { timeout: 10000 }).catch(() => {});
     expect(page.url()).toContain('/portal');
   });
@@ -42,12 +43,11 @@ test.describe('Authentication Flow', () => {
   });
 
   test('should sign out', async ({ page }) => {
-    await page.fill('input[type="email"]', 'admin@viztr.io');
-    await page.fill('input[type="password"]', 'admin');
+    await page.fill('input[type="email"]', TEST_EMAIL);
+    await page.fill('input[type="password"]', TEST_PASSWORD);
     await page.click('button[type="submit"]:has-text("Sign In")');
     await page.waitForURL('**/portal', { timeout: 10000 }).catch(() => {});
 
-    // Sign out via header button (Supabase client-side signOut)
     await page.click('button:has-text("Sign out")');
     await page.waitForURL('/', { timeout: 5000 }).catch(() => {});
     expect(page.url()).toContain('/');
@@ -57,8 +57,8 @@ test.describe('Authentication Flow', () => {
     await page.goto('/portal');
     await expect(page).toHaveURL('/auth/signin?callbackUrl=/portal');
 
-    await page.fill('input[type="email"]', 'admin@viztr.io');
-    await page.fill('input[type="password"]', 'admin');
+    await page.fill('input[type="email"]', TEST_EMAIL);
+    await page.fill('input[type="password"]', TEST_PASSWORD);
     await page.click('button[type="submit"]:has-text("Sign In")');
     await page.waitForURL('**/portal', { timeout: 10000 }).catch(() => {});
     expect(page.url()).toContain('/portal');

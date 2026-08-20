@@ -1,6 +1,9 @@
 import { DomainEvent } from './types';
+import { createLogger } from '../logger';
 import { getCalendarSyncQueue } from '../queues/calendar-sync.queue';
 import { getSessionReminderQueue } from '../queues/session-reminder.queue';
+
+const log = createLogger({ module: 'event-publisher' });
 
 export async function publish(event: DomainEvent): Promise<void> {
   switch (event.type) {
@@ -20,6 +23,6 @@ export async function publish(event: DomainEvent): Promise<void> {
       break;
 
     default:
-      console.warn(`Unhandled event type: ${event.type}`);
+      log.warn({ eventType: event.type }, 'Unhandled event type');
   }
 }

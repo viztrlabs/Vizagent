@@ -12,7 +12,6 @@ import {
 import type { TourConfig, TourHotspot, TourScene } from '@/lib/tour/types';
 
 const LOAD_TIMEOUT_MS = 15000;
-const SWITCH_DURATION_MS = 800;
 
 export interface UseMarzipanoTourResult {
   containerRef: React.RefObject<HTMLDivElement | null>;
@@ -55,6 +54,10 @@ export function useMarzipanoTour(config: TourConfig): UseMarzipanoTourResult {
     () => config.settings.autoRotate && !prefersReducedMotion
   );
 
+  // Get transition duration from settings (in seconds, default 0.5)
+  const transitionDurationMs =
+    (config.settings.transitionDuration ?? 0.5) * 1000;
+
   const switchToScene = useCallback(
     (sceneId: string) => {
       const viewer = viewerRef.current;
@@ -63,9 +66,9 @@ export function useMarzipanoTour(config: TourConfig): UseMarzipanoTourResult {
       if (!scene) return;
       const index = config.scenes.findIndex((s) => s.id === sceneId);
       if (index >= 0) setCurrentSceneIndex(index);
-      scene.switchTo({ transitionDuration: SWITCH_DURATION_MS });
+      scene.switchTo({ transitionDuration: transitionDurationMs });
     },
-    [config.scenes]
+    [config.scenes, transitionDurationMs]
   );
 
   useEffect(() => {
@@ -76,13 +79,13 @@ export function useMarzipanoTour(config: TourConfig): UseMarzipanoTourResult {
     const index = nextIndex(currentSceneIndex, config.scenes.length);
     const scene = config.scenes[index];
     if (scene) switchSceneRef.current(scene.id);
-  }, [currentSceneIndex, config.scenes]);
+  }, [currentSceneIndex, config.scenes, switchSceneRef]);
 
   const goPrev = useCallback(() => {
     const index = prevIndex(currentSceneIndex, config.scenes.length);
     const scene = config.scenes[index];
     if (scene) switchSceneRef.current(scene.id);
-  }, [currentSceneIndex, config.scenes]);
+  }, [currentSceneIndex, config.scenes, switchSceneRef]);
 
   const toggleAutorotate = useCallback(() => {
     setIsPlaying((prev: boolean | undefined) => {
@@ -226,7 +229,7 @@ export function useMarzipanoTour(config: TourConfig): UseMarzipanoTourResult {
       viewerRef.current = null;
       sceneMapRef.current = new Map();
     };
-  }, [config]);
+  }, [config, switchSceneRef, transitionDurationMs]);
 
   return {
     containerRef,

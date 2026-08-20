@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 /**
- * Lightweight in-memory fixed-window rate limiter for API routes (M0.5).
+ * Lightweight in-memory fixed-window rate limiter for API routes.
  *
  * This is a process-local limiter. It is intentionally dependency-free and
  * requires no DB/Redis round-trip, and is a good first line of defense for a
  * single-instance deployment. For multi-instance / horizontal scale-out it must
  * be swapped for a shared store (e.g. @upstash/ratelimit or a Redis-based
- * counter) — a documented M0.5 follow-on.
+ * counter).
  *
  * Usage:
  *   const limited = rateLimit(request, { limit: 60, windowMs: 60_000 });
@@ -61,15 +61,29 @@ export function rateLimit(
 
   if (bucket) {
     if (now < bucket.resetAt) {
-      return new NextResponse('Too Many Requests', { status: 429 });
+      bucket.count++;
+      if (bucket.count > config.limit) {
+        return NextResponse.json(
+          { error: 'Too Many Requests' },
+          {
+            status: 429,
+            headers: {
+              'Retry-After': String(Math.ceil((bucket.resetAt - now) / 1000)),
+              'X-RateLimit-Limit': String(config.limit),
+              'X-RateLimit-Remaining': String(Math.max(0, config.limit - bucket.count)),
+            },
+          }
+        );
+      }
+      return null;
     }
     buckets.delete(bucketKey);
   }
 
-  const max = config.limit ?? 60;
-  const windowMs = config.windowMs ?? 60_000;
+  if (buckets.size >= MAX_BUCKETS) {
+    buckets.clear();
+  }
 
-  buckets.set(bucketKey, { count: 1, resetAt: now + windowMs });
-
+  buckets.set(bucketKey, { count: 1, resetAt: now + config.windowMs });
   return null;
 }

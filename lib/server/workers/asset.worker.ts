@@ -1,9 +1,12 @@
 import { Worker, Job } from 'bullmq';
 import { redis } from '@/lib/server/lib/redis';
+import { createLogger } from '../logger';
 import { optimizeImage, optimizeModel } from '@/lib/server/optimization/optimizer';
 import { tileModel } from '@/lib/server/tiling/tiler';
 import { assetQueue, ASSET_QUEUE_NAME } from '@/lib/server/queues/asset.queue';
 import { prisma } from '@/lib/db/server';
+
+const log = createLogger({ module: 'asset-worker' });
 
 const worker = new Worker(
   ASSET_QUEUE_NAME,
@@ -26,7 +29,7 @@ const worker = new Worker(
         await import('@/lib/server/tiling/tiler').then(m => m.tileModel({ assetId, tenantId, storagePath }));
       }
     } catch (error) {
-      console.error(`Worker error for job ${job.id}:`, error);
+      log.error({ err: error, jobId: job.id, assetId }, 'Worker error');
       await prisma.asset.update({
         where: { id: assetId },
         data: { [`${type === 'image' ? 'optimized' : 'tiling'}Status`]: 'failed' },
@@ -41,12 +44,12 @@ const worker = new Worker(
 );
 
 worker.on('completed', async (job) => {
-  console.log(`Job ${job.id} completed`);
+  log.info({ jobId: job.id }, 'Job completed');
 });
 
 worker.on('failed', async (job, err) => {
   if (!job) return;
-  console.error(`Job ${job.id} failed:`, err);
+  log.error({ err, jobId: job.id }, 'Job failed');
 });
 
 export { worker };

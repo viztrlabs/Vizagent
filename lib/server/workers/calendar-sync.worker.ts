@@ -1,5 +1,8 @@
 import { Worker } from 'bullmq';
 import { Redis } from '@upstash/redis';
+import { createLogger } from '../logger';
+
+const log = createLogger({ module: 'calendar-sync-worker' });
 
 const redis = new Redis({
   url: process.env.UPSTASH_REDIS_URL!,
@@ -13,7 +16,7 @@ const worker = new Worker(
 
     const accessToken = process.env.GOOGLE_ACCESS_TOKEN;
     if (!accessToken) {
-      console.warn('No Google access token available for calendar sync');
+      log.warn('No Google access token available for calendar sync');
       return;
     }
 
@@ -28,9 +31,9 @@ const worker = new Worker(
         projectType: projectType || 'Architectural Visualization',
       });
 
-      console.log(`Calendar event created: ${gcalEventId} for booking ${job.data.aggregateId}`);
+      log.info({ gcalEventId, bookingId: job.data.aggregateId }, 'Calendar event created');
     } catch (error) {
-      console.error(`Failed to sync booking ${job.data.aggregateId} to Google Calendar:`, error);
+      log.error({ err: error, bookingId: job.data.aggregateId }, 'Failed to sync to Google Calendar');
       throw error;
     }
   },
@@ -41,11 +44,11 @@ const worker = new Worker(
 );
 
 worker.on('completed', (job) => {
-  console.log(`Job ${job.id} completed successfully`);
+  log.info({ jobId: job.id }, 'Job completed');
 });
 
 worker.on('failed', (job, err) => {
-  console.error(`Job ${job?.id} failed with error:`, err);
+  log.error({ err, jobId: job?.id }, 'Job failed');
 });
 
 export default worker;
