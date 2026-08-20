@@ -56,14 +56,28 @@ export async function GET(
 
     // Fetch hotspots for all scenes
     const sceneIds = tourScenesRaw.map(s => s.id);
-    const hotspotsRaw = sceneIds.length > 0
-      ? await prisma.$queryRaw<[{id: string, scene_id: string, type: string, label: string | null, yaw: number, pitch: number, target_scene_id: string | null, url: string | null, gallery_id: string | null}]>`
-          SELECT * FROM tour_hotspots WHERE scene_id IN (${sceneIds.join(',')})
-        `
-      : [];
+    type HotspotRow = {
+      id: string;
+      scene_id: string;
+      type: string;
+      label: string | null;
+      yaw: number;
+      pitch: number;
+      target_scene_id: string | null;
+      url: string | null;
+      gallery_id: string | null;
+    };
+
+    let hotspotsRaw: HotspotRow[] = [];
+
+    if (sceneIds.length > 0) {
+      hotspotsRaw = await prisma.$queryRaw<HotspotRow[]>`
+        SELECT * FROM tour_hotspots WHERE scene_id IN (${sceneIds.join(',')})
+      `;
+    }
 
     // Group hotspots by scene
-    const hotspotsByScene = new Map<string, typeof hotspotsRaw>();
+    const hotspotsByScene = new Map<string, HotspotRow[]>();
     for (const h of hotspotsRaw) {
       const list = hotspotsByScene.get(h.scene_id) ?? [];
       list.push(h);

@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/supabase/admin';
-import { mapTourConfig } from '@/lib/tour/map-tour-config';
+import { prisma } from '@/lib/db/server';
+import { getCurrentAuth } from '@/lib/auth/session';
+import { createLogger } from '@/lib/server/logger';
+
+const log = createLogger({ module: 'api/tours/[id]' });
 
 export const dynamic = 'force-dynamic';
 
@@ -9,61 +12,102 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { dbUser } = await getCurrentAuth();
+    if (!dbUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
     const { id } = await params;
 
-    const { data: project, error: projectError } = await supabaseAdmin
-      .from('projects')
-      .select('id, name, settings')
-      .eq('id', id)
-      .single();
-
-    if (projectError || !project) {
-      return NextResponse.json(
-        { success: false, error: { code: 'NOT_FOUND', message: 'Tour not found' } },
-        { status: 404 }
-      );
-    }
-
-    const { data: assets, error: assetsError } = await supabaseAdmin
-      .from('assets')
-      .select('id, storage_path, file_type, file_name, metadata')
-      .eq('project_id', id)
-      .order('created_at', { ascending: true })
-      .order('id', { ascending: true });
-
-    if (assetsError) {
-      return NextResponse.json(
-        { success: false, error: { code: 'INTERNAL', message: 'Failed to fetch tour data' } },
-        { status: 500 }
-      );
-    }
-
-    const publicUrlFor = (storagePath: string) =>
-      supabaseAdmin.storage.from('assets').getPublicUrl(storagePath).data.publicUrl;
-
-    const tourConfig = mapTourConfig({
-      project: {
-        id: project.id,
-        name: project.name,
-        settings: project.settings,
+    const project = await prisma.project.findFirst({
+      where: { id, tenantId: dbUser.tenantId },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        status: true,
+        settings: true,
+        viewCount: true,
+        createdAt: true,
+        updatedAt: true,
       },
-      assets: assets ?? [],
-      publicUrlFor,
     });
 
-    if (!tourConfig) {
-      return NextResponse.json(
-        { success: false, error: { code: 'NOT_FOUND', message: 'No equirectangular assets for this tour' } },
-        { status: 404 }
-      );
+    if (!project) {
+      return NextResponse.json({ error: 'Tour not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, data: tourConfig });
+    return NextResponse.json({ project });
   } catch (error) {
-    console.error('Failed to fetch tour data:', error);
-    return NextResponse.json(
-      { success: false, error: { code: 'INTERNAL', message: 'Failed to fetch tour data' } },
-      { status: 500 }
-    );
+    log.error({ error }, 'Failed to fetch tour');
+    return NextResponse.json({ error: 'Failed to fetch tour' }, { status: 500 });
+  }
+}
+
+export async function PUT(
+  req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { dbUser } = await getCurrentAuth();
+    if (!dbUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { id } = await params;
+
+    const existing = await prisma.project.findFirst({
+      where: { id, tenantId: dbUser.tenantId },
+      select: { id: true },
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Tour not found' }, { status: 404 });
+    }
+
+    const body = await req.json();
+
+    const data: Record<string, unknown> = {};
+    if (body.name) data.name = body.name;
+    if (body.description !== undefined) data.description = body.description;
+    if (body.status) data.status = body.status;
+    if (body.settings) data.settings = body.settings;
+
+    const project = await prisma.project.update({
+      where: { id },
+      data,
+    });
+
+    return NextResponse.json({ project });
+  } catch (error) {
+    log.error({ error }, 'Failed to update tour');
+    return NextResponse.json({ error: 'Failed to update tour' }, { status: 500 });
+  }
+}
+
+export async function DELETE(
+  _req: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { dbUser } = await getCurrentAuth();
+    if (!dbUser) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const { id } = await params;
+
+    const existing = await prisma.project.findFirst({
+      where: { id, tenantId: dbUser.tenantId },
+      select: { id: true },
+    });
+
+    if (!existing) {
+      return NextResponse.json({ error: 'Tour not found' }, { status: 404 });
+    }
+
+    await prisma.project.update({
+      where: { id },
+      data: { status: 'archived' },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    log.error({ error }, 'Failed to archive tour');
+    return NextResponse.json({ error: 'Failed to archive tour' }, { status: 500 });
   }
 }
