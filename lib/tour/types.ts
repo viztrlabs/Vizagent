@@ -24,6 +24,7 @@ export type TourConfig = {
   viewCount?: number;
   settings: TourSettings;
   scenes: TourScene[];
+  model3d?: TourScene3DConfig[];
 };
 
 export type TourScene = {
@@ -69,4 +70,11 @@ export type TourView = {
   yaw: number;
   pitch: number;
   fov?: number;
+};
+
+export type TourScene3DConfig = {
+  sceneId: string;
+  modelUrl?: string;
+  pointCloudUrl?: string;
+  floorPlanPosition?: { x: number; y: number };
 };
