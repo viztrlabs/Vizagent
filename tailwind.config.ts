@@ -1,4 +1,5 @@
 import type { Config } from 'tailwindcss'
+import tokens from '../packages/design-tokens/tokens.json'
 
 const config: Config = {
   content: [
@@ -9,38 +10,46 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        // M0.2: semantic tokens backed by dual-theme CSS vars in globals.css.
-        // Dark default preserves pre-M0.2 visuals; light mode flips with theme.
-        bg: 'var(--background)',
-        foreground: 'var(--foreground)',
-        surface: 'var(--surface)',
-        'surface-2': 'var(--surface-2)',
-        cyan: 'var(--primary)',
-        violet: 'var(--accent)',
+        // Design tokens from packages/design-tokens/tokens.json
+        // Mapped to CSS vars in globals.css for dual-theme support
+        ...tokens.color,
+        // Explicit aliases for common references
+        primary: tokens.color.primary,
+        secondary: tokens.color.secondary,
+        accent: tokens.color.accent,
+        neutral: tokens.color.neutral,
       },
       borderColor: {
         DEFAULT: 'var(--border)',
       },
-      fontFamily: {
-        // next/font variables are injected on <html> (see app/layout.tsx)
-        display: ['var(--font-space-grotesk)', 'sans-serif'],
-        heading: ['var(--font-space-grotesk)', 'sans-serif'],
-        body: ['var(--font-inter)', 'sans-serif'],
-        mono: ['var(--font-jetbrains-mono)', 'monospace'],
-      },
       borderRadius: {
-        sm: '8px',
-        md: '12px',
-        lg: '16px',
-        xl: '24px',
-        full: '9999px',
+        none: '0',
+        sm: tokens.radius.sm,
+        md: tokens.radius.md,
+        lg: tokens.radius.lg,
+        full: tokens.radius.full,
       },
       spacing: {
+        ...tokens.spacing,
         base: '4px',
       },
+      fontFamily: {
+        // next/font variables injected on <html> (see app/layout.tsx)
+        display: [tokens.typography.display.fontFamily, tokens.typography.display.fontWeightRegular],
+        heading: [tokens.typography.display.fontFamily, tokens.typography.display.fontWeightMedium],
+        body: [tokens.typography.body.fontFamily, tokens.typography.body.fontWeightRegular],
+        mono: [tokens.typography.code.fontFamily, tokens.typography.code.fontSize],
+      },
+      spacing: tokens.spacing,
     },
+    fontSize: tokens.typography.display.size.concat(tokens.typography.body.size),
+    lineHeight: tokens.typography.display.size.length > 0 ? tokens.typography.display.size[0]?.lineHeight : '1.2',
   },
-  plugins: [],
+  plugins: [
+    require('@tailwindcss/typography'),
+    require('@tailwindcss/forms'),
+    require('@tailwindcss/aspect-ratio'),
+  ],
   darkMode: 'class',
 }
 

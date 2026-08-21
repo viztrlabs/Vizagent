@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import KanbanBoard from './KanbanBoard';
 
 interface Lead {
   id: string;
@@ -20,6 +21,7 @@ export default function CrmDashboard() {
   const [showForm, setShowForm] = useState(false);
   const [formData, setFormData] = useState({ name: '', email: '', company: '', phone: '', source: '' });
   const [reloadKey, setReloadKey] = useState(0);
+  const [activeTab, setActiveTab] = useState<'leads' | 'deals'>('leads');
 
   const fetchLeads = useCallback(async () => {
     const params = filter ? `?status=${filter}` : '';
@@ -60,12 +62,36 @@ export default function CrmDashboard() {
     <div style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <h1 style={{ fontSize: '1.875rem', fontWeight: 700 }}>CRM Pipeline</h1>
-        <button
-          onClick={() => setShowForm(!showForm)}
-          style={{ padding: '0.5rem 1rem', background: '#3b82f6', color: 'white', border: 'none', borderRadius: '0.375rem', cursor: 'pointer', fontSize: '0.875rem' }}
-        >
-          {showForm ? 'Cancel' : '+ Add Lead'}
-        </button>
+        <div style={{ display: 'flex', gap: '0.5rem' }}>
+          <button
+            onClick={() => setShowForm(!showForm)}
+            style={{
+              padding: '0.5rem 1rem',
+              background: '#3b82f6',
+              color: 'white',
+              border: 'none',
+              borderRadius: '0.375rem',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+            }}
+          >
+            {showForm ? 'Cancel' : '+ Add Lead'}
+          </button>
+          <button
+            onClick={() => setActiveTab(activeTab === 'leads' ? 'deals' : 'leads')}
+            style={{
+              padding: '0.5rem 1rem',
+              background: activeTab === 'deals' ? '#3b82f6' : '#6b7280',
+              color: 'white',
+              border: 'none',
+              borderRadius: '0.375rem',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+            }}
+          >
+            {activeTab === 'leads' ? 'Deals Kanban' : 'Leads'}
+          </button>
+        </div>
       </div>
 
       {showForm && (
@@ -81,46 +107,52 @@ export default function CrmDashboard() {
         </form>
       )}
 
-      <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
-        {['', 'NEW', 'CONTACTED', 'QUALIFIED', 'UNQUALIFIED', 'CONVERTED'].map(s => (
-          <button
-            key={s}
-            onClick={() => setFilter(s)}
-            style={{
-              padding: '0.375rem 0.75rem',
-              border: '1px solid #d1d5db',
-              borderRadius: '1rem',
-              background: filter === s ? '#3b82f6' : 'white',
-              color: filter === s ? 'white' : '#374151',
-              cursor: 'pointer',
-              fontSize: '0.75rem',
-            }}
-          >
-            {s || 'All'}
-          </button>
-        ))}
-      </div>
-
-      <div style={{ display: 'grid', gap: '1rem' }}>
-        {leads.map(lead => (
-          <div key={lead.id} style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: '0.5rem', padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <div>
-              <div style={{ fontWeight: 600, fontSize: '1rem' }}>{lead.name || lead.email}</div>
-              <div style={{ color: '#6b7280', fontSize: '0.875rem' }}>{lead.email}{lead.company ? ` · ${lead.company}` : ''}</div>
-              {lead.source && <div style={{ color: '#9ca3af', fontSize: '0.75rem' }}>Source: {lead.source}</div>}
-            </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-              <span style={{ display: 'inline-block', padding: '0.25rem 0.75rem', borderRadius: '1rem', fontSize: '0.75rem', background: statusColors[lead.status] || '#e5e7eb', color: 'white' }}>
-                {lead.status}
-              </span>
-              <span style={{ color: '#9ca3af', fontSize: '0.75rem' }}>
-                {lead.contacts?.length || 0} contacts · {lead.deals?.length || 0} deals
-              </span>
-            </div>
+      {activeTab === 'leads' ? (
+        <>
+          <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem', flexWrap: 'wrap' }}>
+            {['', 'NEW', 'CONTACTED', 'QUALIFIED', 'UNQUALIFIED', 'CONVERTED'].map(s => (
+              <button
+                key={s}
+                onClick={() => setFilter(s)}
+                style={{
+                  padding: '0.375rem 0.75rem',
+                  border: '1px solid #d1d5db',
+                  borderRadius: '1rem',
+                  background: filter === s ? '#3b82f6' : 'white',
+                  color: filter === s ? 'white' : '#374151',
+                  cursor: 'pointer',
+                  fontSize: '0.75rem',
+                }}
+              >
+                {s || 'All'}
+              </button>
+            ))}
           </div>
-        ))}
-        {leads.length === 0 && <p style={{ color: '#6b7280', textAlign: 'center', padding: '2rem' }}>No leads found. Add your first lead!</p>}
-      </div>
+
+          <div style={{ display: 'grid', gap: '1rem' }}>
+            {leads.map(lead => (
+              <div key={lead.id} style={{ background: 'white', border: '1px solid #e5e7eb', borderRadius: '0.5rem', padding: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: '1rem' }}>{lead.name || lead.email}</div>
+                  <div style={{ color: '#6b7280', fontSize: '0.875rem' }}>{lead.email}{lead.company ? ` · ${lead.company}` : ''}</div>
+                  {lead.source && <div style={{ color: '#9ca3af', fontSize: '0.75rem' }}>Source: {lead.source}</div>}
+                </div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                  <span style={{ display: 'inline-block', padding: '0.25rem 0.75rem', borderRadius: '1rem', fontSize: '0.75rem', background: statusColors[lead.status] || '#e5e7eb', color: 'white' }}>
+                    {lead.status}
+                  </span>
+                  <span style={{ color: '#9ca3af', fontSize: '0.75rem' }}>
+                    {lead.contacts?.length || 0} contacts · {lead.deals?.length || 0} deals
+                  </span>
+                </div>
+              </div>
+            ))}
+            {leads.length === 0 && <p style={{ color: '#6b7280', textAlign: 'center', padding: '2rem' }}>No leads found. Add your first lead!</p>}
+          </div>
+        </>
+      ) : (
+        <KanbanBoard />
+      )}
     </div>
   );
 }

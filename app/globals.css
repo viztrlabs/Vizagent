@@ -1,7 +1,6 @@
 /* M0.2 design tokens: dual-theme (dark/light/auto) + glass + next/font.
    Render-blocking external font @import removed (M0.7 perf) — fonts now
    bundled locally via next/font/google in app/layout.tsx. */
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -9,32 +8,38 @@
 @layer base {
   :root {
     --background: #ffffff;
-    --foreground: #0a0e14;
-    --surface: #f4f5f7;
-    --surface-2: #e9ebef;
-    --border: #d8dbe0;
-    --muted: #5c6470;
-    --primary: #00a8c7; /* cyan scaled for light contrast */
-    --primary-foreground: #002b33;
-    --accent: #7c3aed;
+    --foreground: #1e293b;
+    --surface: #f8fafc;
+    --surface-2: #f1f5f9;
+    --border: #cbd5e1;
+    --muted: #64748b;
+    --primary: #0891b2; /* cyan 500 from design tokens */
+    --primary-foreground: #ffffff;
+    --accent: #a855f7; /* violet 500 from design tokens */
     --glass-bg: rgba(255, 255, 255, 0.6);
     --glass-border: rgba(255, 255, 255, 0.5);
     --shadow-glass: 0 8px 32px rgba(10, 14, 20, 0.12);
+    --radius-sm: 0.125rem;
+    --radius-md: 0.375rem;
+    --radius-lg: 0.5rem;
   }
 
   .dark {
     --background: #080a0f;
-    --foreground: #ffffff;
+    --foreground: #f8fafc;
     --surface: #0d1117;
     --surface-2: #161b22;
     --border: #30363d;
     --muted: #8b949e;
-    --primary: #00e5ff;
-    --primary-foreground: #002b33;
-    --accent: #7c3aed;
+    --primary: #0e7490; /* cyan 600 from design tokens */
+    --primary-foreground: #ffffff;
+    --accent: #9333ea; /* violet 600 from design tokens */
     --glass-bg: rgba(13, 17, 23, 0.6);
     --glass-border: rgba(255, 255, 255, 0.12);
     --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.4);
+    --radius-sm: 0.125rem;
+    --radius-md: 0.375rem;
+    --radius-lg: 0.5rem;
   }
 
   * {
@@ -79,19 +84,14 @@
     border: 1px solid var(--glass-border);
     box-shadow: var(--shadow-glass);
   }
-}
 
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-::-webkit-scrollbar-track {
-  background: var(--surface);
-}
-::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 4px;
-}
-::-webkit-scrollbar-thumb:hover {
-  background: var(--muted);
+  /* M0.2 radius utilities */
+  .radius-sm { radius: var(--radius-sm); }
+  .radius-md { radius: var(--radius-md); }
+  .radius-lg { radius: var(--radius-lg); }
+
+  /* M0.2 shadow utilities */
+  .shadow-sm { box-shadow: var(--shadow-sm); }
+  .shadow-md { box-shadow: var(--shadow-md); }
+  .shadow-lg { box-shadow: var(--shadow-lg); }
 }
