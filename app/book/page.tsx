@@ -194,7 +194,7 @@ export default function BookPage() {
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              className="w-full px-4 py-2.5 bg-surface border border-gray-800 rounded-lg text-white focus:outline-none focus:border-cyan h-24 resize-none"
+              className="w-full px-4 py-2.5 bg-surface border border-gray-800 rounded-lg text-white focus:outline-none focus:border-cyan h-24 resize-none min-h-touch"
               placeholder="Any specific requirements or questions..."
             />
           </div>
