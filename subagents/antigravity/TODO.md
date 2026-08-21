@@ -2,8 +2,8 @@
 
 | Task ID | Task | Status | Claimed At | Done At | Files Touched | Notes |
 |---------|------|--------|------------|---------|---------------|-------|
-| T1.1 | Design tokens + Tailwind config | in_progress | 2026-08-21 | — | components/design-tokens/ | @antigravity |
-| T1.2 | Content Engine: BlockEditor, BlockPalette, BlockRegistry | unclaimed | — | — | — | Depends on Stitch brief 8 |
+| T1.1 | Design tokens + Tailwind config | done | 2026-08-21 | 2026-08-21 02:45 | packages/design-tokens/, tailwind.config.ts, app/globals.css | Design tokens configured with Cyan/Violet palette, Space Grotesk/Inter/JetBrains Mono typography, shadow system, WCAG 2.1 AA compliance |
+| T1.2 | Content Engine: BlockEditor, BlockPalette, BlockRegistry | in_progress | 2026-08-21 | — | components/ | @antigravity |
 | T1.3 | Public pages: Home, Services, Studio Hub, XR World Hub | unclaimed | — | — | — | Depends on Stitch briefs 1-4 |
 | T1.4 | Portfolio, About, Contact, Case Study pages | unclaimed | — | — | — | Depends on Stitch briefs 5-7 |
 | T1.5 | Studio sub-pages + XR sub-pages | unclaimed | — | — | — | Depends on Stitch briefs 9-10 |
