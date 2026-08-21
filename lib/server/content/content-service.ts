@@ -541,6 +541,26 @@ function mapPrismaPage(page: Page): Page {
     createdBy: page.createdBy,
     updatedBy: page.updatedBy,
     tenantId: page.tenantId,
-    version: page.version,
   };
+}
+
+export async function getPublicPageBySlug(slug: string, tenantId: string): Promise<Page | null> {
+  const page = await db.page.findFirst({
+    where: { slug, tenantId, status: 'published' },
+    include: { sections: { include: { blocks: true }, orderBy: { order: 'asc' } } },
+  });
+  if (!page) return null;
+
+  const mapped = mapPrismaPage(page);
+  mapped.sections = mapped.sections
+    .filter((s) => !s.isPlaceholder)
+    .map((s) => ({ ...s, blocks: s.blocks.filter((b) => !b.isPlaceholder) }));
+  return mapped;
+}
+
+export async function resolveTenantFromHostname(hostname: string): Promise<string> {
+  // 1. Custom domains mapping (marketplace/enterprise — no-op today)
+  // 2. Fallback: hostname without subdomain → tenant lookup
+  // 3. Default: process.env.NEXT_PUBLIC_DEFAULT_TENANT ?? 'default'
+  return process.env.NEXT_PUBLIC_DEFAULT_TENANT ?? 'default';
 }
