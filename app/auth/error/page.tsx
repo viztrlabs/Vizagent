@@ -1,6 +1,5 @@
 'use client';
 
-import { Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
@@ -20,7 +19,7 @@ const errorMessages: Record<string, string> = {
   SessionRequired: 'Please sign in to access this page.',
 };
 
-function AuthErrorContent() {
+export default function AuthError() {
   const searchParams = useSearchParams();
   const error = searchParams.get('error') || 'default';
   const errorMessage = errorMessages[error] || errorMessages.default;
@@ -36,13 +35,13 @@ function AuthErrorContent() {
         <div className="flex flex-col gap-3">
           <Link
             href="/auth/signin"
-            className="w-full py-3 bg-cyan text-bg rounded-lg font-medium hover:bg-cyan/90 transition-colors text-center min-h-touch"
+            className="w-full py-3 bg-cyan text-bg rounded-lg font-medium hover:bg-cyan/90 transition-colors flex items-center justify-center min-h-touch"
           >
             Try Again
           </Link>
           <Link
             href="/"
-            className="w-full py-3 bg-surface border border-gray-700 text-white rounded-lg font-medium hover:bg-surface/80 transition-colors text-center min-h-touch"
+            className="w-full py-3 bg-surface border border-gray-700 text-white rounded-lg font-medium hover:bg-surface/80 transition-colors flex items-center justify-center min-h-touch"
           >
             Back to Home
           </Link>
@@ -55,21 +54,5 @@ function AuthErrorContent() {
         )}
       </div>
     </div>
-  );
-}
-
-export default function AuthError() {
-  return (
-    <Suspense
-      fallback={
-        <div className="min-h-screen flex items-center justify-center bg-bg px-4 py-8">
-          <div className="w-full max-w-md p-6 sm:p-8 bg-surface rounded-xl border border-gray-800 text-center text-gray-400">
-            Loading...
-          </div>
-        </div>
-      }
-    >
-      <AuthErrorContent />
-    </Suspense>
   );
 }
