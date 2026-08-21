@@ -2,8 +2,12 @@
 
 import { useState } from 'react';
 import { GripVertical, Trash2, Copy, ChevronDown, ChevronUp, Plus } from 'lucide-react';
+import { DndContext, closestCenter, PointerSensor, useSensor, useSensors, type DragEndEvent } from '@dnd-kit/core';
+import { SortableContext, useSortable, verticalListSortingStrategy, arrayMove } from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 import { Block, BlockType, BLOCK_TYPES, getDefaultBlockProps } from '@/lib/server/content/content-model';
 import { getBlockRegistration } from '@/lib/server/content/block-registry';
+import { BlockPropsEditor } from './BlockPropsEditor';
 
 interface BlockEditorProps {
   blocks: Block[];
@@ -21,9 +25,24 @@ const BLOCK_CATEGORIES = {
   data: 'Data',
 } as const;
 
+function SortableBlock({ block, index, children }: { block: Block; index: number; children: React.ReactNode }) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: block.id });
+  const style = { transform: CSS.Transform.toString(transform), transition };
+  return (
+    <div ref={setNodeRef} style={style} className={isDragging ? 'opacity-40' : ''}>
+      <div className="flex items-center gap-1 mb-1">
+        <button {...attributes} {...listeners} className="p-1 rounded hover:bg-gray-800 text-gray-500 hover:text-white cursor-grab" aria-label={`Drag block ${index + 1}`}>
+          <GripVertical className="w-4 h-4" />
+        </button>
+        <span className="text-xs text-gray-500 font-mono">#{index + 1}</span>
+      </div>
+      {children}
+    </div>
+  );
+}
+
 export function BlockEditor({ blocks, onBlocksChange, readOnly = false, sectionId }: BlockEditorProps) {
   const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null);
-  const [draggedBlock, setDraggedBlock] = useState<Block | null>(null);
 
   const handleAddBlock = (type: string) => {
     const newBlock = {
@@ -69,74 +88,16 @@ export function BlockEditor({ blocks, onBlocksChange, readOnly = false, sectionI
     }
   };
 
-  const renderBlockEditor = (block: Block) => {
-    return (
-      <div key={block.id} className="relative group">
-        {/* Drag handle + actions */}
-        <div className="absolute left-0 top-0 bottom-0 w-8 flex flex-col items-center justify-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <div className="p-1.5 rounded hover:bg-gray-800 text-gray-500 hover:text-white transition-colors">
-            <GripVertical className="w-4 h-4" />
-          </div>
+  const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 5 } }));
 
-          <div className="flex flex-col gap-1">
-            <button
-              onClick={() => handleMoveBlock(block.id, 'up')}
-              disabled={block.order === 0}
-              className="p-1.5 rounded hover:bg-gray-800 text-gray-500 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              aria-label="Move up"
-            >
-              <ChevronUp className="w-4 h-4" />
-            </button>
-            <button
-              onClick={() => handleMoveBlock(block.id, 'down')}
-              disabled={block.order === blocks.length - 1}
-              className="p-1.5 rounded hover:bg-gray-800 text-gray-500 hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              aria-label="Move down"
-            >
-              <ChevronDown className="w-4 h-4" />
-            </button>
-          </div>
-        </div>
-
-        {/* Block content */}
-        <div className="ml-8 flex-1 p-4 bg-gray-900/50 border border-gray-800 rounded-lg">
-          {/* Block header */}
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <span className="px-2 py-1 text-xs font-medium bg-cyan/20 text-cyan rounded">
-                {getBlockRegistration(block.type)?.label || block.type}
-              </span>
-              <span className="text-xs text-gray-500 font-mono">#{block.order + 1}</span>
-            </div>
-
-            <div className="flex items-center gap-1">
-              <button
-                onClick={() => handleDuplicateBlock(block)}
-                className="p-1.5 rounded hover:bg-gray-800 text-gray-500 hover:text-white transition-colors"
-                aria-label="Duplicate"
-              >
-                <Copy className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => handleDeleteBlock(block.id)}
-                className="p-1.5 rounded hover:bg-red-400/10 text-gray-500 hover:text-red-400 transition-colors"
-                aria-label="Delete"
-              >
-                <Trash2 className="w-4 h-4" />
-              </button>
-            </div>
-          </div>
-
-          {/* Block props editor */}
-          <BlockPropsEditor
-            blockType={block.type}
-            props={block.props}
-            onChange={(props) => handleUpdateBlock(block.id, props)}
-          />
-        </div>
-      </div>
-    );
-  }
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id) return;
+    const oldIndex = blocks.findIndex((b) => b.id === active.id);
+    const newIndex = blocks.findIndex((b) => b.id === over.id);
+    const reordered = arrayMove(blocks, oldIndex, newIndex).map((b, i) => ({ ...b, order: i }));
+    onBlocksChange(reordered);
+  };
 
   return (
     <div className="space-y-4">
@@ -169,51 +130,39 @@ export function BlockEditor({ blocks, onBlocksChange, readOnly = false, sectionI
             No blocks yet. Click &quot;Add Block&quot; to get started.
           </div>
         ) : (
-          blocks.map((block) => (
-            <div key={block.id} className="group relative">
-              {/* Block rendering would go here */}
-              <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4">
-                <div className="flex items-center justify-between mb-3">
-                  <div className="flex items-center gap-2">
-                    <span className="px-2 py-1 text-xs font-medium bg-cyan/20 text-cyan rounded">
-                      {getBlockRegistration(block.type)?.label || block.type}
-                    </span>
-                    <span className="text-xs text-gray-500 font-mono">#{block.order + 1}</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button className="p-1.5 rounded hover:bg-gray-800 text-gray-500 hover:text-white transition-colors" aria-label="Move up">
-                      <ChevronUp className="w-4 h-4" />
-                    </button>
-                    <button className="p-1.5 rounded hover:bg-gray-800 text-gray-500 hover:text-white transition-colors" aria-label="Move down">
-                      <ChevronDown className="w-4 h-4" />
-                    </button>
-                    <button className="p-1.5 rounded hover:bg-gray-800 text-gray-500 hover:text-white transition-colors" aria-label="Duplicate">
-                      <Copy className="w-4 h-4" />
-                    </button>
-                    <button className="p-1.5 rounded hover:bg-red-400/10 text-gray-500 hover:text-red-400 transition-colors" aria-label="Delete">
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                </div>
-                <div className="text-sm text-gray-400">
-                  Block type: {block.type} | Props: {JSON.stringify(block.props)}
-                </div>
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
+              <div className="space-y-4">
+                {blocks.map((block) => (
+                  <SortableBlock key={block.id} block={block} index={block.order}>
+                    <div className="bg-gray-900/50 border border-gray-800 rounded-lg p-4">
+                      <div className="flex items-center justify-between mb-3">
+                        <span className="px-2 py-1 text-xs font-medium bg-cyan/20 text-cyan rounded">
+                          {getBlockRegistration(block.type)?.label || block.type}
+                        </span>
+                        <div className="flex items-center gap-1">
+                          <button onClick={() => handleMoveBlock(block.id, 'up')} className="p-1.5 rounded hover:bg-gray-800 text-gray-500 hover:text-white" aria-label="Move up">
+                            <ChevronUp className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => handleMoveBlock(block.id, 'down')} className="p-1.5 rounded hover:bg-gray-800 text-gray-500 hover:text-white" aria-label="Move down">
+                            <ChevronDown className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => handleDuplicateBlock(block)} className="p-1.5 rounded hover:bg-gray-800 text-gray-500 hover:text-white" aria-label="Duplicate">
+                            <Copy className="w-4 h-4" />
+                          </button>
+                          <button onClick={() => handleDeleteBlock(block.id)} className="p-1.5 rounded hover:bg-red-400/10 text-gray-500 hover:text-red-400" aria-label="Delete">
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                      <BlockPropsEditor blockType={block.type as BlockType} props={block.props} onChange={(p) => handleUpdateBlock(block.id, p)} />
+                    </div>
+                  </SortableBlock>
+                ))}
               </div>
-            </div>
-          ))
+            </SortableContext>
+          </DndContext>
         )}
-      </div>
-    </div>
-  );
-}
-
-// Placeholder for BlockPropsEditor component
-function BlockPropsEditor({ blockType, props, onChange }: { blockType: string; props: Record<string, unknown>; onChange: (props: Record<string, unknown>) => void }) {
-  return (
-    <div className="space-y-3 pt-4 border-t border-gray-800">
-      <h4 className="text-sm font-medium text-white">Properties</h4>
-      <div className="text-sm text-gray-500">
-        Editing {Object.keys(props).length} properties for {blockType}
       </div>
     </div>
   );

@@ -1,4 +1,24 @@
 import { BlockType, BLOCK_TYPES, BlockProps, getDefaultBlockProps, Block } from './content-model';
+import { HeroBlock } from '@/components/content/blocks/HeroBlock';
+import { TextBlock } from '@/components/content/blocks/TextBlock';
+import { ImageBlock } from '@/components/content/blocks/ImageBlock';
+import { VideoBlock } from '@/components/content/blocks/VideoBlock';
+import { GalleryBlock } from '@/components/content/blocks/GalleryBlock';
+import { CtaBlock } from '@/components/content/blocks/CtaBlock';
+import { FeatureGridBlock } from '@/components/content/blocks/FeatureGridBlock';
+import { TestimonialBlock } from '@/components/content/blocks/TestimonialBlock';
+import { PricingTableBlock } from '@/components/content/blocks/PricingTableBlock';
+import { ContactFormBlock } from '@/components/content/blocks/ContactFormBlock';
+import { CodeBlock } from '@/components/content/blocks/CodeBlock';
+import { DividerBlock } from '@/components/content/blocks/DividerBlock';
+import { SpacerBlock } from '@/components/content/blocks/SpacerBlock';
+import { HtmlBlock } from '@/components/content/blocks/HtmlBlock';
+import { EmbedBlock } from '@/components/content/blocks/EmbedBlock';
+import { FaqBlock } from '@/components/content/blocks/FaqBlock';
+import { TeamBlock } from '@/components/content/blocks/TeamBlock';
+import { PricingBlock } from '@/components/content/blocks/PricingBlock';
+import { StatsBlock } from '@/components/content/blocks/StatsBlock';
+
 
 /**
  * M9: Block Registry
@@ -407,6 +427,35 @@ export const BLOCK_REGISTRY: Record<BlockType, BlockRegistration> = {
     deletable: true,
   },
 };
+
+export const BLOCK_PREVIEWS: Record<BlockType, React.ComponentType<{ props: any }>> = {
+  hero: HeroBlock,
+  text: TextBlock,
+  image: ImageBlock,
+  video: VideoBlock,
+  gallery: GalleryBlock,
+  cta: CtaBlock,
+  'feature-grid': FeatureGridBlock,
+  testimonial: TestimonialBlock,
+  'pricing-table': PricingTableBlock,
+  'contact-form': ContactFormBlock,
+  code: CodeBlock,
+  divider: DividerBlock,
+  spacer: SpacerBlock,
+  html: HtmlBlock,
+  embed: EmbedBlock,
+  faq: FaqBlock,
+  team: TeamBlock,
+  pricing: PricingBlock,
+  stats: StatsBlock,
+};
+
+// Wire preview components into the registry
+Object.keys(BLOCK_REGISTRY).forEach((key) => {
+  const type = key as BlockType;
+  BLOCK_REGISTRY[type].previewComponent = BLOCK_PREVIEWS[type] as any;
+});
+
 
 /**
  * Get registration for a block type
