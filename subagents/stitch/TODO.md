@@ -2,7 +2,7 @@
 
 | Task ID | Task | Status | Claimed At | Done At | Files Touched | Notes |
 |---------|------|--------|------------|---------|---------------|-------|
-| T7.1 | Home Hero brief | unclaimed | — | — | briefs/ | P0 |
+| T7.1 | Home Hero brief | in_progress | 2026-08-21 | — | briefs/ | @stitch |
 | T7.2 | Services Hub brief | unclaimed | — | — | briefs/ | P0 |
 | T7.3 | Studio Hub brief | unclaimed | — | — | briefs/ | P0 |
 | T7.4 | XR World Hub brief | unclaimed | — | — | briefs/ | P0 |
