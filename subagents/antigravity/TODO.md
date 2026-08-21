@@ -8,6 +8,6 @@
 | T1.4 | Portfolio, About, Contact, Case Study pages | unclaimed | — | — | — | Depends on Stitch briefs 5-7 |
 | T1.5 | Studio sub-pages + XR sub-pages | unclaimed | — | — | — | Depends on Stitch briefs 9-10 |
 | T1.6 | Admin Console: User mgmt, Agent board, Server monitoring | unclaimed | — | — | — | Depends on Phase 0 RBAC |
-| T3.1 | Global Content Sets | unclaimed | — | — | — | Parallel with T1.2 |
+| T3.1 | Global Content Sets | in_progress | 2026-08-21 | — | app/, lib/server/content/ | @antigravity |
 | T3.2 | SEO/Metadata Editor | unclaimed | — | — | — | Depends on T3.1 |
 | T3.3 | Scheduled Publishing | unclaimed | — | — | — | Depends on T3.1 |
