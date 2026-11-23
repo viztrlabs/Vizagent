@@ -1,32 +1,35 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { streamCreateSchema } from '@/lib/validations';
-import { createRoom, addPeer } from '@/lib/server/lib/signaling';
+
+// In-memory store for rooms (replace with Redis in production)
+const rooms = new Map<string, { peers: Set<string>; createdAt: number }>();
 
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const validation = streamCreateSchema.safeParse(body);
+  const body = await request.json();
+  const validation = streamCreateSchema.safeParse(body);
 
-    if (!validation.success) {
-      return NextResponse.json({ error: validation.error.issues }, { status: 400 });
-    }
-
-    const { room_id, user_id } = validation.data;
-
-    await createRoom(room_id);
-    const peers = await addPeer(room_id, user_id);
-
-    const iceServers = [
-      { urls: 'stun:stun.l.google.com:19302' },
-      { urls: 'stun:stun1.l.google.com:19302' },
-    ];
-
-    return NextResponse.json({
-      room_id,
-      ice_servers: iceServers,
-      peers,
-    });
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to create room' }, { status: 500 });
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error.issues }, { status: 400 });
   }
+
+  const { room_id, user_id } = validation.data;
+
+  if (!rooms.has(room_id)) {
+    rooms.set(room_id, { peers: new Set(), createdAt: Date.now() });
+  }
+
+  const room = rooms.get(room_id)!;
+  room.peers.add(user_id);
+
+  // STUN/TURN servers for WebRTC
+  const iceServers = [
+    { urls: 'stun:stun.l.google.com:19302' },
+    { urls: 'stun:stun1.l.google.com:19302' },
+  ];
+
+  return NextResponse.json({
+    room_id,
+    ice_servers: iceServers,
+    peers: Array.from(room.peers),
+  });
 }

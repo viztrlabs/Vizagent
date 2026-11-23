@@ -1,39 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { prisma } from '@/lib/supabase/server';
+import { deleteSessionFromCalendar } from '@/lib/google-calendar';
+import { getToken } from 'next-auth/jwt';
 
 export async function DELETE(
-  req: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  try {
-    const session = await prisma.session.findUnique({
-      where: { id },
-    });
 
-    if (!session) {
-      return NextResponse.json({ error: 'Not found' }, { status: 404 });
-    }
+  const session = await prisma.configuratorSession.findUnique({
+    where: { id },
+  });
 
-    if (session.gcalEventId) {
-      try {
-        const { google } = await import('googleapis');
-        const auth = new google.auth.OAuth2();
-        auth.setCredentials({ access_token: 'placeholder' });
-      } catch {}
-    }
-
-    await prisma.session.update({
-      where: { id },
-      data: { status: 'CANCELLED' },
-    });
-
-    return NextResponse.json({ ok: true });
-  } catch (error) {
-    console.error('Cancel error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+  if (!session) {
+    return NextResponse.json({ error: 'Not found' }, { status: 404 });
   }
+
+  // Delete from Google Calendar if exists
+  const token = await getToken({ req: request });
+  if (token?.accessToken && session.gcalEventId) {
+    try {
+      await deleteSessionFromCalendar(
+        token.accessToken as string,
+        session.gcalEventId
+      );
+    } catch (error) {
+      console.error('Failed to delete from Google Calendar:', error);
+    }
+  }
+
+  // Update session status to cancelled
+  await prisma.configuratorSession.update({
+    where: { id },
+    data: { isActive: false },
+  });
+
+  return NextResponse.json({ success: true });
 }

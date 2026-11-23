@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState } from 'react';
 import { PeerConnection } from '@/lib/types';
 import { ConnectionStatus } from './ConnectionStatus';
 
@@ -9,44 +9,46 @@ interface StreamViewerProps {
   userId: string;
 }
 
-export const StreamViewer = memo(function StreamViewer({ roomId, userId }: StreamViewerProps) {
+export function StreamViewer({ roomId, userId }: StreamViewerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [peers, setPeers] = useState<PeerConnection[]>([]);
   const [isConnected, setIsConnected] = useState(false);
 
   useEffect(() => {
-    let cancelled = false;
+    const socket = new WebSocket(`${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}/ws`);
 
-    async function joinRoom() {
-      try {
-        const res = await fetch('/api/streams/join', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ room_id: roomId, user_id: userId }),
-        });
+    socket.onopen = () => {
+      socket.send(JSON.stringify({ type: 'join', room_id: roomId, user_id: userId }));
+      setIsConnected(true);
+    };
 
-        if (!res.ok) throw new Error('Failed to join room');
+    socket.onmessage = async (event) => {
+      const data = JSON.parse(event.data);
 
-        const data = await res.json();
-        if (!cancelled) {
-          setIsConnected(true);
-          setPeers(data.peers.map((id: string) => ({ peerId: id, userId: id, connectionState: 'connected' as const })));
-        }
-      } catch (error) {
-        console.error('Stream join error:', error);
-        if (!cancelled) setIsConnected(false);
+      if (data.type === 'peer_joined') {
+        const peerConnection = new RTCPeerConnection();
+        // Add your logic for handling peer connections
       }
-    }
 
-    joinRoom();
+      if (data.type === 'offer') {
+        // Handle offer
+      }
+
+      if (data.type === 'answer') {
+        // Handle answer
+      }
+
+      if (data.type === 'ice_candidate') {
+        // Handle ICE candidate
+      }
+    };
+
+    socket.onclose = () => {
+      setIsConnected(false);
+    };
 
     return () => {
-      cancelled = true;
-      fetch('/api/streams/leave', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ room_id: roomId, user_id: userId }),
-      }).catch(() => {});
+      socket.close();
     };
   }, [roomId, userId]);
 
@@ -61,4 +63,4 @@ export const StreamViewer = memo(function StreamViewer({ roomId, userId }: Strea
       <ConnectionStatus isConnected={isConnected} peerCount={peers.length} />
     </div>
   );
-});
+}

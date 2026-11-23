@@ -1,21 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/server';
-import { ConfigurationRepository } from '@/lib/server/repositories/configuration.repository';
-import { getTenantId } from '@/lib/server/lib/tenant';
-import { withTenant } from '@/lib/server/middleware/tenant';
-
-const configurationRepository = new ConfigurationRepository();
+import { prisma } from '@/lib/supabase/server';
 
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const tenantId = await getTenantId();
 
-  const config = await withTenant(prisma, tenantId, async () =>
-    configurationRepository.findDefault(id, tenantId)
-  );
+  const config = await prisma.configuration.findFirst({
+    where: { xrAssetId: id, name: 'default' },
+  });
 
   if (!config) {
     return NextResponse.json({ error: 'No config found' }, { status: 404 });
@@ -30,16 +24,14 @@ export async function POST(
 ) {
   const { id } = await params;
   const body = await request.json();
-  const tenantId = await getTenantId();
 
-  const config = await withTenant(prisma, tenantId, async () =>
-    configurationRepository.upsert(
-      id,
-      body.name || 'default',
-      body.data,
-      tenantId
-    )
-  );
+  const config = await prisma.configuration.upsert({
+    where: {
+      xrAssetId_name: { xrAssetId: id, name: body.name || 'default' },
+    },
+    update: { data: body.data },
+    create: { xrAssetId: id, name: body.name || 'default', data: body.data },
+  });
 
   return NextResponse.json({ config });
 }

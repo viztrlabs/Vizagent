@@ -1,33 +1,11 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import dynamic from 'next/dynamic';
-import { PanelSkeleton } from '@/components/ui/Skeleton';
-
-const MaterialsPanel = dynamic(
-  () => import('./MaterialsPanel').then((mod) => mod.MaterialsPanel),
-  { ssr: false, loading: () => <PanelSkeleton /> }
-);
-
-const LightingPanel = dynamic(
-  () => import('./LightingPanel').then((mod) => mod.LightingPanel),
-  { ssr: false, loading: () => <PanelSkeleton /> }
-);
-
-const HotspotsPanel = dynamic(
-  () => import('./HotspotsPanel').then((mod) => mod.HotspotsPanel),
-  { ssr: false, loading: () => <PanelSkeleton /> }
-);
-
-const ExportPanel = dynamic(
-  () => import('./ExportPanel').then((mod) => mod.ExportPanel),
-  { ssr: false, loading: () => <PanelSkeleton /> }
-);
-
-const ARPanel = dynamic(
-  () => import('./ARPanel').then((mod) => mod.ARPanel),
-  { ssr: false, loading: () => <PanelSkeleton /> }
-);
+import { MaterialsPanel } from './MaterialsPanel';
+import { LightingPanel } from './LightingPanel';
+import { HotspotsPanel } from './HotspotsPanel';
+import { ExportPanel } from './ExportPanel';
+import { ARPanel } from './ARPanel';
 
 interface SidebarProps {
   projectId: string;
@@ -39,10 +17,10 @@ const tabs = [
   { id: 'hotspots', label: 'Hotspots', icon: '📍' },
   { id: 'export', label: 'Export', icon: '📤' },
   { id: 'ar', label: 'AR', icon: '📱' },
-] as const;
+];
 
 export function Sidebar({ projectId }: SidebarProps) {
-  const [activeTab, setActiveTab] = useState<'materials' | 'lighting' | 'hotspots' | 'export' | 'ar'>('materials');
+  const [activeTab, setActiveTab] = useState('materials');
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
@@ -145,7 +123,7 @@ export function Sidebar({ projectId }: SidebarProps) {
             {/* Header */}
             <div className="flex items-center justify-between px-4 pb-3 border-b border-gray-800">
               <h3 className="font-heading text-cyan">
-                {tabs.find((t) => t.id === activeTab)?.label}
+                {tabs.find(t => t.id === activeTab)?.label}
               </h3>
               <button
                 onClick={() => setIsMobileOpen(false)}

@@ -1,38 +1,24 @@
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
   provider = "postgresql"
-  url      = env("DATABASE_URL")
-}
-
-// M0.5: role enum replaces the free-text `role String @default("client")` field.
-// Maps to the locked hierarchy SUPER_ADMIN > ADMIN > USER (studio) > CLIENT.
-enum Role {
-  CLIENT
-  USER
-  ADMIN
-  SUPER_ADMIN
 }
 
 model User {
   id        String   @id @default(uuid())
   email     String   @unique
   name      String?
-  role      Role     @default(CLIENT)
+  role      String   @default("client")
   avatarUrl String?
-  tenantId  String   @map("tenant_id")
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
   projects      Project[]
   deployments   Deployment[]
-  subscriptions Subscription[]
 
   @@map("users")
-  @@index([tenantId])
 }
 
 model Project {
@@ -48,54 +34,37 @@ model Project {
   publishedUrl String?   @map("published_url")
   createdAt    DateTime  @default(now()) @map("created_at")
   updatedAt    DateTime  @updatedAt @map("updated_at")
-  tenantId     String    @map("tenant_id")
 
   client      User          @relation(fields: [clientId], references: [id], onDelete: Cascade)
   assets      Asset[]
-  qaReports   QaReport[]
+  qaReports   QAReport[]
   deployments Deployment[]
   xrAssets    XrAsset[]
 
   @@index([clientId])
   @@index([status])
-  @@index([tenantId])
   @@map("projects")
 }
 
 model Asset {
-  id                String   @id @default(uuid())
-  projectId         String   @map("project_id")
-  fileName          String   @map("file_name")
-  fileType          String   @map("file_type")
-  fileSize          BigInt?  @map("file_size")
-  storagePath       String   @map("storage_path")
-  thumbnailPath     String?  @map("thumbnail_path")
-  status            String   @default("uploaded")
-  metadata          Json     @default("{}")
-  createdAt         DateTime @default(now()) @map("created_at")
-  tenantId          String   @map("tenant_id")
-  // M4: optimization fields
-  optimizedPath     String?  @map("optimized_path")
-  optimizedStatus   String?  @map("optimized_status")
-  optimizedAt       DateTime? @map("optimized_at")
-  tilingPath        String?  @map("tiling_path")
-  tilingStatus      String?  @map("tiling_status")
-  tilingAt          DateTime? @map("tiling_at")
-  // optimization metadata
-  originalWidth     Int?     @map("original_width")
-  originalHeight    Int?     @map("original_height")
-  optimizedWidth    Int?     @map("optimized_width")
-  optimizedHeight   Int?     @map("optimized_height")
-  compressionRatio  Float?   @map("compression_ratio")
+  id            String   @id @default(uuid())
+  projectId     String   @map("project_id")
+  fileName      String   @map("file_name")
+  fileType      String   @map("file_type")
+  fileSize      BigInt?  @map("file_size")
+  storagePath   String   @map("storage_path")
+  thumbnailPath String?  @map("thumbnail_path")
+  status        String   @default("uploaded")
+  metadata      Json     @default("{}")
+  createdAt     DateTime @default(now()) @map("created_at")
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
-  @@index([tenantId])
   @@map("assets")
 }
 
-model QaReport {
+model QAReport {
   id        String   @id @default(uuid())
   projectId String   @map("project_id")
   qaStatus  String   @map("qa_status")
@@ -103,12 +72,10 @@ model QaReport {
   issues    Json     @default("[]")
   checkedAt DateTime? @map("checked_at")
   createdAt DateTime @default(now()) @map("created_at")
-  tenantId  String   @map("tenant_id")
 
   project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
 
   @@index([projectId])
-  @@index([tenantId])
   @@map("qa_reports")
 }
 
@@ -123,17 +90,11 @@ model Deployment {
   deployedBy  String?   @map("deployed_by")
   deployedAt  DateTime? @map("deployed_at")
   createdAt   DateTime  @default(now()) @map("created_at")
-  tenantId    String    @map("tenant_id")
-  // M8: deployment mode and approval tracking
-  mode        String
-  approvalId  String?   @unique @map("approval_id")
 
   project  Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
   deployer User?   @relation(fields: [deployedBy], references: [id])
-  approval Approval? @relation(fields: [approvalId], references: [id], onDelete: SetNull)
 
   @@index([projectId])
-  @@index([tenantId])
   @@map("deployments")
 }
 
@@ -148,34 +109,12 @@ model XrAsset {
   fileSizeBytes Int?     @map("file_size_bytes")
   createdAt     DateTime @default(now()) @map("created_at")
   updatedAt     DateTime @updatedAt @map("updated_at")
-  tenantId      String   @map("tenant_id")
 
   project         Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
   configurations  Configuration[]
 
   @@index([projectId])
-  @@index([tenantId])
   @@map("xr_assets")
-}
-
-model Approval {
-  id          String    @id @default(uuid())
-  resource    String
-  resourceId  String
-  actorId     String
-  actorRole   String
-  status      String    @default("pending") // pending, approved, rejected
-  notes       String?
-  token       String    @unique @map("token")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-  tenantId    String    @map("tenant_id")
-  deployment  Deployment?
-
-  @@index([resource, resourceId])
-  @@index([actorId])
-  @@index([tenantId])
-  @@map("approvals")
 }
 
 model Configuration {
@@ -185,37 +124,33 @@ model Configuration {
   data       String
   createdAt  DateTime @default(now()) @map("created_at")
   updatedAt  DateTime @updatedAt @map("updated_at")
-  tenantId   String   @map("tenant_id")
 
   xrAsset XrAsset @relation(fields: [xrAssetId], references: [id], onDelete: Cascade)
 
   @@unique([xrAssetId, name])
   @@index([xrAssetId])
-  @@index([tenantId])
   @@map("configurations")
 }
 
 model ConfiguratorSession {
-  id          String    @id @default(uuid())
-  projectId   String    @map("project_id")
-  hostId      String    @map("host_id")
+  id          String   @id @default(uuid())
+  projectId   String   @map("project_id")
+  hostId      String   @map("host_id")
   config      String
-  shareToken  String    @unique @map("share_token")
-  isActive    Boolean   @default(true) @map("is_active")
-  permissions Json      @default("{\"canEdit\": [], \"canView\": [], \"isPublic\": false}")
+  shareToken  String   @unique @map("share_token")
+  isActive    Boolean  @default(true) @map("is_active")
+  permissions Json     @default("{\"canEdit\": [], \"canView\": [], \"isPublic\": false}")
   startAt     DateTime? @map("start_at")
   reminderSentAt DateTime? @map("reminder_sent_at")
-  gcalEventId String?   @map("gcal_event_id")
-  createdAt   DateTime  @default(now()) @map("created_at")
-  updatedAt   DateTime  @updatedAt @map("updated_at")
-  tenantId    String    @map("tenant_id")
+  gcalEventId String?  @map("gcal_event_id")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
 
   viewers Viewer[]
 
   @@index([shareToken])
   @@index([hostId])
   @@index([startAt])
-  @@index([tenantId])
   @@map("configurator_sessions")
 }
 
@@ -225,158 +160,9 @@ model Viewer {
   userId    String?   @map("user_id")
   joinedAt  DateTime  @default(now()) @map("joined_at")
   leftAt    DateTime? @map("left_at")
-  tenantId  String    @map("tenant_id")
 
   session ConfiguratorSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
 
   @@index([sessionId])
-  @@index([tenantId])
   @@map("viewers")
-}
-
-model Subscription {
-  id                 String    @id @default(uuid())
-  userId             String    @map("user_id")
-  tenantId           String    @map("tenant_id")
-  stripeCustomerId   String    @unique @map("stripe_customer_id")
-  stripeSubscriptionId String  @unique @map("stripe_subscription_id")
-  stripePriceId      String    @map("stripe_price_id")
-  tier               String
-  status             String
-  currentPeriodStart DateTime? @map("current_period_start")
-  currentPeriodEnd   DateTime? @map("current_period_end")
-  createdAt          DateTime  @default(now()) @map("created_at")
-  updatedAt          DateTime  @updatedAt @map("updated_at")
-
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([tenantId])
-  @@index([userId])
-  @@map("subscriptions")
-}
-model Session {
-  id              String    @id @default(cuid())
-  email           String
-  firstName       String
-  lastName        String
-  company         String?
-  serviceId       String
-  projectType     String
-  notes           String?
-  date            String
-  time            String
-  startAt         DateTime  @db.Timestamp(0)
-  durationMinutes Int
-  status          String    @default("CONFIRMED")
-  reminderSentAt  DateTime? @db.Timestamp(0)
-  gcalEventId     String?
-  createdAt       DateTime  @default(now()) @db.Timestamp(0)
-
-  @@index([email])
-  @@index([status])
-  @@index([startAt])
-  @@map("sessions")
-}
-
-model AuditLog {
-  id         String    @id @default(uuid())
-  actorId    String    @map("actor_id")
-  actorRole  String    @map("actor_role")
-  action     String
-  resource   String
-  resourceId String?   @map("resource_id")
-  changes    Json?
-  ip         String?
-  userAgent  String?   @map("user_agent")
-  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamp(0)
-
-  @@index([actorId])
-  @@index([action])
-  @@index([resource])
-  @@index([createdAt])
-  @@map("audit_logs")
-}
-
-model Annotation {
-  id          String   @id @default(uuid())
-  projectId   String   @map("project_id")
-  authorId    String   @map("author_id")
-  position    Json
-  content     String
-  resolved    Boolean  @default(false)
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  tenantId    String   @map("tenant_id")
-
-  @@index([projectId])
-  @@index([authorId])
-  @@index([tenantId])
-  @@map("annotations")
-}
-
-model Comment {
-  id        String   @id @default(uuid())
-  projectId String   @map("project_id")
-  authorId  String   @map("author_id")
-  parentId  String?  @map("parent_id")
-  content   String
-  mentions  String[]
-  createdAt DateTime @default(now()) @map("created_at")
-  updatedAt DateTime @updatedAt @map("updated_at")
-  tenantId  String   @map("tenant_id")
-
-  @@index([projectId])
-  @@index([authorId])
-  @@index([parentId])
-  @@index([tenantId])
-  @@map("comments")
-}
-
-model ApprovalWorkflow {
-  id          String   @id @default(uuid())
-  projectId   String   @map("project_id")
-  requesterId String   @map("requester_id")
-  approverId  String   @map("approver_id")
-  status      String   @default("pending") // pending, approved, rejected
-  notes       String?
-  createdAt   DateTime @default(now()) @map("created_at")
-  updatedAt   DateTime @updatedAt @map("updated_at")
-  tenantId    String   @map("tenant_id")
-
-  @@index([projectId])
-  @@index([requesterId])
-  @@index([approverId])
-  @@index([tenantId])
-  @@map("approval_workflows")
-}
-
-model Deliverable {
-  id        String    @id @default(uuid())
-  projectId String    @map("project_id")
-  name      String
-  type      String
-  url       String
-  password  String?
-  expiresAt DateTime?
-  createdAt DateTime  @default(now()) @map("created_at")
-  updatedAt DateTime  @updatedAt @map("updated_at")
-  tenantId  String    @map("tenant_id")
-
-  @@index([projectId])
-  @@index([tenantId])
-  @@map("deliverables")
-}
-
-model ProjectVersion {
-  id        String   @id @default(uuid())
-  projectId String   @map("project_id")
-  version   String
-  changes   Json
-  createdAt DateTime @default(now()) @map("created_at")
-  createdBy String   @map("created_by")
-  tenantId  String   @map("tenant_id")
-
-  @@index([projectId])
-  @@index([tenantId])
-  @@map("project_versions")
 }

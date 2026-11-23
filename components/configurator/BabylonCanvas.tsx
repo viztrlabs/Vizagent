@@ -1,6 +1,6 @@
 'use client';
 
-import { memo, useRef, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { Engine, Scene, ArcRotateCamera, HemisphericLight, Vector3, Color3, Color4 } from '@babylonjs/core';
 import { useConfiguratorStore } from '@/lib/store/configurator-store';
 
@@ -9,7 +9,7 @@ interface BabylonCanvasProps {
   className?: string;
 }
 
-export const BabylonCanvas = memo(function BabylonCanvas({ modelUrl, className }: BabylonCanvasProps) {
+export function BabylonCanvas({ modelUrl, className }: BabylonCanvasProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const engineRef = useRef<Engine | null>(null);
   const sceneRef = useRef<Scene | null>(null);
@@ -27,7 +27,6 @@ export const BabylonCanvas = memo(function BabylonCanvas({ modelUrl, className }
 
   useEffect(() => {
     let cancelled = false;
-    const cleanupRef = { current: (() => {}) as () => void };
 
     const setup = async () => {
       if (!canvasRef.current) return;
@@ -85,7 +84,7 @@ export const BabylonCanvas = memo(function BabylonCanvas({ modelUrl, className }
       const handleResize = () => engine.resize();
       window.addEventListener('resize', handleResize);
 
-      cleanupRef.current = () => {
+      return () => {
         window.removeEventListener('resize', handleResize);
         engine.stopRenderLoop();
         scene.dispose();
@@ -93,11 +92,14 @@ export const BabylonCanvas = memo(function BabylonCanvas({ modelUrl, className }
       };
     };
 
-    setup();
+    let cleanupFn: (() => void) | undefined;
+    setup().then((fn) => {
+      if (!cancelled) cleanupFn = fn;
+    });
 
     return () => {
       cancelled = true;
-      cleanupRef.current();
+      cleanupFn?.();
     };
   }, [modelUrl]);
 
@@ -128,4 +130,4 @@ export const BabylonCanvas = memo(function BabylonCanvas({ modelUrl, className }
       className={`w-full h-full ${className}`}
     />
   );
-});
+}

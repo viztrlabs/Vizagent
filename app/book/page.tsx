@@ -67,7 +67,7 @@ export default function BookPage() {
           </div>
           <h1 className="font-display text-3xl sm:text-4xl text-white mb-4">Booking Confirmed!</h1>
           <p className="text-gray-400 mb-8">
-            You&apos;ll receive a confirmation email shortly with session details and a Google Calendar invite.
+            You'll receive a confirmation email shortly with session details and a Google Calendar invite.
           </p>
           <button
             onClick={() => router.push('/portal')}
@@ -194,7 +194,7 @@ export default function BookPage() {
             <textarea
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              className="w-full px-4 py-2.5 bg-surface border border-gray-800 rounded-lg text-white focus:outline-none focus:border-cyan h-24 resize-none min-h-touch"
+              className="w-full px-4 py-2.5 bg-surface border border-gray-800 rounded-lg text-white focus:outline-none focus:border-cyan h-24 resize-none"
               placeholder="Any specific requirements or questions..."
             />
           </div>

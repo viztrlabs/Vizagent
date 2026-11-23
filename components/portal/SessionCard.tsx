@@ -1,5 +1,4 @@
 'use client';
-
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
@@ -59,7 +58,7 @@ export default function SessionCard({ session, isPast = false, isCancelled = fal
       {!isPast && !isCancelled && !showConfirm && (
         <button
           onClick={() => setShowConfirm(true)}
-          className="w-full sm:w-auto text-xs text-red-400 border border-red-900/50 rounded-lg px-3 py-2 hover:bg-red-900/20 transition min-h-touch"
+          className="text-xs text-red-400 border border-red-900/50 rounded-lg px-3 py-2 hover:bg-red-900/20 transition min-h-touch"
         >
           Cancel session
         </button>

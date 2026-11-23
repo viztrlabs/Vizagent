@@ -1,54 +1,39 @@
-import type { Metadata, Viewport } from 'next';
-import { Space_Grotesk, Inter, JetBrains_Mono } from 'next/font/google';
-import './globals.css';
-import { Header } from '@/components/Header';
-import { ThemeProvider } from '@/components/theme-provider';
+import type { Metadata } from "next";
+import { DM_Sans, Syne, Bebas_Neue } from "next/font/google";
+import { auth } from "@/lib/auth";
+import Providers from "@/components/providers";
+import "./globals.css";
 
-const spaceGrotesk = Space_Grotesk({
-  subsets: ['latin'],
-  variable: '--font-space-grotesk',
-  display: 'swap',
+const dmSans = DM_Sans({
+  variable: "--font-dm-sans",
+  subsets: ["latin"],
 });
 
-const inter = Inter({
-  subsets: ['latin'],
-  variable: '--font-inter',
-  display: 'swap',
+const syne = Syne({
+  variable: "--font-syne",
+  subsets: ["latin"],
 });
 
-const jetBrainsMono = JetBrains_Mono({
-  subsets: ['latin'],
-  variable: '--font-jetbrains-mono',
-  display: 'swap',
+const bebasNeue = Bebas_Neue({
+  variable: "--font-bebas-neue",
+  weight: "400",
+  subsets: ["latin"],
 });
 
 export const metadata: Metadata = {
-  title: 'VizTR',
-  description: 'Architectural Visualization Platform',
+  title: "VizTR - Architectural Visualization Platform",
+  description: "Create immersive 3D experiences for your architectural projects with real-time collaboration and AI-powered rendering.",
 };
 
-export const viewport: Viewport = {
-  themeColor: '#080a0f',
-  width: 'device-width',
-  initialScale: 1,
-};
-
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const session = await auth();
   return (
     <html
       lang="en"
-      suppressHydrationWarning
-      className={`${spaceGrotesk.variable} ${inter.variable} ${jetBrainsMono.variable}`}
+      className={`${dmSans.variable} ${syne.variable} ${bebasNeue.variable} h-full antialiased`}
     >
-      <body className="min-h-screen bg-bg text-foreground antialiased">
-        <ThemeProvider>
-          <Header />
-          <main className="pt-16">{children}</main>
-        </ThemeProvider>
+      <body className="min-h-full flex flex-col bg-bg text-white font-body">
+        <Providers session={session}>{children}</Providers>
       </body>
     </html>
   );

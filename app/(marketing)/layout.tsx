@@ -1,9 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import Footer from '@/components/Footer';
-import { ThemeToggle } from '@/components/ThemeToggle';
 
 export default function MarketingLayout({
   children,
@@ -16,14 +14,13 @@ export default function MarketingLayout({
     <div className="min-h-screen bg-bg flex flex-col">
       <header className="border-b border-gray-800">
         <nav className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <Link href="/" className="font-display text-2xl text-cyan">VizTR</Link>
+          <a href="/" className="font-display text-2xl text-cyan">VizTR</a>
 
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-6">
             <a href="/pricing" className="text-gray-400 hover:text-white transition-colors">Pricing</a>
             <a href="/dashboard" className="text-gray-400 hover:text-white transition-colors">Dashboard</a>
             <a href="/login" className="text-gray-400 hover:text-white transition-colors">Login</a>
-            <ThemeToggle />
             <a href="/auth/signin" className="px-4 py-2 bg-cyan text-bg rounded-md font-medium hover:bg-cyan/90 transition-colors min-h-touch">Sign Up</a>
           </div>
 
@@ -41,68 +38,41 @@ export default function MarketingLayout({
           </button>
         </nav>
 
-        {/* Mobile menu drawer overlay */}
+        {/* Mobile menu */}
         {mobileMenuOpen && (
-          <div 
-            className="fixed inset-0 bg-black/50 z-40 md:hidden"
-            onClick={() => setMobileMenuOpen(false)}
-          />
-        )}
-
-        {/* Mobile menu drawer */}
-        <div 
-          className={`fixed inset-y-0 left-0 w-64 bg-surface z-50 transform transition-transform duration-300 ease-in-out md:hidden flex flex-col border-r border-gray-800 ${
-            mobileMenuOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
-        >
-          <div className="p-4 border-b border-gray-800 flex justify-between items-center">
-            <Link href="/" className="font-display text-2xl text-cyan">VizTR</Link>
-            <button
-              onClick={() => setMobileMenuOpen(false)}
-              className="p-2 min-h-touch min-w-touch text-gray-400 hover:text-white"
-              aria-label="Close menu"
-            >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-          <div className="px-4 py-6 space-y-4 flex-1">
-            <a
-              href="/pricing"
-              className="block py-2 text-gray-400 hover:text-white transition-colors min-h-touch text-lg"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Pricing
-            </a>
-            <a
-              href="/dashboard"
-              className="block py-2 text-gray-400 hover:text-white transition-colors min-h-touch text-lg"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Dashboard
-            </a>
-            <a
-              href="/login"
-              className="block py-2 text-gray-400 hover:text-white transition-colors min-h-touch text-lg"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Login
-            </a>
-          </div>
-          <div className="p-4 border-t border-gray-800 space-y-3">
-            <div className="flex justify-center">
-              <ThemeToggle />
+          <div className="md:hidden border-t border-gray-800 bg-surface">
+            <div className="container mx-auto px-4 py-4 space-y-3">
+              <a
+                href="/pricing"
+                className="block py-2 text-gray-400 hover:text-white transition-colors min-h-touch flex items-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Pricing
+              </a>
+              <a
+                href="/dashboard"
+                className="block py-2 text-gray-400 hover:text-white transition-colors min-h-touch flex items-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Dashboard
+              </a>
+              <a
+                href="/login"
+                className="block py-2 text-gray-400 hover:text-white transition-colors min-h-touch flex items-center"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Login
+              </a>
+              <a
+                href="/auth/signin"
+                className="block py-3 bg-cyan text-bg rounded-md font-medium text-center min-h-touch"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Sign Up
+              </a>
             </div>
-            <a
-              href="/auth/signin"
-              className="block w-full py-3 bg-cyan text-bg rounded-md font-medium text-center min-h-touch"
-              onClick={() => setMobileMenuOpen(false)}
-            >
-              Sign Up
-            </a>
           </div>
-        </div>
+        )}
       </header>
       <main className="flex-1">{children}</main>
       <Footer />

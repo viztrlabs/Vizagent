@@ -1,131 +1,83 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
-import { Resend } from 'resend';
-import { confirmationEmailHTML } from '@/lib/emails/reminder';
-
-const resend = new Resend(process.env.RESEND_API_KEY);
+import { prisma } from '@/lib/supabase/server';
+import { addSessionToCalendar } from '@/lib/google-calendar';
+import { getToken } from 'next-auth/jwt';
 
 const SERVICE_NAMES: Record<string, string> = {
-  'vr-walkthrough': 'VR Walkthrough',
-  'exterior-viz': 'Exterior Visualisation',
-  'interior-xr': 'Interior XR Tour',
-  'masterplan': 'Master Plan Review',
+  'tour': 'Virtual Tour',
+  'xr': 'XR Configurator',
+  'render': '3D Rendering',
 };
 
 const SERVICE_DURATIONS: Record<string, number> = {
-  'vr-walkthrough': 60,
-  'exterior-viz': 45,
-  'interior-xr': 60,
-  'masterplan': 90,
+  'tour': 60,
+  'xr': 90,
+  'render': 120,
 };
 
-export async function POST(req: NextRequest) {
+export async function POST(request: NextRequest) {
   try {
-    const body: {
-      firstName?: string;
-      lastName?: string;
-      email?: string;
-      company?: string;
-      serviceId?: string;
-      projectType?: string;
-      date?: string;
-      time?: string;
-      notes?: string;
-    } = await req.json();
-    const {
-      firstName,
-      lastName,
-      email,
-      company,
-      serviceId,
-      projectType,
-      date,
-      time,
-      notes,
-    } = body;
+    const body = await request.json();
+    const { project_id, service, date, time, duration, client_name, email, project_type } = body;
 
-    if (!firstName || !lastName || !email || !serviceId || !date || !time) {
-      return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
-      );
-    }
-
-    const durationMinutes = SERVICE_DURATIONS[serviceId] || 60;
-    const startAt = new Date(`${date}T${time}:00+05:30`);
-
-    const session = await prisma.session.create({
+    // Create session
+    const session = await prisma.configuratorSession.create({
       data: {
-        email,
-        firstName,
-        lastName,
-        company: company || null,
-        serviceId,
-        projectType: projectType || '',
-        notes: notes || null,
-        date,
-        time,
-        startAt,
-        durationMinutes,
-        status: 'CONFIRMED',
+        projectId: project_id,
+        hostId: 'admin', // Default host
+        config: '{}',
+        shareToken: Math.random().toString(36).substring(2, 15),
+        startAt: new Date(`${date}T${time}:00`),
       },
     });
 
-    await resend.emails.send({
-      from: 'VizTR <bookings@viztr.io>',
-      to: email,
-      subject: `Session confirmed — ${SERVICE_NAMES[serviceId] || serviceId}`,
-      html: await confirmationEmailHTML({
-        id: session.id,
-        serviceId: SERVICE_NAMES[serviceId] || serviceId,
-        firstName,
-        lastName,
-        date,
-        time,
-      }),
-    });
+    // Try to add to Google Calendar
+    const token = await getToken({ req: request });
+    let gcalEventId = null;
 
-    await resend.emails.send({
-      from: 'VizTR <bookings@viztr.io>',
-      to: 'admin@viztr.io',
-      subject: `New booking: ${SERVICE_NAMES[serviceId]} — ${firstName} ${lastName}`,
-      html: `<p>New session booked:</p>
-             <ul>
-               <li>Service: ${SERVICE_NAMES[serviceId]}</li>
-               <li>Client: ${firstName} ${lastName} (${email})</li>
-               <li>Date: ${date} at ${time} IST</li>
-               <li>Session ID: ${session.id}</li>
-             </ul>`,
-    });
+    if (token?.accessToken) {
+      try {
+        gcalEventId = await addSessionToCalendar(token.accessToken as string, {
+          id: session.id,
+          service: SERVICE_NAMES[service] || service,
+          date: `${date}T${time}:00`,
+          durationMinutes: duration || SERVICE_DURATIONS[service] || 60,
+          clientName: client_name,
+          projectType: project_type,
+        });
 
-    return NextResponse.json({ ok: true, sessionId: session.id });
+        // Update session with gcal event ID
+        await prisma.configuratorSession.update({
+          where: { id: session.id },
+          data: { gcalEventId: gcalEventId },
+        });
+      } catch (error) {
+        console.error('Failed to add to Google Calendar:', error);
+      }
+    }
+
+    return NextResponse.json({ session, gcalEventId: gcalEventId }, { status: 201 });
   } catch (error) {
-    console.error('Booking error:', error);
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to create booking' }, { status: 500 });
   }
 }
 
-export async function GET(req: NextRequest) {
-  const { searchParams } = new URL(req.url);
-  const date = searchParams.get('date');
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url);
+    const email = searchParams.get('email');
 
-  if (!date) {
-    return NextResponse.json(
-      { error: 'Date parameter required' },
-      { status: 400 }
-    );
+    if (!email) {
+      return NextResponse.json({ error: 'email required' }, { status: 400 });
+    }
+
+    const sessions = await prisma.configuratorSession.findMany({
+      where: { hostId: email },
+      orderBy: { startAt: 'desc' },
+    });
+
+    return NextResponse.json({ sessions });
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to fetch bookings' }, { status: 500 });
   }
-
-  const sessions = await prisma.session.findMany({
-    where: {
-      date,
-      status: { in: ['CONFIRMED', 'PENDING'] },
-    },
-    select: { time: true },
-  });
-
-  return NextResponse.json({ bookedSlots: sessions.map((s: { time: string | null }) => s.time) });
 }

@@ -1,22 +1,29 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { streamCreateSchema } from '@/lib/validations';
-import { removePeer } from '@/lib/server/lib/signaling';
+
+const rooms = new Map<string, { peers: Set<string>; createdAt: number }>();
 
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json();
-    const validation = streamCreateSchema.safeParse(body);
+  const body = await request.json();
+  const validation = streamCreateSchema.safeParse(body);
 
-    if (!validation.success) {
-      return NextResponse.json({ error: validation.error.issues }, { status: 400 });
-    }
-
-    const { room_id, user_id } = validation.data;
-
-    const peers = await removePeer(room_id, user_id);
-
-    return NextResponse.json({ success: true, peers });
-  } catch (error) {
-    return NextResponse.json({ error: 'Failed to leave room' }, { status: 500 });
+  if (!validation.success) {
+    return NextResponse.json({ error: validation.error.issues }, { status: 400 });
   }
+
+  const { room_id, user_id } = validation.data;
+
+  if (!rooms.has(room_id)) {
+    return NextResponse.json({ error: 'Room not found' }, { status: 404 });
+  }
+
+  const room = rooms.get(room_id)!;
+  room.peers.delete(user_id);
+
+  // Clean up empty rooms
+  if (room.peers.size === 0) {
+    rooms.delete(room_id);
+  }
+
+  return NextResponse.json({ success: true });
 }

@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/db/server';
-import { SessionRepository } from '@/lib/server/repositories/session.repository';
-import { getTenantId } from '@/lib/server/lib/tenant';
-import { withTenant } from '@/lib/server/middleware/tenant';
-
-const sessionRepository = new SessionRepository();
+import { prisma } from '@/lib/supabase/server';
 
 export async function GET(
   request: NextRequest,
@@ -12,11 +7,11 @@ export async function GET(
 ) {
   try {
     const { token } = await params;
-    const tenantId = await getTenantId();
 
-    const session = await withTenant(prisma, tenantId, async () =>
-      sessionRepository.findByShareToken(token)
-    );
+    const session = await prisma.configuratorSession.findUnique({
+      where: { shareToken: token },
+      include: { viewers: true },
+    });
 
     if (!session) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
